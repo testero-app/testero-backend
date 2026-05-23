@@ -26,3 +26,4 @@ replay_pid*
 # Environment variables
 .env
 .DS_Store
+CLAUDE.local.md
