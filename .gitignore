@@ -26,6 +26,11 @@ replay_pid*
 # Build output
 target/
 
+# IDE
+.vscode/
+.idea/
+*.iml
+
 # Environment variables
 .env
 .DS_Store
