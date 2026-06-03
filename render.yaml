@@ -1,11 +1,9 @@
 services:
   - type: web
     name: testero-backend
-    runtime: java
+    runtime: docker
     plan: free
     region: frankfurt
-    buildCommand: ./mvnw package -DskipTests
-    startCommand: java -Xmx256m -XX:+UseSerialGC -jar target/*.jar
     envVars:
       - key: DATABASE_URL
         sync: false
