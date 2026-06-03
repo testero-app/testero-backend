@@ -8,9 +8,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "submission")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Submission {
 
     @Id
@@ -27,19 +33,4 @@ public class Submission {
     private LocalDateTime submittedAt;
 
     private Double score;
-
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-
-    public UUID getStudentId() { return studentId; }
-    public void setStudentId(UUID studentId) { this.studentId = studentId; }
-
-    public UUID getTestId() { return testId; }
-    public void setTestId(UUID testId) { this.testId = testId; }
-
-    public LocalDateTime getSubmittedAt() { return submittedAt; }
-    public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
-
-    public Double getScore() { return score; }
-    public void setScore(Double score) { this.score = score; }
 }
