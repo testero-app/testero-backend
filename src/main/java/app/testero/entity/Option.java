@@ -5,9 +5,15 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.UUID;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "option")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Option {
 
     @Id
@@ -27,22 +33,4 @@ public class Option {
 
     @Column(nullable = false)
     private int position;
-
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-
-    public UUID getQuestionId() { return questionId; }
-    public void setQuestionId(UUID questionId) { this.questionId = questionId; }
-
-    public String getText() { return text; }
-    public void setText(String text) { this.text = text; }
-
-    public boolean isCorrect() { return correct; }
-    public void setCorrect(boolean correct) { this.correct = correct; }
-
-    public boolean isFallback() { return fallback; }
-    public void setFallback(boolean fallback) { this.fallback = fallback; }
-
-    public int getPosition() { return position; }
-    public void setPosition(int position) { this.position = position; }
 }
