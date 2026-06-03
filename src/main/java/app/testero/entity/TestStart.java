@@ -7,9 +7,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.UUID;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "test_start")
+@Getter
+@Setter
+@NoArgsConstructor
 public class TestStart {
 
     @Id
@@ -18,10 +24,4 @@ public class TestStart {
 
     @Column(name = "test_id", nullable = false)
     private UUID testId;
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public UUID getTestId() { return testId; }
-    public void setTestId(UUID testId) { this.testId = testId; }
 }
