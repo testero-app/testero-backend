@@ -9,6 +9,9 @@ import java.util.UUID;
 
 public interface TestRepository extends JpaRepository<Test, UUID> {
 
-    @Query("SELECT t FROM Test t JOIN ClassTest ct ON ct.testId = t.id WHERE ct.classId = :classId")
+    @Query("SELECT t FROM Test t JOIN ClassTest ct ON ct.testId = t.id "
+            + "WHERE ct.classId = :classId "
+            + "AND ct.activatedAt IS NOT NULL "
+            + "AND ct.deactivatedAt IS NULL")
     List<Test> findTestsByClassId(@Param("classId") UUID classId);
 }

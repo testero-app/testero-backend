@@ -7,6 +7,7 @@ public record SubmissionFeedbackResponse(
         String id,
         @JsonProperty("student_id") String studentId,
         @JsonProperty("test_id") String testId,
+        @JsonProperty("started_at") String startedAt,
         @JsonProperty("submitted_at") String submittedAt,
         List<AnswerResult> answers
 ) {
