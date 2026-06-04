@@ -8,5 +8,6 @@ import java.util.List;
 
 public record SubmissionCreateRequest(
         @JsonProperty("test_id") @NotBlank String testId,
+        @JsonProperty("started_at") String startedAt,
         @Valid @NotEmpty List<AnswerInput> answers
 ) {}
