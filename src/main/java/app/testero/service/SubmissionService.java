@@ -56,6 +56,9 @@ public class SubmissionService {
         Submission submission = new Submission();
         submission.setStudentId(studentId);
         submission.setTestId(testUuid);
+        submission.setStartedAt(request.startedAt() != null
+                ? LocalDateTime.parse(request.startedAt())
+                : null);
         submission.setSubmittedAt(LocalDateTime.now());
         submission = submissionRepository.save(submission);
 
@@ -170,6 +173,7 @@ public class SubmissionService {
                 submission.getId().toString(),
                 submission.getStudentId().toString(),
                 submission.getTestId().toString(),
+                submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt().toString(),
                 answerResults
         );
@@ -208,6 +212,7 @@ public class SubmissionService {
                 submission.getId().toString(),
                 submission.getStudentId().toString(),
                 submission.getTestId().toString(),
+                submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt().toString(),
                 answerResults
         );
