@@ -1,0 +1,154 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.0-008
+      author: testero
+      changes:
+        - createTable:
+            tableName: test
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: timer_minutes
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: total_pool
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: questions_per_test
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: pts_correct
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: pts_wrong
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: test
+
+  - changeSet:
+      id: v1.0-009
+      author: testero
+      changes:
+        - createTable:
+            tableName: subject
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: label
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: subject
+
+  - changeSet:
+      id: v1.0-010
+      author: testero
+      changes:
+        - createTable:
+            tableName: test_subject
+            columns:
+              - column:
+                  name: test_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subject_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: test_subject
+            columnNames: test_id, subject_id
+            constraintName: pk_test_subject
+        - addForeignKeyConstraint:
+            baseTableName: test_subject
+            baseColumnNames: test_id
+            referencedTableName: test
+            referencedColumnNames: id
+            constraintName: fk_test_subject_test_id
+        - addForeignKeyConstraint:
+            baseTableName: test_subject
+            baseColumnNames: subject_id
+            referencedTableName: subject
+            referencedColumnNames: id
+            constraintName: fk_test_subject_subject_id
+      rollback:
+        - dropTable:
+            tableName: test_subject
+
+  - changeSet:
+      id: v1.0-011
+      author: testero
+      changes:
+        - createTable:
+            tableName: class_test
+            columns:
+              - column:
+                  name: class_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: test_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: activated_at
+                  type: timestamp
+              - column:
+                  name: deactivated_at
+                  type: timestamp
+        - addPrimaryKey:
+            tableName: class_test
+            columnNames: class_id, test_id
+            constraintName: pk_class_test
+        - addForeignKeyConstraint:
+            baseTableName: class_test
+            baseColumnNames: class_id
+            referencedTableName: user_class
+            referencedColumnNames: id
+            constraintName: fk_class_test_class_id
+        - addForeignKeyConstraint:
+            baseTableName: class_test
+            baseColumnNames: test_id
+            referencedTableName: test
+            referencedColumnNames: id
+            constraintName: fk_class_test_test_id
+      rollback:
+        - dropTable:
+            tableName: class_test

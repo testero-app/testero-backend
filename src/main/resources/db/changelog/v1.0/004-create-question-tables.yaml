@@ -1,0 +1,95 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.0-012
+      author: testero
+      changes:
+        - createTable:
+            tableName: question
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: test_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: text
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: code
+                  type: text
+              - column:
+                  name: position
+                  type: int
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: question
+            baseColumnNames: test_id
+            referencedTableName: test
+            referencedColumnNames: id
+            constraintName: fk_question_test_id
+      rollback:
+        - dropTable:
+            tableName: question
+
+  - changeSet:
+      id: v1.0-013
+      author: testero
+      changes:
+        - createTable:
+            tableName: option
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: question_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: text
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_correct
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_fallback
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: int
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: option
+            baseColumnNames: question_id
+            referencedTableName: question
+            referencedColumnNames: id
+            constraintName: fk_option_question_id
+            onDelete: CASCADE
+      rollback:
+        - dropTable:
+            tableName: option
