@@ -88,6 +88,12 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Database migrations -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-liquibase</artifactId>
+        </dependency>
+
         <!-- .env support -->
         <dependency>
             <groupId>me.paulschwarz</groupId>

@@ -1,0 +1,114 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.0-018
+      author: testero
+      changes:
+        - createIndex:
+            tableName: app_user
+            indexName: idx_app_user_username
+            columns:
+              - column:
+                  name: username
+        - createIndex:
+            tableName: app_user
+            indexName: idx_app_user_email
+            columns:
+              - column:
+                  name: email
+        - createIndex:
+            tableName: question
+            indexName: idx_question_test_id
+            columns:
+              - column:
+                  name: test_id
+        - createIndex:
+            tableName: option
+            indexName: idx_option_question_id
+            columns:
+              - column:
+                  name: question_id
+        - createIndex:
+            tableName: submission
+            indexName: idx_submission_user_id
+            columns:
+              - column:
+                  name: user_id
+        - createIndex:
+            tableName: submission
+            indexName: idx_submission_test_id
+            columns:
+              - column:
+                  name: test_id
+        - createIndex:
+            tableName: user_answer
+            indexName: idx_user_answer_submission_id
+            columns:
+              - column:
+                  name: submission_id
+        - createIndex:
+            tableName: user_answer
+            indexName: idx_user_answer_question_id
+            columns:
+              - column:
+                  name: question_id
+        - createIndex:
+            tableName: user_answer_selected_option
+            indexName: idx_user_answer_selected_option_answer_id
+            columns:
+              - column:
+                  name: answer_id
+        - createIndex:
+            tableName: user_answer_selected_option
+            indexName: idx_user_answer_selected_option_option_id
+            columns:
+              - column:
+                  name: option_id
+        - createIndex:
+            tableName: test_start
+            indexName: idx_test_start_test_id
+            columns:
+              - column:
+                  name: test_id
+        - createIndex:
+            tableName: student_profile
+            indexName: idx_student_profile_class_id
+            columns:
+              - column:
+                  name: class_id
+      rollback:
+        - dropIndex:
+            tableName: app_user
+            indexName: idx_app_user_username
+        - dropIndex:
+            tableName: app_user
+            indexName: idx_app_user_email
+        - dropIndex:
+            tableName: question
+            indexName: idx_question_test_id
+        - dropIndex:
+            tableName: option
+            indexName: idx_option_question_id
+        - dropIndex:
+            tableName: submission
+            indexName: idx_submission_user_id
+        - dropIndex:
+            tableName: submission
+            indexName: idx_submission_test_id
+        - dropIndex:
+            tableName: user_answer
+            indexName: idx_user_answer_submission_id
+        - dropIndex:
+            tableName: user_answer
+            indexName: idx_user_answer_question_id
+        - dropIndex:
+            tableName: user_answer_selected_option
+            indexName: idx_user_answer_selected_option_answer_id
+        - dropIndex:
+            tableName: user_answer_selected_option
+            indexName: idx_user_answer_selected_option_option_id
+        - dropIndex:
+            tableName: test_start
+            indexName: idx_test_start_test_id
+        - dropIndex:
+            tableName: student_profile
+            indexName: idx_student_profile_class_id
