@@ -12,11 +12,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "answer")
+@Table(name = "user_answer")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Answer {
+public class UserAnswer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

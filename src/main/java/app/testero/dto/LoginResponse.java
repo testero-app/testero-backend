@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record LoginResponse(
         String token,
-        StudentInfo student
+        UserInfo user
 ) {
-    public record StudentInfo(
+    public record UserInfo(
             String id,
             String name,
             String username,

@@ -24,19 +24,18 @@ public class JwtService {
         this.expireMillis = props.expireHours() * 3600_000L;
     }
 
-    public String generateToken(UUID studentId, String username, UUID classId) {
+    public String generateToken(UUID userId, String username) {
         Date now = new Date();
         return Jwts.builder()
-                .subject(studentId.toString())
+                .subject(userId.toString())
                 .claim("username", username)
-                .claim("class_id", classId.toString())
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expireMillis))
                 .signWith(key)
                 .compact();
     }
 
-    public StudentPrincipal parseToken(String token) {
+    public UserPrincipal parseToken(String token) {
         try {
             Claims claims = Jwts.parser()
                     .verifyWith(key)
@@ -44,10 +43,9 @@ public class JwtService {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            return new StudentPrincipal(
+            return new UserPrincipal(
                     UUID.fromString(claims.getSubject()),
-                    claims.get("username", String.class),
-                    UUID.fromString(claims.get("class_id", String.class))
+                    claims.get("username", String.class)
             );
         } catch (ExpiredJwtException e) {
             throw new JwtAuthenticationException("Token expired");

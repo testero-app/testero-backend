@@ -2,7 +2,7 @@ package app.testero.controller;
 
 import app.testero.dto.SubmissionCreateRequest;
 import app.testero.dto.SubmissionFeedbackResponse;
-import app.testero.security.StudentPrincipal;
+import app.testero.security.UserPrincipal;
 import app.testero.service.SubmissionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -30,18 +30,18 @@ public class SubmissionController {
     @PostMapping
     public ResponseEntity<SubmissionFeedbackResponse> createSubmission(
             @Valid @RequestBody SubmissionCreateRequest request,
-            @AuthenticationPrincipal StudentPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal) {
         SubmissionFeedbackResponse response = submissionService.createSubmission(
-                principal.studentId(), request);
+                principal.userId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{submissionId}")
     public ResponseEntity<SubmissionFeedbackResponse> getSubmission(
             @PathVariable UUID submissionId,
-            @AuthenticationPrincipal StudentPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal) {
         SubmissionFeedbackResponse response = submissionService.getSubmission(
-                submissionId, principal.studentId());
+                submissionId, principal.userId());
         return ResponseEntity.ok(response);
     }
 }

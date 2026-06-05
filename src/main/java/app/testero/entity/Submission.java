@@ -15,31 +15,31 @@ import lombok.Setter;
 /**
  * Application flow:
  *
- * - A Student starts a Test -> a Submission is created (the "blank exam sheet")
- * - For each Question in the test, the student provides a response -> an Answer is
+ * - A user starts a Test -> a Submission is created (the "blank exam sheet")
+ * - For each Question in the test, the user provides a response -> a UserAnswer is
  *   created, linked to this Submission and to the Question
- *     - If the Question is open-ended: Answer contains text (the written response)
- *     - If the Question is multiple-choice: Answer alone is not enough — the student
+ *     - If the Question is open-ended: UserAnswer contains text (the written response)
+ *     - If the Question is multiple-choice: UserAnswer alone is not enough — the user
  *       selects one or more Options -> for each one, a record is created in
- *       AnswerSelectedOption (bridge table between Answer and Option)
+ *       UserAnswerSelectedOption (bridge table between UserAnswer and Option)
  *
  * Submission (the exam)
- *   └── Answer (one response per question)
- *         ├── text/motivation          -> for open-ended questions
- *         └── AnswerSelectedOption     -> for multiple-choice questions
- *               └── Option             -> the selected option
+ *   └── UserAnswer (one response per question)
+ *         ├── text/motivation              -> for open-ended questions
+ *         └── UserAnswerSelectedOption     -> for multiple-choice questions
+ *               └── Option                 -> the selected option
  *
- * AnswerSelectedOption exists because a multiple-choice question can have multiple
+ * UserAnswerSelectedOption exists because a multiple-choice question can have multiple
  * correct answers (checkboxes, not just radio buttons). If it were always a single
- * option, a simple selectedOptionId on Answer would suffice.
+ * option, a simple selectedOptionId on UserAnswer would suffice.
  *
  * Scoring logic:
  *
  * The "correct" field on Option is the ground truth (defined by the teacher), while
- * "isCorrect" and "pointsAwarded" on Answer are the result computed by the system.
- *   1. The student selects Options (via AnswerSelectedOption)
+ * "isCorrect" and "pointsAwarded" on UserAnswer are the result computed by the system.
+ *   1. The user selects Options (via UserAnswerSelectedOption)
  *   2. The system compares selected options against the correct Options
- *   3. The system writes on Answer: isCorrect and pointsAwarded (using ptsCorrect /
+ *   3. The system writes on UserAnswer: isCorrect and pointsAwarded (using ptsCorrect /
  *      ptsWrong from the Test)
  *
  * Why not just rely on Option.correct?
@@ -47,11 +47,11 @@ import lombok.Setter;
  *     different tests can be worth different points
  *   - For open-ended questions there are no Options -> isCorrect must be
  *     calculated/assigned manually by the teacher
- *   - Materialising the result on Answer avoids recalculating it every time and
+ *   - Materialising the result on UserAnswer avoids recalculating it every time and
  *     allows the teacher to override it (e.g. partial credit)
  *
- * Note: AnswerSelectedOption has neither isCorrect nor points — it is only a bridge
- * table. The overall judgement lives on Answer, which looks at the set of selected
+ * Note: UserAnswerSelectedOption has neither isCorrect nor points — it is only a bridge
+ * table. The overall judgement lives on UserAnswer, which looks at the set of selected
  * options vs the correct ones.
  */
 @Entity
@@ -65,8 +65,8 @@ public class Submission {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "student_id", nullable = false)
-    private UUID studentId;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @Column(name = "test_id", nullable = false)
     private UUID testId;

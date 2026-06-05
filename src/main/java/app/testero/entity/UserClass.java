@@ -10,11 +10,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "\"class\"")
+@Table(name = "user_class")
 @Getter
 @Setter
 @NoArgsConstructor
-public class StudentClass {
+public class UserClass {
 
     @Id
     private UUID id;

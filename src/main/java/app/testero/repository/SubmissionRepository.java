@@ -7,5 +7,5 @@ import java.util.UUID;
 
 public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
-    Optional<Submission> findByIdAndStudentId(UUID id, UUID studentId);
+    Optional<Submission> findByIdAndUserId(UUID id, UUID userId);
 }
