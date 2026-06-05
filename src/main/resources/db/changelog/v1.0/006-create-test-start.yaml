@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.0-017
+      author: testero
+      changes:
+        - createTable:
+            tableName: test_start
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: test_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: test_start
+            baseColumnNames: test_id
+            referencedTableName: test
+            referencedColumnNames: id
+            constraintName: fk_test_start_test_id
+      rollback:
+        - dropTable:
+            tableName: test_start

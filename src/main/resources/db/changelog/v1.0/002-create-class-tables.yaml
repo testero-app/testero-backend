@@ -1,0 +1,100 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.0-005
+      author: testero
+      changes:
+        - createTable:
+            tableName: user_class
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: user_class
+
+  - changeSet:
+      id: v1.0-006
+      author: testero
+      changes:
+        - createTable:
+            tableName: student_profile
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: class_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: student_profile
+            baseColumnNames: user_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_student_profile_user_id
+        - addForeignKeyConstraint:
+            baseTableName: student_profile
+            baseColumnNames: class_id
+            referencedTableName: user_class
+            referencedColumnNames: id
+            constraintName: fk_student_profile_class_id
+      rollback:
+        - dropTable:
+            tableName: student_profile
+
+  - changeSet:
+      id: v1.0-007
+      author: testero
+      changes:
+        - createTable:
+            tableName: teacher_class
+            columns:
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: class_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: teacher_class
+            columnNames: user_id, class_id
+            constraintName: pk_teacher_class
+        - addForeignKeyConstraint:
+            baseTableName: teacher_class
+            baseColumnNames: user_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_teacher_class_user_id
+        - addForeignKeyConstraint:
+            baseTableName: teacher_class
+            baseColumnNames: class_id
+            referencedTableName: user_class
+            referencedColumnNames: id
+            constraintName: fk_teacher_class_class_id
+      rollback:
+        - dropTable:
+            tableName: teacher_class
