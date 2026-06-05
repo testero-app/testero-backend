@@ -30,7 +30,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
             try {
-                StudentPrincipal principal = jwtService.parseToken(token);
+                UserPrincipal principal = jwtService.parseToken(token);
                 var auth = new UsernamePasswordAuthenticationToken(principal, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (JwtService.JwtAuthenticationException e) {

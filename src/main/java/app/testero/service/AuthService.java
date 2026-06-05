@@ -2,8 +2,10 @@ package app.testero.service;
 
 import app.testero.dto.LoginRequest;
 import app.testero.dto.LoginResponse;
-import app.testero.entity.Student;
-import app.testero.repository.StudentRepository;
+import app.testero.entity.AppUser;
+import app.testero.entity.StudentProfile;
+import app.testero.repository.AppUserRepository;
+import app.testero.repository.StudentProfileRepository;
 import app.testero.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -11,45 +13,48 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
-    private final StudentRepository studentRepository;
+    private final AppUserRepository appUserRepository;
+    private final StudentProfileRepository studentProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public AuthService(StudentRepository studentRepository,
+    public AuthService(AppUserRepository appUserRepository,
+                       StudentProfileRepository studentProfileRepository,
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService) {
-        this.studentRepository = studentRepository;
+        this.appUserRepository = appUserRepository;
+        this.studentProfileRepository = studentProfileRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
     public LoginResponse login(LoginRequest request) {
-        Student student = studentRepository.findByUsername(request.username())
+        AppUser user = appUserRepository.findByUsername(request.username())
                 .orElseThrow(() -> new InvalidCredentialsException());
 
-        if (student.getPasswordHash() == null ||
-                !passwordEncoder.matches(request.password(), student.getPasswordHash())) {
+        if (user.getPasswordHash() == null ||
+                !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new InvalidCredentialsException();
         }
 
         String token = jwtService.generateToken(
-                student.getId(),
-                student.getUsername(),
-                student.getClassId()
+                user.getId(),
+                user.getUsername()
         );
 
-        String className = student.getStudentClass() != null
-                ? student.getStudentClass().getName()
+        StudentProfile profile = studentProfileRepository.findByUserId(user.getId()).orElse(null);
+        String className = (profile != null && profile.getUserClass() != null)
+                ? profile.getUserClass().getName()
                 : "";
 
-        var studentInfo = new LoginResponse.StudentInfo(
-                student.getId().toString(),
-                student.getName(),
-                student.getUsername(),
+        var userInfo = new LoginResponse.UserInfo(
+                user.getId().toString(),
+                user.getName(),
+                user.getUsername(),
                 className
         );
 
-        return new LoginResponse(token, studentInfo);
+        return new LoginResponse(token, userInfo);
     }
 
     public static class InvalidCredentialsException extends RuntimeException {
