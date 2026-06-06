@@ -1,14 +1,13 @@
 # testero-backend
 
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+
 Backend for **Testero**, an open source system for administering tests
 and assessments, designed for educational settings: private schools,
 training organizations, teachers, and trainers.
 
 This repository contains the **backend API**. The web frontend lives in
 [testero-web](https://github.com/testero-app/testero-web).
-
-> ⚠️ This repository is under initial development. The backend is being
-> built with Spring Boot (Java), replacing an earlier Python prototype.
 
 ## Stack
 
