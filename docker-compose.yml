@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: testero-db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: testero_dev
+      POSTGRES_USER: testero
+      POSTGRES_PASSWORD: testero
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
