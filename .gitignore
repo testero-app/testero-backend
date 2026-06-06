@@ -36,3 +36,6 @@ META-INF/
 .env
 .DS_Store
 CLAUDE.local.md
+
+# Docker override (personal)
+docker-compose.override.yml

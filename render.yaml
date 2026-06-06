@@ -5,6 +5,8 @@ services:
     plan: free
     region: frankfurt
     envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
