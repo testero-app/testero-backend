@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.0-seed-dev
+      author: testero
+      context: dev
+      changes:
+        - sqlFile:
+            path: db/seed/dev-data.sql
