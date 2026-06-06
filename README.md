@@ -24,28 +24,42 @@ This repository contains the **backend API**. The web frontend lives in
 Prerequisites:
 
 - JDK 21 or later
+- Docker (for local PostgreSQL)
 
 ```bash
 # Clone the repository
 git clone https://github.com/testero-app/testero-backend.git
 cd testero-backend
 
+# Start PostgreSQL
+docker compose up -d
+
 # Copy the environment variables template and fill in the values
 cp .env.example .env
 
-# Run the application
+# Run the application (starts with "dev" profile by default)
 ./mvnw spring-boot:run
 ```
+
+To stop PostgreSQL: `docker compose down` (add `-v` to also delete data).
 
 ### Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `DATABASE_URL` | PostgreSQL JDBC connection string (Supabase) |
+| `SPRING_PROFILES_ACTIVE` | `dev` (local) or `prod` (Render) — defaults to `dev` |
+| `DATABASE_URL` | PostgreSQL JDBC connection string |
 | `JWT_SECRET` | HS256 signing key, min 256 bits — generate with `openssl rand -hex 32` |
 | `CORS_ORIGINS` | Allowed frontend origin (e.g. `http://localhost:3000`) |
 
 See [`.env.example`](./.env.example) for the expected format.
+
+### Spring Profiles
+
+| Profile | Purpose | Datasource |
+|---------|---------|------------|
+| `dev` | Local development | Docker Compose PostgreSQL (hardcoded in profile) |
+| `prod` | Production (Render) | `DATABASE_URL` env var (Supabase) |
 
 ### Database Migrations
 
