@@ -324,11 +324,11 @@ INSERT INTO class_test (class_id, test_id, activated_at) VALUES
 -- ── Test 1: Python - Fondamenti (1SW) ────────────────────────
 
 INSERT INTO question (id, test_id, type, text, code, position) VALUES
-  ('f1010000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001', 'MULTIPLE_CHOICE', 'Quale funzione si usa per ottenere il tipo di una variabile in Python?', NULL, 1),
-  ('f1010000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000001', 'MULTIPLE_CHOICE', 'Quale keyword si usa per aggiungere una condizione alternativa in un blocco if?', NULL, 2),
-  ('f1010000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000001', 'MULTIPLE_CHOICE', 'Cosa restituisce una funzione senza return?', NULL, 3),
-  ('f1010000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000001', 'MULTIPLE_CHOICE', 'Qual e'' il risultato di 10 // 3 in Python?', NULL, 4),
-  ('f1010000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000001', 'MULTIPLE_CHOICE', 'Cosa stampa questo codice?', 'for i in range(3):\n    print(i, end=" ")', 5);
+  ('f1010000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001', 'multiple', 'Quale funzione si usa per ottenere il tipo di una variabile in Python?', NULL, 1),
+  ('f1010000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000001', 'multiple', 'Quale keyword si usa per aggiungere una condizione alternativa in un blocco if?', NULL, 2),
+  ('f1010000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000001', 'multiple', 'Cosa restituisce una funzione senza return?', NULL, 3),
+  ('f1010000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000001', 'multiple', 'Qual e'' il risultato di 10 // 3 in Python?', NULL, 4),
+  ('f1010000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000001', 'multiple', 'Cosa stampa questo codice?', 'for i in range(3):\n    print(i, end=" ")', 5);
 
 INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VALUES
   ('f2010000-0000-0000-0001-000000000001', 'f1010000-0000-0000-0000-000000000001', 'typeof()',  false, false, 1),
@@ -359,11 +359,11 @@ INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VA
 -- ── Test 2: Python - Strutture Dati (1SW) ────────────────────
 
 INSERT INTO question (id, test_id, type, text, code, position) VALUES
-  ('f1020000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000002', 'MULTIPLE_CHOICE', 'Cosa fa il metodo append() di una lista?', NULL, 1),
-  ('f1020000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000002', 'MULTIPLE_CHOICE', 'Qual e'' la differenza tra pop() e remove()?', NULL, 2),
-  ('f1020000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000002', 'MULTIPLE_CHOICE', 'Cosa restituisce il metodo keys() di un dizionario?', NULL, 3),
-  ('f1020000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000002', 'MULTIPLE_CHOICE', 'Come si accede al terzo elemento di una lista?', NULL, 4),
-  ('f1020000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000002', 'MULTIPLE_CHOICE', 'Cosa stampa questo codice?', 'lista = [1, 2, 3]\nlista.append([4, 5])\nprint(len(lista))', 5);
+  ('f1020000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000002', 'multiple', 'Cosa fa il metodo append() di una lista?', NULL, 1),
+  ('f1020000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000002', 'multiple', 'Qual e'' la differenza tra pop() e remove()?', NULL, 2),
+  ('f1020000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000002', 'multiple', 'Cosa restituisce il metodo keys() di un dizionario?', NULL, 3),
+  ('f1020000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000002', 'multiple', 'Come si accede al terzo elemento di una lista?', NULL, 4),
+  ('f1020000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000002', 'multiple', 'Cosa stampa questo codice?', 'lista = [1, 2, 3]\nlista.append([4, 5])\nprint(len(lista))', 5);
 
 INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VALUES
   ('f2020000-0000-0000-0001-000000000001', 'f1020000-0000-0000-0000-000000000001', 'Rimuove l''ultimo elemento',   false, false, 1),
@@ -394,11 +394,11 @@ INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VA
 -- ── Test 3: HTML/CSS - Fondamenti (1INF) ─────────────────────
 
 INSERT INTO question (id, test_id, type, text, code, position) VALUES
-  ('f1030000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000003', 'MULTIPLE_CHOICE', 'Quale tag HTML definisce un paragrafo?', NULL, 1),
-  ('f1030000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000003', 'MULTIPLE_CHOICE', 'Quale proprieta'' CSS cambia il colore del testo?', NULL, 2),
-  ('f1030000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000003', 'MULTIPLE_CHOICE', 'Cosa significa l''acronimo HTML?', NULL, 3),
-  ('f1030000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000003', 'MULTIPLE_CHOICE', 'Quale attributo specifica l''URL di un link?', NULL, 4),
-  ('f1030000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000003', 'MULTIPLE_CHOICE', 'Come si seleziona un elemento per id in CSS?', NULL, 5);
+  ('f1030000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000003', 'multiple', 'Quale tag HTML definisce un paragrafo?', NULL, 1),
+  ('f1030000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000003', 'multiple', 'Quale proprieta'' CSS cambia il colore del testo?', NULL, 2),
+  ('f1030000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000003', 'multiple', 'Cosa significa l''acronimo HTML?', NULL, 3),
+  ('f1030000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000003', 'multiple', 'Quale attributo specifica l''URL di un link?', NULL, 4),
+  ('f1030000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000003', 'multiple', 'Come si seleziona un elemento per id in CSS?', NULL, 5);
 
 INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VALUES
   ('f2030000-0000-0000-0001-000000000001', 'f1030000-0000-0000-0000-000000000001', '<p>',      true,  false, 1),
@@ -429,11 +429,11 @@ INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VA
 -- ── Test 4: JavaScript - Fondamenti (1INF) ───────────────────
 
 INSERT INTO question (id, test_id, type, text, code, position) VALUES
-  ('f1040000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000004', 'MULTIPLE_CHOICE', 'Come si dichiara una variabile costante in JavaScript?', NULL, 1),
-  ('f1040000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000004', 'MULTIPLE_CHOICE', 'Quale metodo aggiunge un elemento alla fine di un array?', NULL, 2),
-  ('f1040000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000004', 'MULTIPLE_CHOICE', 'Cosa restituisce typeof null?', NULL, 3),
-  ('f1040000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000004', 'MULTIPLE_CHOICE', 'Qual e'' la differenza tra == e ===?', NULL, 4),
-  ('f1040000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000004', 'MULTIPLE_CHOICE', 'Cosa stampa questo codice?', 'console.log(typeof []);', 5);
+  ('f1040000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000004', 'multiple', 'Come si dichiara una variabile costante in JavaScript?', NULL, 1),
+  ('f1040000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000004', 'multiple', 'Quale metodo aggiunge un elemento alla fine di un array?', NULL, 2),
+  ('f1040000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000004', 'multiple', 'Cosa restituisce typeof null?', NULL, 3),
+  ('f1040000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000004', 'multiple', 'Qual e'' la differenza tra == e ===?', NULL, 4),
+  ('f1040000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000004', 'multiple', 'Cosa stampa questo codice?', 'console.log(typeof []);', 5);
 
 INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VALUES
   ('f2040000-0000-0000-0001-000000000001', 'f1040000-0000-0000-0000-000000000001', 'var',    false, false, 1),
@@ -464,11 +464,11 @@ INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VA
 -- ── Test 5: Java - OOP (2SW) ─────────────────────────────────
 
 INSERT INTO question (id, test_id, type, text, code, position) VALUES
-  ('f1050000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000005', 'MULTIPLE_CHOICE', 'Quale keyword crea una nuova istanza di un oggetto in Java?', NULL, 1),
-  ('f1050000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000005', 'MULTIPLE_CHOICE', 'Cosa indica il modificatore di accesso private?', NULL, 2),
-  ('f1050000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000005', 'MULTIPLE_CHOICE', 'Quale keyword permette a una classe di ereditare da un''altra?', NULL, 3),
-  ('f1050000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000005', 'MULTIPLE_CHOICE', 'Cosa fa l''annotazione @Override?', NULL, 4),
-  ('f1050000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000005', 'MULTIPLE_CHOICE', 'Quale di queste e'' una definizione corretta di interfaccia?', 'public interface Veicolo {\n    void avvia();\n}', 5);
+  ('f1050000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000005', 'multiple', 'Quale keyword crea una nuova istanza di un oggetto in Java?', NULL, 1),
+  ('f1050000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000005', 'multiple', 'Cosa indica il modificatore di accesso private?', NULL, 2),
+  ('f1050000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000005', 'multiple', 'Quale keyword permette a una classe di ereditare da un''altra?', NULL, 3),
+  ('f1050000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000005', 'multiple', 'Cosa fa l''annotazione @Override?', NULL, 4),
+  ('f1050000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000005', 'multiple', 'Quale di queste e'' una definizione corretta di interfaccia?', 'public interface Veicolo {\n    void avvia();\n}', 5);
 
 INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VALUES
   ('f2050000-0000-0000-0001-000000000001', 'f1050000-0000-0000-0000-000000000001', 'create',   false, false, 1),
@@ -499,11 +499,11 @@ INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VA
 -- ── Test 6: SQL - Fondamenti (2SW) ───────────────────────────
 
 INSERT INTO question (id, test_id, type, text, code, position) VALUES
-  ('f1060000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000006', 'MULTIPLE_CHOICE', 'Quale comando SQL seleziona tutti i record di una tabella?', NULL, 1),
-  ('f1060000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000006', 'MULTIPLE_CHOICE', 'Quale clausola filtra i risultati di una query?', NULL, 2),
-  ('f1060000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000006', 'MULTIPLE_CHOICE', 'Cosa fa la clausola GROUP BY?', NULL, 3),
-  ('f1060000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000006', 'MULTIPLE_CHOICE', 'Quale tipo di JOIN restituisce solo le righe con corrispondenza in entrambe le tabelle?', NULL, 4),
-  ('f1060000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000006', 'MULTIPLE_CHOICE', 'Cosa restituisce questa query?', 'SELECT COUNT(*) FROM studenti WHERE voto >= 18;', 5);
+  ('f1060000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000006', 'multiple', 'Quale comando SQL seleziona tutti i record di una tabella?', NULL, 1),
+  ('f1060000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000006', 'multiple', 'Quale clausola filtra i risultati di una query?', NULL, 2),
+  ('f1060000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000006', 'multiple', 'Cosa fa la clausola GROUP BY?', NULL, 3),
+  ('f1060000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000006', 'multiple', 'Quale tipo di JOIN restituisce solo le righe con corrispondenza in entrambe le tabelle?', NULL, 4),
+  ('f1060000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000006', 'multiple', 'Cosa restituisce questa query?', 'SELECT COUNT(*) FROM studenti WHERE voto >= 18;', 5);
 
 INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VALUES
   ('f2060000-0000-0000-0001-000000000001', 'f1060000-0000-0000-0000-000000000001', 'GET * FROM tabella',    false, false, 1),
@@ -534,11 +534,11 @@ INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VA
 -- ── Test 7: React - Componenti e Stato (2INF) ────────────────
 
 INSERT INTO question (id, test_id, type, text, code, position) VALUES
-  ('f1070000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000007', 'MULTIPLE_CHOICE', 'Come si definisce uno stato in un componente funzionale React?', NULL, 1),
-  ('f1070000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000007', 'MULTIPLE_CHOICE', 'Cosa sono le props in React?', NULL, 2),
-  ('f1070000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000007', 'MULTIPLE_CHOICE', 'Quale hook gestisce gli effetti collaterali?', NULL, 3),
-  ('f1070000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000007', 'MULTIPLE_CHOICE', 'Come si renderizza una lista di elementi in JSX?', NULL, 4),
-  ('f1070000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000007', 'MULTIPLE_CHOICE', 'Cosa produce questo componente?', 'function App() {\n  const [count, setCount] = useState(0);\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}', 5);
+  ('f1070000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000007', 'multiple', 'Come si definisce uno stato in un componente funzionale React?', NULL, 1),
+  ('f1070000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000007', 'multiple', 'Cosa sono le props in React?', NULL, 2),
+  ('f1070000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000007', 'multiple', 'Quale hook gestisce gli effetti collaterali?', NULL, 3),
+  ('f1070000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000007', 'multiple', 'Come si renderizza una lista di elementi in JSX?', NULL, 4),
+  ('f1070000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000007', 'multiple', 'Cosa produce questo componente?', 'function App() {\n  const [count, setCount] = useState(0);\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}', 5);
 
 INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VALUES
   ('f2070000-0000-0000-0001-000000000001', 'f1070000-0000-0000-0000-000000000001', 'this.state',   false, false, 1),
@@ -569,11 +569,11 @@ INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VA
 -- ── Test 8: Progettazione Database (2INF) ────────────────────
 
 INSERT INTO question (id, test_id, type, text, code, position) VALUES
-  ('f1080000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000008', 'MULTIPLE_CHOICE', 'Cos''e'' una chiave primaria?', NULL, 1),
-  ('f1080000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000008', 'MULTIPLE_CHOICE', 'Cosa rappresenta una relazione 1:N?', NULL, 2),
-  ('f1080000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000008', 'MULTIPLE_CHOICE', 'Cos''e'' la normalizzazione?', NULL, 3),
-  ('f1080000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000008', 'MULTIPLE_CHOICE', 'A cosa serve una chiave esterna (foreign key)?', NULL, 4),
-  ('f1080000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000008', 'MULTIPLE_CHOICE', 'Cos''e'' un indice in un database?', NULL, 5);
+  ('f1080000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000008', 'multiple', 'Cos''e'' una chiave primaria?', NULL, 1),
+  ('f1080000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000008', 'multiple', 'Cosa rappresenta una relazione 1:N?', NULL, 2),
+  ('f1080000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000008', 'multiple', 'Cos''e'' la normalizzazione?', NULL, 3),
+  ('f1080000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000008', 'multiple', 'A cosa serve una chiave esterna (foreign key)?', NULL, 4),
+  ('f1080000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000008', 'multiple', 'Cos''e'' un indice in un database?', NULL, 5);
 
 INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VALUES
   ('f2080000-0000-0000-0001-000000000001', 'f1080000-0000-0000-0000-000000000001', 'Un campo qualsiasi della tabella',              false, false, 1),
@@ -604,11 +604,11 @@ INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VA
 -- ── Test 9: Design Patterns (3SW) ────────────────────────────
 
 INSERT INTO question (id, test_id, type, text, code, position) VALUES
-  ('f1090000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000009', 'MULTIPLE_CHOICE', 'Quale design pattern garantisce che esista una sola istanza di una classe?', NULL, 1),
-  ('f1090000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000009', 'MULTIPLE_CHOICE', 'Cosa fa il pattern Observer?', NULL, 2),
-  ('f1090000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000009', 'MULTIPLE_CHOICE', 'Quale pattern separa la costruzione di un oggetto dalla sua rappresentazione?', NULL, 3),
-  ('f1090000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000009', 'MULTIPLE_CHOICE', 'Cos''e'' il pattern Strategy?', NULL, 4),
-  ('f1090000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000009', 'MULTIPLE_CHOICE', 'Quale pattern fornisce un''interfaccia semplificata a un sottosistema complesso?', NULL, 5);
+  ('f1090000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000009', 'multiple', 'Quale design pattern garantisce che esista una sola istanza di una classe?', NULL, 1),
+  ('f1090000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000009', 'multiple', 'Cosa fa il pattern Observer?', NULL, 2),
+  ('f1090000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000009', 'multiple', 'Quale pattern separa la costruzione di un oggetto dalla sua rappresentazione?', NULL, 3),
+  ('f1090000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000009', 'multiple', 'Cos''e'' il pattern Strategy?', NULL, 4),
+  ('f1090000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000009', 'multiple', 'Quale pattern fornisce un''interfaccia semplificata a un sottosistema complesso?', NULL, 5);
 
 INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VALUES
   ('f2090000-0000-0000-0001-000000000001', 'f1090000-0000-0000-0000-000000000001', 'Factory',    false, false, 1),
@@ -639,11 +639,11 @@ INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VA
 -- ── Test 10: REST API (3SW) ──────────────────────────────────
 
 INSERT INTO question (id, test_id, type, text, code, position) VALUES
-  ('f10a0000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-00000000000a', 'MULTIPLE_CHOICE', 'Quale metodo HTTP si usa per creare una nuova risorsa?', NULL, 1),
-  ('f10a0000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-00000000000a', 'MULTIPLE_CHOICE', 'Cosa indica il codice di stato HTTP 404?', NULL, 2),
-  ('f10a0000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-00000000000a', 'MULTIPLE_CHOICE', 'Quale metodo HTTP e'' idempotente per aggiornare una risorsa?', NULL, 3),
-  ('f10a0000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-00000000000a', 'MULTIPLE_CHOICE', 'Cos''e'' un endpoint REST?', NULL, 4),
-  ('f10a0000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-00000000000a', 'MULTIPLE_CHOICE', 'Quale formato e'' piu'' comune per le risposte di un''API REST?', NULL, 5);
+  ('f10a0000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-00000000000a', 'multiple', 'Quale metodo HTTP si usa per creare una nuova risorsa?', NULL, 1),
+  ('f10a0000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-00000000000a', 'multiple', 'Cosa indica il codice di stato HTTP 404?', NULL, 2),
+  ('f10a0000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-00000000000a', 'multiple', 'Quale metodo HTTP e'' idempotente per aggiornare una risorsa?', NULL, 3),
+  ('f10a0000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-00000000000a', 'multiple', 'Cos''e'' un endpoint REST?', NULL, 4),
+  ('f10a0000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-00000000000a', 'multiple', 'Quale formato e'' piu'' comune per le risposte di un''API REST?', NULL, 5);
 
 INSERT INTO option (id, question_id, text, is_correct, is_fallback, position) VALUES
   ('f20a0000-0000-0000-0001-000000000001', 'f10a0000-0000-0000-0000-000000000001', 'GET',    false, false, 1),
