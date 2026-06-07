@@ -40,5 +40,11 @@ CLAUDE.local.md
 # Docker override (personal)
 docker-compose.override.yml
 
+# macOS
+.DS_Store
+
 # Personal notes
 .tool
+
+# Production seed data (not committed — run manually on Supabase)
+docs/db_seed/prod/

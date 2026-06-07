@@ -40,7 +40,13 @@ cp .env.example .env
 ./mvnw spring-boot:run
 ```
 
-To stop PostgreSQL: `docker compose down` (add `-v` to also delete data).
+To stop PostgreSQL: `docker compose down`.
+
+To **reset the database** (wipe all data and let Liquibase recreate everything on next startup):
+
+```bash
+docker compose down -v && docker compose up -d
+```
 
 ### Environment Variables
 
