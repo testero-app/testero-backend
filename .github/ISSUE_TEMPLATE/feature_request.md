@@ -1,8 +1,8 @@
 ---
 name: Feature request
 about: Suggest an idea for Testero
-title: "[Feature] "
-labels: enhancement
+title: ""
+labels: feature
 assignees: ''
 ---
 
@@ -14,9 +14,11 @@ assignees: ''
 
 <!-- Describe the solution you'd like. -->
 
-## Use Cases
+## Acceptance Criteria
 
-<!-- Concrete situations where this would be useful. -->
+<!-- How do we know this is done? List concrete criteria. -->
+
+- [ ] ...
 
 ## Alternatives Considered
 

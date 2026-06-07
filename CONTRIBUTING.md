@@ -25,6 +25,11 @@ on contributions that may fall outside what the project aims to do.
 For small fixes (typos, bugs, minor improvements), feel free to open a pull
 request directly.
 
+## Project Board and Labels
+
+Work is tracked on a shared Kanban board with consistent labels across
+both repositories. See [PROJECT.md](./PROJECT.md) for details.
+
 ## How to Contribute
 
 ### Reporting Bugs
