@@ -1,4 +1,4 @@
-package app.testero.entity;
+package app.testero.entity.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,18 +11,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "test_subject")
-@IdClass(TestSubjectId.class)
+@Table(name = "app_user_role")
+@IdClass(AppUserRoleId.class)
 @Getter
 @Setter
 @NoArgsConstructor
-public class TestSubject {
+public class AppUserRole {
 
     @Id
-    @Column(name = "test_id")
-    private UUID testId;
+    @Column(name = "user_id")
+    private UUID userId;
 
     @Id
-    @Column(name = "subject_id")
-    private UUID subjectId;
+    @Column(name = "role_id")
+    private UUID roleId;
 }

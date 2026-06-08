@@ -1,4 +1,4 @@
-package app.testero.entity;
+package app.testero.entity.assessment;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,26 +10,26 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "option")
+@Table(name = "question")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Option {
+public class Question {
 
     @Id
     private UUID id;
 
-    @Column(name = "question_id", nullable = false)
-    private UUID questionId;
+    @Column(name = "test_id", nullable = false)
+    private UUID assessmentId;
 
     @Column(nullable = false)
+    private String type;
+
+    @Column(nullable = false, columnDefinition = "text")
     private String text;
 
-    @Column(name = "is_correct", nullable = false)
-    private boolean correct;
-
-    @Column(name = "is_fallback", nullable = false)
-    private boolean fallback;
+    @Column(columnDefinition = "text")
+    private String code;
 
     @Column(nullable = false)
     private int position;

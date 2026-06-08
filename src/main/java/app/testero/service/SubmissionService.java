@@ -4,17 +4,17 @@ import app.testero.dto.AnswerInput;
 import app.testero.dto.SubmissionCreateRequest;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
-import app.testero.entity.UserAnswer;
-import app.testero.entity.UserAnswerSelectedOption;
-import app.testero.entity.Option;
-import app.testero.entity.Submission;
-import app.testero.entity.Test;
+import app.testero.entity.assessment.Assessment;
+import app.testero.entity.assessment.Option;
+import app.testero.entity.submission.Submission;
+import app.testero.entity.submission.UserAnswer;
+import app.testero.entity.submission.UserAnswerSelectedOption;
 import app.testero.exception.ResourceNotFoundException;
-import app.testero.repository.UserAnswerRepository;
-import app.testero.repository.UserAnswerSelectedOptionRepository;
+import app.testero.repository.AssessmentRepository;
 import app.testero.repository.OptionRepository;
 import app.testero.repository.SubmissionRepository;
-import app.testero.repository.TestRepository;
+import app.testero.repository.UserAnswerRepository;
+import app.testero.repository.UserAnswerSelectedOptionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,28 +34,28 @@ public class SubmissionService {
     private final UserAnswerRepository userAnswerRepository;
     private final UserAnswerSelectedOptionRepository userAnswerSelectedOptionRepository;
     private final OptionRepository optionRepository;
-    private final TestRepository testRepository;
+    private final AssessmentRepository assessmentRepository;
 
     public SubmissionService(SubmissionRepository submissionRepository,
                              UserAnswerRepository userAnswerRepository,
                              UserAnswerSelectedOptionRepository userAnswerSelectedOptionRepository,
                              OptionRepository optionRepository,
-                             TestRepository testRepository) {
+                             AssessmentRepository assessmentRepository) {
         this.submissionRepository = submissionRepository;
         this.userAnswerRepository = userAnswerRepository;
         this.userAnswerSelectedOptionRepository = userAnswerSelectedOptionRepository;
         this.optionRepository = optionRepository;
-        this.testRepository = testRepository;
+        this.assessmentRepository = assessmentRepository;
     }
 
     @Transactional
     public SubmissionFeedbackResponse createSubmission(UUID userId, SubmissionCreateRequest request) {
-        UUID testUuid = UUID.fromString(request.testId());
+        UUID assessmentUuid = UUID.fromString(request.assessmentId());
 
         // 1. Create submission record
         Submission submission = new Submission();
         submission.setUserId(userId);
-        submission.setTestId(testUuid);
+        submission.setAssessmentId(assessmentUuid);
         submission.setStartedAt(request.startedAt() != null
                 ? LocalDateTime.parse(request.startedAt())
                 : null);
@@ -98,11 +98,11 @@ public class SubmissionService {
             userAnswerSelectedOptionRepository.saveAll(selectedOptions);
         }
 
-        // 4. Fetch test scoring rules
-        Test test = testRepository.findById(testUuid)
-                .orElseThrow(() -> new ResourceNotFoundException("Test not found"));
-        double ptsCorrect = test.getPtsCorrect().doubleValue();
-        double ptsWrong = test.getPtsWrong().doubleValue();
+        // 4. Fetch assessment scoring rules
+        Assessment assessment = assessmentRepository.findById(assessmentUuid)
+                .orElseThrow(() -> new ResourceNotFoundException("Assessment not found"));
+        double ptsCorrect = assessment.getPtsCorrect().doubleValue();
+        double ptsWrong = assessment.getPtsWrong().doubleValue();
 
         // 5. Fetch correct options for all MC questions
         List<UUID> mcQuestionIds = answers.stream()
@@ -172,7 +172,7 @@ public class SubmissionService {
         return new SubmissionFeedbackResponse(
                 submission.getId().toString(),
                 submission.getUserId().toString(),
-                submission.getTestId().toString(),
+                submission.getAssessmentId().toString(),
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt().toString(),
                 answerResults
@@ -211,7 +211,7 @@ public class SubmissionService {
         return new SubmissionFeedbackResponse(
                 submission.getId().toString(),
                 submission.getUserId().toString(),
-                submission.getTestId().toString(),
+                submission.getAssessmentId().toString(),
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt().toString(),
                 answerResults

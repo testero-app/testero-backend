@@ -6,7 +6,7 @@ import java.util.List;
 public record SubmissionFeedbackResponse(
         String id,
         @JsonProperty("user_id") String userId,
-        @JsonProperty("test_id") String testId,
+        @JsonProperty("assessment_id") String assessmentId,
         @JsonProperty("started_at") String startedAt,
         @JsonProperty("submitted_at") String submittedAt,
         List<AnswerResult> answers

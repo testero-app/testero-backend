@@ -2,9 +2,9 @@ package app.testero.dto;
 
 import java.util.List;
 
-public record TestListResponse(List<TestListItem> tests) {
+public record AssessmentListResponse(List<AssessmentListItem> assessments) {
 
-    public record TestListItem(
+    public record AssessmentListItem(
             String id,
             String title,
             String date,
