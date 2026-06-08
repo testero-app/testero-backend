@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 public record SubmissionCreateRequest(
-        @JsonProperty("test_id") @NotBlank String testId,
+        @JsonProperty("assessment_id") @NotBlank String assessmentId,
         @JsonProperty("started_at") String startedAt,
         @Valid @NotEmpty List<AnswerInput> answers
 ) {}

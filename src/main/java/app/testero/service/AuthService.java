@@ -2,8 +2,8 @@ package app.testero.service;
 
 import app.testero.dto.LoginRequest;
 import app.testero.dto.LoginResponse;
-import app.testero.entity.AppUser;
-import app.testero.entity.StudentProfile;
+import app.testero.entity.user.AppUser;
+import app.testero.entity.user.StudentProfile;
 import app.testero.repository.AppUserRepository;
 import app.testero.repository.StudentProfileRepository;
 import app.testero.security.JwtService;

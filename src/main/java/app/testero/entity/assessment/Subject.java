@@ -1,9 +1,8 @@
-package app.testero.entity;
+package app.testero.entity.assessment;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 import java.util.UUID;
 import lombok.Getter;
@@ -11,18 +10,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "teacher_class")
-@IdClass(TeacherClassId.class)
+@Table(name = "subject")
 @Getter
 @Setter
 @NoArgsConstructor
-public class TeacherClass {
+public class Subject {
 
     @Id
-    @Column(name = "user_id")
-    private UUID userId;
+    private UUID id;
 
-    @Id
-    @Column(name = "class_id")
-    private UUID classId;
+    @Column(nullable = false)
+    private String label;
 }

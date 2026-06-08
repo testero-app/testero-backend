@@ -1,9 +1,9 @@
 package app.testero.repository;
 
-import app.testero.entity.Submission;
-import org.springframework.data.jpa.repository.JpaRepository;
+import app.testero.entity.submission.Submission;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
