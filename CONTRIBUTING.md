@@ -249,6 +249,21 @@ By contributing to this repository, you agree that your contributions
 will be licensed under the project's
 [GNU Affero General Public License v3.0](./LICENSE).
 
+## Releases
+
+Releases are managed automatically by
+[Release Please](https://github.com/googleapis/release-please). You do not
+need to update `CHANGELOG.md` or version numbers manually — they are
+generated from your commit messages.
+
+After your PR is merged to `main`, Release Please will open (or update) a
+Release PR with the accumulated changes. When a maintainer merges the
+Release PR, a new version is tagged and published as a GitHub Release.
+
+This is why using [Conventional Commits](#commit-messages) correctly is
+important: the commit prefix determines whether the next release is a
+patch, minor, or major version bump.
+
 ## Questions
 
 For questions about contributing, open a
