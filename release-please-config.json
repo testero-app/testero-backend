@@ -5,7 +5,8 @@
       "release-type": "maven",
       "changelog-type": "default",
       "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true
+      "bump-patch-for-minor-pre-major": true,
+      "snapshot": false
     }
   }
 }
