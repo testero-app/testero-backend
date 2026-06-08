@@ -47,4 +47,4 @@ docker-compose.override.yml
 .tool
 
 # Production seed data (not committed — run manually on Supabase)
-docs/db_seed/prod/
+docs/db_seed/
