@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   pull_request:
@@ -11,8 +11,8 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Run tests
+  build:
+    name: Build & Verify
     runs-on: ubuntu-latest
 
     steps:
@@ -26,7 +26,22 @@ jobs:
           java-version: 21
           cache: maven
 
-      - name: Run tests
+      - name: Compile
+        run: ./mvnw compile --batch-mode --no-transfer-progress
+        env:
+          DATABASE_URL: jdbc:postgresql://localhost:5432/unused
+          JWT_SECRET: ci-test-secret-key-that-is-long-enough-for-hs256
+
+      - name: Checkstyle
+        run: ./mvnw checkstyle:check --batch-mode --no-transfer-progress
+
+      - name: SpotBugs
+        run: ./mvnw compile spotbugs:check --batch-mode --no-transfer-progress
+        env:
+          DATABASE_URL: jdbc:postgresql://localhost:5432/unused
+          JWT_SECRET: ci-test-secret-key-that-is-long-enough-for-hs256
+
+      - name: Test
         run: ./mvnw test --batch-mode --no-transfer-progress
         env:
           DATABASE_URL: jdbc:postgresql://localhost:5432/unused
