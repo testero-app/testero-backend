@@ -157,14 +157,42 @@ cannot be merged.
 
 ### CI Pipeline
 
-Tests run automatically at two stages:
+Every PR to `main` runs through four automated checks (in order):
 
-1. **GitHub Actions** — on every PR to `main`. The "Run tests" check is
-   a required status check; PRs cannot be merged until it passes.
-2. **Docker build (Render)** — tests run again during the production
-   image build. If tests fail, the deploy is aborted.
+| Step | Tool | What it catches |
+|------|------|-----------------|
+| **Compile** | `./mvnw compile` | Syntax errors, missing dependencies |
+| **Checkstyle** | `./mvnw checkstyle:check` | Style violations (indentation, imports, naming) |
+| **SpotBugs** | `./mvnw compile spotbugs:check` | Common bug patterns (null deref, resource leaks) |
+| **Test** | `./mvnw test` | Broken logic, regressions |
 
-This double gate ensures that no untested code reaches production.
+The "Build & Verify" check is a required status check — PRs cannot be
+merged until all four steps pass.
+
+Tests also run during the **Docker build on Render**, so a failing test
+blocks the deploy to production.
+
+### Running Quality Checks Locally
+
+```bash
+# Run all checks (same as CI)
+./mvnw compile checkstyle:check spotbugs:check test
+
+# Run individual checks
+./mvnw checkstyle:check    # code style
+./mvnw spotbugs:check      # static analysis
+./mvnw test                # unit tests
+```
+
+### Checkstyle Rules
+
+The project uses a custom Checkstyle configuration at
+`config/checkstyle/checkstyle.xml`. Key rules:
+
+- **4-space indentation** (no tabs)
+- **120 character** max line length
+- **No star imports** (`import foo.*` is not allowed)
+- **Standard Java naming** conventions enforced
 
 ### Test Organization
 
