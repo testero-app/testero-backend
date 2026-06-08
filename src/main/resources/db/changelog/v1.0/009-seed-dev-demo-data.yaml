@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.0-seed-dev-demo
+      author: testero
+      context: dev
+      changes:
+        - sqlFile:
+            path: db/seed/dev/10_roles.sql
+        - sqlFile:
+            path: db/seed/dev/20_admin.sql
+        - sqlFile:
+            path: db/seed/dev/25_teacher.sql
+        - sqlFile:
+            path: db/seed/dev/30_class.sql
+        - sqlFile:
+            path: db/seed/dev/40_students.sql
+        - sqlFile:
+            path: db/seed/dev/50_demo_test.sql
