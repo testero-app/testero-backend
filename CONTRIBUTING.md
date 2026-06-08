@@ -55,7 +55,7 @@ would solve and any proposed solution.
    `git checkout -b feature/descriptive-name`
 3. Make your changes with **DCO-signed commits** (see below)
 4. Push to your fork and open a **Pull Request** against `main`
-5. Ensure all checks pass (including the DCO check)
+5. Ensure all checks pass (DCO check **and** test suite — see below)
 
 ## Developer Certificate of Origin (DCO)
 
@@ -136,6 +136,46 @@ Commits must be attributed solely to their human author. Do **not** add
 attribution referencing AI tools or assistants. The only trailer required
 is the DCO `Signed-off-by:` line with your name.
 
+## Testing
+
+Tests are a **required** part of every contribution that changes backend
+logic. The CI pipeline enforces this — pull requests with failing tests
+cannot be merged.
+
+### Running Tests Locally
+
+```bash
+./mvnw test
+```
+
+### What to Test
+
+- **Bug fixes**: add a test that reproduces the bug before fixing it.
+- **New features**: add unit tests for the new business logic.
+- **Refactors**: ensure existing tests still pass; add tests if coverage
+  is lacking.
+
+### CI Pipeline
+
+Tests run automatically at two stages:
+
+1. **GitHub Actions** — on every PR to `main`. The "Run tests" check is
+   a required status check; PRs cannot be merged until it passes.
+2. **Docker build (Render)** — tests run again during the production
+   image build. If tests fail, the deploy is aborted.
+
+This double gate ensures that no untested code reaches production.
+
+### Test Organization
+
+| Directory | Purpose |
+|-----------|---------|
+| `src/test/java/app/testero/service/` | Unit tests for service-layer business logic |
+| `src/test/java/app/testero/fixture/` | Shared test data fixtures (self-contained, no DB) |
+
+Unit tests use **JUnit 5 + Mockito** (no Spring context, no database).
+They should be fast and deterministic.
+
 ## Coding Standards
 
 ### Commit Messages
@@ -168,7 +208,7 @@ Use the [Conventional Commits](https://www.conventionalcommits.org/) format:
 After you open a pull request:
 
 - A maintainer will review it and may request changes.
-- All status checks (including the DCO check) must pass before merging.
+- All status checks (DCO check and test suite) must pass before merging.
 - At least one approval is required.
 
 Testero is a small project maintained in spare time, so reviews may take a
