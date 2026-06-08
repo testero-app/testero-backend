@@ -14,7 +14,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "user_answer_selected_option",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"answer_id", "option_id"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"answer_id", "option_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
