@@ -1,4 +1,4 @@
-package app.testero.entity;
+package app.testero.entity.submission;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

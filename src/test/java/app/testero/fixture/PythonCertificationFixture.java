@@ -1,7 +1,7 @@
 package app.testero.fixture;
 
-import app.testero.entity.Option;
-import app.testero.entity.Test;
+import app.testero.entity.assessment.Assessment;
+import app.testero.entity.assessment.Option;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,7 +25,7 @@ public final class PythonCertificationFixture {
     public static final LocalDate DATE = LocalDate.of(2026, 6, 15);
     public static final int TIMER_MINUTES = 45;
     public static final int TOTAL_POOL = 5;
-    public static final int QUESTIONS_PER_TEST = 5;
+    public static final int QUESTIONS_PER_ASSESSMENT = 5;
     public static final BigDecimal PTS_CORRECT = new BigDecimal("1.00");
     public static final BigDecimal PTS_WRONG = new BigDecimal("-0.25");
 
@@ -75,23 +75,23 @@ public final class PythonCertificationFixture {
 
     // ── Factory methods ────────────────────────────────────────────
 
-    /** Build the test entity with default scoring (1.00 / -0.25). */
-    public static Test buildTest() {
-        return buildTest(PTS_CORRECT, PTS_WRONG);
+    /** Build the assessment entity with default scoring (1.00 / -0.25). */
+    public static Assessment buildAssessment() {
+        return buildAssessment(PTS_CORRECT, PTS_WRONG);
     }
 
-    /** Build the test entity with custom scoring. */
-    public static Test buildTest(BigDecimal ptsCorrect, BigDecimal ptsWrong) {
-        Test test = new Test();
-        test.setId(TEST_ID);
-        test.setTitle(TITLE);
-        test.setDate(DATE);
-        test.setTimerMinutes(TIMER_MINUTES);
-        test.setTotalPool(TOTAL_POOL);
-        test.setQuestionsPerTest(QUESTIONS_PER_TEST);
-        test.setPtsCorrect(ptsCorrect);
-        test.setPtsWrong(ptsWrong);
-        return test;
+    /** Build the assessment entity with custom scoring. */
+    public static Assessment buildAssessment(BigDecimal ptsCorrect, BigDecimal ptsWrong) {
+        Assessment assessment = new Assessment();
+        assessment.setId(TEST_ID);
+        assessment.setTitle(TITLE);
+        assessment.setDate(DATE);
+        assessment.setTimerMinutes(TIMER_MINUTES);
+        assessment.setTotalPool(TOTAL_POOL);
+        assessment.setQuestionsPerAssessment(QUESTIONS_PER_ASSESSMENT);
+        assessment.setPtsCorrect(ptsCorrect);
+        assessment.setPtsWrong(ptsWrong);
+        return assessment;
     }
 
     /** Correct options for Q1 through Q5 (one correct each). */

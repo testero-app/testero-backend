@@ -1,4 +1,4 @@
-package app.testero.entity;
+package app.testero.entity.assessment;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,7 +16,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Test {
+public class Assessment {
 
     @Id
     private UUID id;
@@ -34,7 +34,7 @@ public class Test {
     private int totalPool;
 
     @Column(name = "questions_per_test", nullable = false)
-    private int questionsPerTest;
+    private int questionsPerAssessment;
 
     @Column(name = "pts_correct", nullable = false)
     private BigDecimal ptsCorrect;

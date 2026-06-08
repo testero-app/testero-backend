@@ -1,4 +1,4 @@
-package app.testero.entity;
+package app.testero.entity.assessment;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,11 +13,11 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "class_test")
-@IdClass(ClassTestId.class)
+@IdClass(ClassAssessmentId.class)
 @Getter
 @Setter
 @NoArgsConstructor
-public class ClassTest {
+public class ClassAssessment {
 
     @Id
     @Column(name = "class_id")
@@ -25,7 +25,7 @@ public class ClassTest {
 
     @Id
     @Column(name = "test_id")
-    private UUID testId;
+    private UUID assessmentId;
 
     @Column(name = "activated_at")
     private LocalDateTime activatedAt;

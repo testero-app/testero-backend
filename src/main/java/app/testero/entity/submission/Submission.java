@@ -1,4 +1,4 @@
-package app.testero.entity;
+package app.testero.entity.submission;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,8 +15,8 @@ import lombok.Setter;
 /**
  * Application flow:
  *
- * - A user starts a Test -> a Submission is created (the "blank exam sheet")
- * - For each Question in the test, the user provides a response -> a UserAnswer is
+ * - A user starts an Assessment -> a Submission is created (the "blank exam sheet")
+ * - For each Question in the assessment, the user provides a response -> a UserAnswer is
  *   created, linked to this Submission and to the Question
  *     - If the Question is open-ended: UserAnswer contains text (the written response)
  *     - If the Question is multiple-choice: UserAnswer alone is not enough — the user
@@ -40,11 +40,11 @@ import lombok.Setter;
  *   1. The user selects Options (via UserAnswerSelectedOption)
  *   2. The system compares selected options against the correct Options
  *   3. The system writes on UserAnswer: isCorrect and pointsAwarded (using ptsCorrect /
- *      ptsWrong from the Test)
+ *      ptsWrong from the Assessment)
  *
  * Why not just rely on Option.correct?
- *   - Scoring depends on the Test (ptsCorrect, ptsWrong) — the same question in
- *     different tests can be worth different points
+ *   - Scoring depends on the Assessment (ptsCorrect, ptsWrong) — the same question in
+ *     different assessments can be worth different points
  *   - For open-ended questions there are no Options -> isCorrect must be
  *     calculated/assigned manually by the teacher
  *   - Materialising the result on UserAnswer avoids recalculating it every time and
@@ -69,7 +69,7 @@ public class Submission {
     private UUID userId;
 
     @Column(name = "test_id", nullable = false)
-    private UUID testId;
+    private UUID assessmentId;
 
     @Column(name = "started_at")
     private LocalDateTime startedAt;

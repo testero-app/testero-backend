@@ -1,9 +1,9 @@
 package app.testero.repository;
 
-import app.testero.entity.AppUser;
-import org.springframework.data.jpa.repository.JpaRepository;
+import app.testero.entity.user.AppUser;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
 

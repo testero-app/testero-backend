@@ -1,12 +1,12 @@
 package app.testero.dto;
 
-public record TestConfigResponse(
-        String testId,
+public record AssessmentConfigResponse(
+        String assessmentId,
         String title,
         String date,
         int timerMinutes,
         int totalPool,
-        int questionsPerTest,
+        int questionsPerAssessment,
         ScoringRules scoring
 ) {
     public record ScoringRules(

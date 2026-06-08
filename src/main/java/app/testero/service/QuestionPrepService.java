@@ -1,7 +1,7 @@
 package app.testero.service;
 
-import app.testero.dto.TestQuestionsResponse.OptionDto;
-import app.testero.dto.TestQuestionsResponse.QuestionDto;
+import app.testero.dto.AssessmentQuestionsResponse.OptionDto;
+import app.testero.dto.AssessmentQuestionsResponse.QuestionDto;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

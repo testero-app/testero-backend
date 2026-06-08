@@ -2,8 +2,8 @@ package app.testero.dto;
 
 import java.util.List;
 
-public record TestQuestionsResponse(
-        String testId,
+public record AssessmentQuestionsResponse(
+        String assessmentId,
         String title,
         String date,
         int timerMinutes,

@@ -4,14 +4,14 @@ import app.testero.dto.AnswerInput;
 import app.testero.dto.SubmissionCreateRequest;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
-import app.testero.entity.Option;
-import app.testero.entity.Submission;
-import app.testero.entity.UserAnswer;
-import app.testero.entity.UserAnswerSelectedOption;
+import app.testero.entity.assessment.Assessment;
+import app.testero.entity.assessment.Option;
+import app.testero.entity.submission.Submission;
+import app.testero.entity.submission.UserAnswer;
 import app.testero.exception.ResourceNotFoundException;
+import app.testero.repository.AssessmentRepository;
 import app.testero.repository.OptionRepository;
 import app.testero.repository.SubmissionRepository;
-import app.testero.repository.TestRepository;
 import app.testero.repository.UserAnswerRepository;
 import app.testero.repository.UserAnswerSelectedOptionRepository;
 
@@ -46,13 +46,13 @@ class SubmissionServiceTest {
     @Mock UserAnswerRepository userAnswerRepository;
     @Mock UserAnswerSelectedOptionRepository userAnswerSelectedOptionRepository;
     @Mock OptionRepository optionRepository;
-    @Mock TestRepository testRepository;
+    @Mock AssessmentRepository assessmentRepository;
 
     @InjectMocks SubmissionService submissionService;
 
     @Captor ArgumentCaptor<Submission> submissionCaptor;
 
-    private app.testero.entity.Test defaultTest; // FQN to avoid collision with @Test
+    private Assessment defaultAssessment;
 
     // Deterministic answer IDs assigned by the saveAll mock
     private final UUID ANSWER_1_ID = UUID.fromString("ee000000-0000-0000-0000-000000000001");
@@ -64,16 +64,16 @@ class SubmissionServiceTest {
 
     @BeforeEach
     void setUp() {
-        defaultTest = buildTest();
+        defaultAssessment = buildAssessment();
     }
 
     // ── Stub helpers ───────────────────────────────────────────────
 
     private void stubSaves() {
-        stubSaves(defaultTest);
+        stubSaves(defaultAssessment);
     }
 
-    private void stubSaves(app.testero.entity.Test test) {
+    private void stubSaves(Assessment assessment) {
         when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> {
             Submission s = inv.getArgument(0);
             if (s.getId() == null) s.setId(UUID.fromString("ff000000-0000-0000-0000-000000000001"));
@@ -92,7 +92,7 @@ class SubmissionServiceTest {
         lenient().when(userAnswerRepository.save(any(UserAnswer.class))).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(userAnswerSelectedOptionRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
-        when(testRepository.findById(TEST_ID)).thenReturn(Optional.of(test));
+        when(assessmentRepository.findById(TEST_ID)).thenReturn(Optional.of(assessment));
     }
 
     // ── DTO builders ───────────────────────────────────────────────
@@ -247,7 +247,7 @@ class SubmissionServiceTest {
         @Test
         @DisplayName("custom scoring: ptsCorrect=2.0, ptsWrong=0.0")
         void differentScoringConfig() {
-            app.testero.entity.Test custom = buildTest(new BigDecimal("2.0"), BigDecimal.ZERO);
+            Assessment custom = buildAssessment(new BigDecimal("2.0"), BigDecimal.ZERO);
             stubSaves(custom);
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID, Q2_ID));
@@ -262,7 +262,7 @@ class SubmissionServiceTest {
         @Test
         @DisplayName("negative ptsWrong accumulates: 2 wrong with ptsWrong=-1.0 → score=-2.0")
         void negativePtsWrong_accumulates() {
-            app.testero.entity.Test harsh = buildTest(new BigDecimal("3.0"), new BigDecimal("-1.0"));
+            Assessment harsh = buildAssessment(new BigDecimal("3.0"), new BigDecimal("-1.0"));
             stubSaves(harsh);
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID, Q2_ID));
@@ -468,11 +468,11 @@ class SubmissionServiceTest {
                 list.forEach(a -> a.setId(UUID.randomUUID()));
                 return list;
             });
-            when(testRepository.findById(TEST_ID)).thenReturn(Optional.empty());
+            when(assessmentRepository.findById(TEST_ID)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> submit(mcAnswer(Q1_ID, Q1_OPT_C.toString())))
                     .isInstanceOf(ResourceNotFoundException.class)
-                    .hasMessageContaining("Test not found");
+                    .hasMessageContaining("Assessment not found");
         }
     }
 
@@ -490,7 +490,7 @@ class SubmissionServiceTest {
             Submission s = new Submission();
             s.setId(SUBMISSION_ID);
             s.setUserId(STUDENT_ID);
-            s.setTestId(TEST_ID);
+            s.setAssessmentId(TEST_ID);
             s.setStartedAt(LocalDateTime.of(2026, 6, 15, 10, 0));
             s.setSubmittedAt(LocalDateTime.of(2026, 6, 15, 10, 30));
             s.setScore(2.75);
@@ -533,7 +533,7 @@ class SubmissionServiceTest {
 
             assertThat(response.id()).isEqualTo(SUBMISSION_ID.toString());
             assertThat(response.userId()).isEqualTo(STUDENT_ID.toString());
-            assertThat(response.testId()).isEqualTo(TEST_ID.toString());
+            assertThat(response.assessmentId()).isEqualTo(TEST_ID.toString());
             assertThat(response.startedAt()).isNotNull();
             assertThat(response.submittedAt()).isNotNull();
             assertThat(response.answers()).hasSize(1);

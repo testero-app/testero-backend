@@ -1,4 +1,4 @@
-package app.testero.entity;
+package app.testero.entity.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,16 +12,16 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "test_start")
+@Table(name = "app_role")
 @Getter
 @Setter
 @NoArgsConstructor
-public class TestStart {
+public class AppRole {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
-    @Column(name = "test_id", nullable = false)
-    private UUID testId;
+    @Column(nullable = false, unique = true)
+    private String name;
 }

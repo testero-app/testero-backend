@@ -1,4 +1,4 @@
-package app.testero.entity;
+package app.testero.entity.user;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -13,8 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class TestSubjectId implements Serializable {
-
-    private UUID testId;
-    private UUID subjectId;
+public class AppUserRoleId implements Serializable {
+    private UUID userId;
+    private UUID roleId;
 }

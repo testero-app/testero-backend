@@ -1,4 +1,4 @@
-package app.testero.entity;
+package app.testero.entity.assessment;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -13,8 +13,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class TeacherClassId implements Serializable {
+public class ClassAssessmentId implements Serializable {
 
-    private UUID userId;
     private UUID classId;
+    private UUID assessmentId;
 }
