@@ -1,6 +1,6 @@
 # testero-backend
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+[![Version](https://img.shields.io/github/v/release/testero-app/testero-backend)](https://github.com/testero-app/testero-backend/releases)
 
 Backend for **Testero**, an open source system for administering tests
 and assessments, designed for educational settings: private schools,
@@ -113,6 +113,25 @@ and available under `target/site/jacoco/` after running `./mvnw test`.
 
 > **For contributors:** every change to backend logic must include tests.
 > See [CONTRIBUTING.md](./CONTRIBUTING.md#testing) for details.
+
+## Releases
+
+This project uses [Release Please](https://github.com/googleapis/release-please)
+for automated versioning and changelog generation.
+
+Versioning follows [Semantic Versioning](https://semver.org/) and is driven
+by [Conventional Commits](https://www.conventionalcommits.org/) prefixes:
+
+| Prefix | Version bump |
+|--------|-------------|
+| `fix:` | Patch (1.0.0 → 1.0.1) |
+| `feat:` | Minor (1.0.0 → 1.1.0) |
+| `feat!:` / `BREAKING CHANGE:` | Major (1.0.0 → 2.0.0) |
+
+After each merge to `main`, Release Please opens (or updates) a Release
+PR that bumps the version in `pom.xml` and updates `CHANGELOG.md`. When
+the Release PR is merged, a git tag and a GitHub Release are created
+automatically.
 
 ## Contributing
 
