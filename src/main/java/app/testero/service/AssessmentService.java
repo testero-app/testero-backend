@@ -52,7 +52,7 @@ public class AssessmentService {
                         a.getTitle(),
                         a.getDate().toString(),
                         a.getTimerMinutes(),
-                        a.getQuestionsPerTest()
+                        a.getQuestionsPerAssessment()
                 ))
                 .toList();
 
@@ -68,7 +68,7 @@ public class AssessmentService {
                 assessment.getDate().toString(),
                 assessment.getTimerMinutes(),
                 assessment.getTotalPool(),
-                assessment.getQuestionsPerTest(),
+                assessment.getQuestionsPerAssessment(),
                 new AssessmentConfigResponse.ScoringRules(
                         assessment.getPtsCorrect().doubleValue(),
                         assessment.getPtsWrong().doubleValue()
@@ -120,7 +120,7 @@ public class AssessmentService {
         // Run through preparation pipeline: random subset, shuffle, shuffle options
         List<QuestionDto> prepared = questionPrepService.prepare(
                 new ArrayList<>(questionDtos),
-                assessment.getQuestionsPerTest()
+                assessment.getQuestionsPerAssessment()
         );
 
         return new AssessmentQuestionsResponse(

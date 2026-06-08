@@ -25,7 +25,7 @@ public final class PythonCertificationFixture {
     public static final LocalDate DATE = LocalDate.of(2026, 6, 15);
     public static final int TIMER_MINUTES = 45;
     public static final int TOTAL_POOL = 5;
-    public static final int QUESTIONS_PER_TEST = 5;
+    public static final int QUESTIONS_PER_ASSESSMENT = 5;
     public static final BigDecimal PTS_CORRECT = new BigDecimal("1.00");
     public static final BigDecimal PTS_WRONG = new BigDecimal("-0.25");
 
@@ -88,7 +88,7 @@ public final class PythonCertificationFixture {
         assessment.setDate(DATE);
         assessment.setTimerMinutes(TIMER_MINUTES);
         assessment.setTotalPool(TOTAL_POOL);
-        assessment.setQuestionsPerTest(QUESTIONS_PER_TEST);
+        assessment.setQuestionsPerAssessment(QUESTIONS_PER_ASSESSMENT);
         assessment.setPtsCorrect(ptsCorrect);
         assessment.setPtsWrong(ptsWrong);
         return assessment;

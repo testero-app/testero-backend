@@ -9,6 +9,6 @@ public record AssessmentListResponse(List<AssessmentListItem> assessments) {
             String title,
             String date,
             int timerMinutes,
-            int questionsPerTest
+            int questionsPerAssessment
     ) {}
 }

@@ -34,7 +34,7 @@ public class Assessment {
     private int totalPool;
 
     @Column(name = "questions_per_test", nullable = false)
-    private int questionsPerTest;
+    private int questionsPerAssessment;
 
     @Column(name = "pts_correct", nullable = false)
     private BigDecimal ptsCorrect;

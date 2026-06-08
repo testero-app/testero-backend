@@ -6,7 +6,7 @@ public record AssessmentConfigResponse(
         String date,
         int timerMinutes,
         int totalPool,
-        int questionsPerTest,
+        int questionsPerAssessment,
         ScoringRules scoring
 ) {
     public record ScoringRules(
