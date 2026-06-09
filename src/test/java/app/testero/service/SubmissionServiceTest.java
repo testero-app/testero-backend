@@ -1,13 +1,15 @@
 package app.testero.service;
 
 import app.testero.dto.AnswerInput;
-import app.testero.dto.SubmissionCreateRequest;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
+import app.testero.dto.SubmissionStartResponse;
+import app.testero.dto.SubmissionSubmitRequest;
 import app.testero.entity.assessment.Assessment;
 import app.testero.entity.assessment.Option;
 import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.UserAnswer;
+import app.testero.exception.IllegalSubmissionStateException;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentRepository;
 import app.testero.repository.OptionRepository;
@@ -54,6 +56,8 @@ class SubmissionServiceTest {
 
     private Assessment defaultAssessment;
 
+    private static final UUID SUBMISSION_ID = UUID.fromString("ff000000-0000-0000-0000-000000000001");
+
     // Deterministic answer IDs assigned by the saveAll mock
     private final UUID ANSWER_1_ID = UUID.fromString("ee000000-0000-0000-0000-000000000001");
     private final UUID ANSWER_2_ID = UUID.fromString("ee000000-0000-0000-0000-000000000002");
@@ -69,16 +73,24 @@ class SubmissionServiceTest {
 
     // ── Stub helpers ───────────────────────────────────────────────
 
-    private void stubSaves() {
-        stubSaves(defaultAssessment);
+    private Submission startedSubmission() {
+        Submission s = new Submission();
+        s.setId(SUBMISSION_ID);
+        s.setUserId(STUDENT_ID);
+        s.setAssessmentId(TEST_ID);
+        s.setStartedAt(LocalDateTime.of(2026, 6, 15, 10, 0));
+        return s;
     }
 
-    private void stubSaves(Assessment assessment) {
-        when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> {
-            Submission s = inv.getArgument(0);
-            if (s.getId() == null) s.setId(UUID.fromString("ff000000-0000-0000-0000-000000000001"));
-            return s;
-        });
+    private void stubSubmitFlow() {
+        stubSubmitFlow(defaultAssessment);
+    }
+
+    private void stubSubmitFlow(Assessment assessment) {
+        when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                .thenReturn(Optional.of(startedSubmission()));
+
+        when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> inv.getArgument(0));
 
         AtomicInteger idx = new AtomicInteger(0);
         when(userAnswerRepository.saveAll(anyList())).thenAnswer(inv -> {
@@ -106,33 +118,91 @@ class SubmissionServiceTest {
         return new AnswerInput(questionId.toString(), "open", text, null, List.of());
     }
 
-    private static SubmissionCreateRequest buildRequest(AnswerInput... answers) {
-        return new SubmissionCreateRequest(TEST_ID.toString(), "2026-06-15T10:00:00", List.of(answers));
+    private static SubmissionSubmitRequest buildRequest(AnswerInput... answers) {
+        return new SubmissionSubmitRequest(List.of(answers));
     }
 
     private SubmissionFeedbackResponse submit(AnswerInput... answers) {
-        return submissionService.createSubmission(STUDENT_ID, buildRequest(answers));
+        return submissionService.submitAnswers(SUBMISSION_ID, STUDENT_ID, buildRequest(answers));
     }
 
     private void assertScore(double expected) {
-        verify(submissionRepository, atLeast(2)).save(submissionCaptor.capture());
+        verify(submissionRepository, atLeast(1)).save(submissionCaptor.capture());
         List<Submission> captured = submissionCaptor.getAllValues();
         Submission last = captured.get(captured.size() - 1);
         assertThat(last.getScore()).isCloseTo(expected, within(0.001));
     }
 
     // ════════════════════════════════════════════════════════════════
-    // createSubmission — Multiple Choice
+    // startSubmission
     // ════════════════════════════════════════════════════════════════
 
     @Nested
-    @DisplayName("createSubmission — multiple choice scoring")
-    class CreateSubmission_MultipleChoice {
+    @DisplayName("startSubmission")
+    class StartSubmissionTests {
+
+        @Test
+        @DisplayName("creates new submission with server-side startedAt")
+        void createsNewSubmission() {
+            when(assessmentRepository.findById(TEST_ID)).thenReturn(Optional.of(defaultAssessment));
+            when(submissionRepository.findByAssessmentIdAndUserId(TEST_ID, STUDENT_ID))
+                    .thenReturn(Optional.empty());
+            when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> {
+                Submission s = inv.getArgument(0);
+                s.setId(SUBMISSION_ID);
+                return s;
+            });
+
+            SubmissionStartResponse response = submissionService.startSubmission(TEST_ID, STUDENT_ID);
+
+            assertThat(response.submissionId()).isEqualTo(SUBMISSION_ID.toString());
+            assertThat(response.startedAt()).isNotNull();
+
+            verify(submissionRepository).save(submissionCaptor.capture());
+            Submission saved = submissionCaptor.getValue();
+            assertThat(saved.getStartedAt()).isNotNull();
+            assertThat(saved.getSubmittedAt()).isNull();
+            assertThat(saved.getUserId()).isEqualTo(STUDENT_ID);
+            assertThat(saved.getAssessmentId()).isEqualTo(TEST_ID);
+        }
+
+        @Test
+        @DisplayName("idempotent — returns existing unsubmitted submission")
+        void idempotent_returnsExisting() {
+            Submission existing = startedSubmission();
+            when(assessmentRepository.findById(TEST_ID)).thenReturn(Optional.of(defaultAssessment));
+            when(submissionRepository.findByAssessmentIdAndUserId(TEST_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(existing));
+
+            SubmissionStartResponse response = submissionService.startSubmission(TEST_ID, STUDENT_ID);
+
+            assertThat(response.submissionId()).isEqualTo(SUBMISSION_ID.toString());
+            verify(submissionRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("assessment not found → ResourceNotFoundException")
+        void assessmentNotFound() {
+            UUID unknownId = UUID.randomUUID();
+            when(assessmentRepository.findById(unknownId)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> submissionService.startSubmission(unknownId, STUDENT_ID))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // submitAnswers — Multiple Choice
+    // ════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("submitAnswers — multiple choice scoring")
+    class SubmitAnswers_MultipleChoice {
 
         @Test
         @DisplayName("all correct (Q1) → isCorrect=true, score=1.0")
         void allCorrect_singleQuestion() {
-            stubSaves();
+            stubSubmitFlow();
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID));
 
@@ -150,7 +220,7 @@ class SubmissionServiceTest {
         @Test
         @DisplayName("all wrong (Q1 selects wrong option) → isCorrect=false, score=-0.25")
         void allWrong_singleQuestion() {
-            stubSaves();
+            stubSubmitFlow();
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID));
 
@@ -164,7 +234,7 @@ class SubmissionServiceTest {
         @Test
         @DisplayName("unanswered (Q1, no options selected) → isCorrect=null, score=0.0")
         void unanswered_singleQuestion() {
-            stubSaves();
+            stubSubmitFlow();
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID));
 
@@ -178,7 +248,7 @@ class SubmissionServiceTest {
         @Test
         @DisplayName("mixed: Q1 correct + Q2 wrong + Q3 unanswered → score=0.75")
         void mixedCorrectAndWrong() {
-            stubSaves();
+            stubSubmitFlow();
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID, Q2_ID, Q3_ID));
 
@@ -197,8 +267,7 @@ class SubmissionServiceTest {
         @Test
         @DisplayName("multiple correct options — all selected → correct")
         void multipleCorrectOptions_allSelected() {
-            stubSaves();
-            // Simulate Q1 having two correct options (C and D)
+            stubSubmitFlow();
             List<Option> twoCorrect = List.of(
                     buildOption(Q1_OPT_C, Q1_ID, "[::-1]", true, false, 3),
                     buildOption(Q1_OPT_D, Q1_ID, "[-1:]", true, false, 4));
@@ -215,7 +284,7 @@ class SubmissionServiceTest {
         @Test
         @DisplayName("multiple correct options — partial selection → wrong")
         void multipleCorrectOptions_partialSelection() {
-            stubSaves();
+            stubSubmitFlow();
             List<Option> twoCorrect = List.of(
                     buildOption(Q1_OPT_C, Q1_ID, "[::-1]", true, false, 3),
                     buildOption(Q1_OPT_D, Q1_ID, "[-1:]", true, false, 4));
@@ -232,11 +301,10 @@ class SubmissionServiceTest {
         @Test
         @DisplayName("over-selection — correct + extra wrong selected → full penalty")
         void overSelection_correctPlusExtra_isWrong() {
-            stubSaves();
+            stubSubmitFlow();
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID));
 
-            // Student selects the correct option (C) but also a wrong one (A)
             SubmissionFeedbackResponse response = submit(
                     mcAnswer(Q1_ID, Q1_OPT_C.toString(), Q1_OPT_A.toString()));
 
@@ -248,7 +316,7 @@ class SubmissionServiceTest {
         @DisplayName("custom scoring: ptsCorrect=2.0, ptsWrong=0.0")
         void differentScoringConfig() {
             Assessment custom = buildAssessment(new BigDecimal("2.0"), BigDecimal.ZERO);
-            stubSaves(custom);
+            stubSubmitFlow(custom);
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID, Q2_ID));
 
@@ -263,7 +331,7 @@ class SubmissionServiceTest {
         @DisplayName("negative ptsWrong accumulates: 2 wrong with ptsWrong=-1.0 → score=-2.0")
         void negativePtsWrong_accumulates() {
             Assessment harsh = buildAssessment(new BigDecimal("3.0"), new BigDecimal("-1.0"));
-            stubSaves(harsh);
+            stubSubmitFlow(harsh);
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID, Q2_ID));
 
@@ -277,8 +345,7 @@ class SubmissionServiceTest {
         @Test
         @DisplayName("fallback 'Nessuna' option — treated like any other option in grading")
         void fallbackOption_treatedNormally() {
-            stubSaves();
-            // Q1 has only the fallback option as correct
+            stubSubmitFlow();
             Option fallback = buildFallbackOption(true);
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(List.of(fallback));
@@ -292,91 +359,88 @@ class SubmissionServiceTest {
     }
 
     // ════════════════════════════════════════════════════════════════
-    // createSubmission — Full Exam Scenarios (happy path)
+    // submitAnswers — Full Exam Scenarios (happy path)
     // ════════════════════════════════════════════════════════════════
 
     @Nested
-    @DisplayName("createSubmission — full exam scenarios")
-    class CreateSubmission_FullExam {
+    @DisplayName("submitAnswers — full exam scenarios")
+    class SubmitAnswers_FullExam {
 
         @Test
         @DisplayName("perfect score — 5/5 correct → score=5.0")
         void allCorrect_fullExam() {
-            stubSaves();
+            stubSubmitFlow();
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID, Q2_ID, Q3_ID, Q4_ID, Q5_ID));
 
             SubmissionFeedbackResponse response = submit(
-                    mcAnswer(Q1_ID, Q1_OPT_C.toString()),  // correct
-                    mcAnswer(Q2_ID, Q2_OPT_D.toString()),  // correct
-                    mcAnswer(Q3_ID, Q3_OPT_B.toString()),  // correct
-                    mcAnswer(Q4_ID, Q4_OPT_A.toString()),  // correct
-                    mcAnswer(Q5_ID, Q5_OPT_A.toString())); // correct
+                    mcAnswer(Q1_ID, Q1_OPT_C.toString()),
+                    mcAnswer(Q2_ID, Q2_OPT_D.toString()),
+                    mcAnswer(Q3_ID, Q3_OPT_B.toString()),
+                    mcAnswer(Q4_ID, Q4_OPT_A.toString()),
+                    mcAnswer(Q5_ID, Q5_OPT_A.toString()));
 
             assertThat(response.answers()).hasSize(5);
             assertThat(response.answers()).allSatisfy(r -> {
                 assertThat(r.isCorrect()).isTrue();
                 assertThat(r.type()).isEqualTo("multiple");
             });
-            // 5 × 1.0 = 5.0
             assertScore(5.0);
         }
 
         @Test
         @DisplayName("total disaster — 5/5 wrong → score=-1.25")
         void allWrong_fullExam() {
-            stubSaves();
+            stubSubmitFlow();
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID, Q2_ID, Q3_ID, Q4_ID, Q5_ID));
 
             SubmissionFeedbackResponse response = submit(
-                    mcAnswer(Q1_ID, Q1_OPT_A.toString()),  // wrong
-                    mcAnswer(Q2_ID, Q2_OPT_A.toString()),  // wrong
-                    mcAnswer(Q3_ID, Q3_OPT_A.toString()),  // wrong
-                    mcAnswer(Q4_ID, Q4_OPT_B.toString()),  // wrong
-                    mcAnswer(Q5_ID, Q5_OPT_B.toString())); // wrong
+                    mcAnswer(Q1_ID, Q1_OPT_A.toString()),
+                    mcAnswer(Q2_ID, Q2_OPT_A.toString()),
+                    mcAnswer(Q3_ID, Q3_OPT_A.toString()),
+                    mcAnswer(Q4_ID, Q4_OPT_B.toString()),
+                    mcAnswer(Q5_ID, Q5_OPT_B.toString()));
 
             assertThat(response.answers()).hasSize(5);
             assertThat(response.answers()).allSatisfy(r ->
                     assertThat(r.isCorrect()).isFalse());
-            // 5 × (-0.25) = -1.25
             assertScore(-1.25);
         }
 
         @Test
         @DisplayName("blank exam — 5/5 unanswered → score=0.0")
         void allUnanswered_fullExam() {
-            stubSaves();
+            stubSubmitFlow();
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID, Q2_ID, Q3_ID, Q4_ID, Q5_ID));
 
             SubmissionFeedbackResponse response = submit(
-                    mcAnswer(Q1_ID),  // unanswered
-                    mcAnswer(Q2_ID),  // unanswered
-                    mcAnswer(Q3_ID),  // unanswered
-                    mcAnswer(Q4_ID),  // unanswered
-                    mcAnswer(Q5_ID)); // unanswered
+                    mcAnswer(Q1_ID),
+                    mcAnswer(Q2_ID),
+                    mcAnswer(Q3_ID),
+                    mcAnswer(Q4_ID),
+                    mcAnswer(Q5_ID));
 
             assertThat(response.answers()).hasSize(5);
             assertThat(response.answers()).allSatisfy(r ->
                     assertThat(r.isCorrect()).isNull());
-            // 5 × 0.0 = 0.0
             assertScore(0.0);
         }
 
         @Test
         @DisplayName("80% correct, 20% wrong — 4 correct + 1 wrong → score=3.75")
         void eightyPercentCorrect_fullExam() {
-            stubSaves();
+            stubSubmitFlow();
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID, Q2_ID, Q3_ID, Q4_ID, Q5_ID));
 
             SubmissionFeedbackResponse response = submit(
-                    mcAnswer(Q1_ID, Q1_OPT_C.toString()),  // correct
-                    mcAnswer(Q2_ID, Q2_OPT_D.toString()),  // correct
-                    mcAnswer(Q3_ID, Q3_OPT_B.toString()),  // correct
-                    mcAnswer(Q4_ID, Q4_OPT_A.toString()),  // correct
-                    mcAnswer(Q5_ID, Q5_OPT_B.toString())); // wrong
+                    mcAnswer(Q1_ID, Q1_OPT_C.toString()),
+                    mcAnswer(Q2_ID, Q2_OPT_D.toString()),
+                    mcAnswer(Q3_ID, Q3_OPT_B.toString()),
+                    mcAnswer(Q4_ID, Q4_OPT_A.toString()),
+                    mcAnswer(Q5_ID, Q5_OPT_B.toString()));
 
             assertThat(response.answers()).hasSize(5);
             long correctCount = response.answers().stream()
@@ -385,24 +449,22 @@ class SubmissionServiceTest {
                     .filter(r -> Boolean.FALSE.equals(r.isCorrect())).count();
             assertThat(correctCount).isEqualTo(4);
             assertThat(wrongCount).isEqualTo(1);
-            // (4 × 1.0) + (1 × -0.25) = 3.75
             assertScore(3.75);
         }
     }
 
     // ════════════════════════════════════════════════════════════════
-    // createSubmission — Open & Mixed
+    // submitAnswers — Open & Mixed
     // ════════════════════════════════════════════════════════════════
 
     @Nested
-    @DisplayName("createSubmission — open and mixed question types")
-    class CreateSubmission_OpenAndMixed {
+    @DisplayName("submitAnswers — open and mixed question types")
+    class SubmitAnswers_OpenAndMixed {
 
         @Test
         @DisplayName("open question → isCorrect=null, no score impact")
         void openQuestion_noScoreImpact() {
-            stubSaves();
-            // No MC questions → optionRepository not called
+            stubSubmitFlow();
 
             SubmissionFeedbackResponse response = submit(
                     openAnswer(Q_OPEN_ID, "Python uses # for comments"));
@@ -419,7 +481,7 @@ class SubmissionServiceTest {
         @Test
         @DisplayName("mix of MC (correct) + open → only MC scored, score=1.0")
         void mixOfMultipleAndOpen_onlyMultipleScored() {
-            stubSaves();
+            stubSubmitFlow();
             when(optionRepository.findByQuestionIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionsFor(Q1_ID));
 
@@ -436,7 +498,7 @@ class SubmissionServiceTest {
         @Test
         @DisplayName("only open questions → score=0.0, optionRepository never called")
         void onlyOpenQuestions_scoreRemainsZero() {
-            stubSaves();
+            stubSubmitFlow();
 
             submit(
                     openAnswer(Q_OPEN_ID, "Answer 1"),
@@ -448,21 +510,43 @@ class SubmissionServiceTest {
     }
 
     // ════════════════════════════════════════════════════════════════
-    // createSubmission — Error cases
+    // submitAnswers — Error cases
     // ════════════════════════════════════════════════════════════════
 
     @Nested
-    @DisplayName("createSubmission — error cases")
-    class CreateSubmission_ErrorCases {
+    @DisplayName("submitAnswers — error cases")
+    class SubmitAnswers_ErrorCases {
 
         @Test
-        @DisplayName("test not found → ResourceNotFoundException")
-        void testNotFound_throwsResourceNotFoundException() {
-            when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> {
-                Submission s = inv.getArgument(0);
-                s.setId(UUID.randomUUID());
-                return s;
-            });
+        @DisplayName("submission not found → ResourceNotFoundException")
+        void submissionNotFound() {
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> submit(mcAnswer(Q1_ID, Q1_OPT_C.toString())))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("Submission not found");
+        }
+
+        @Test
+        @DisplayName("already submitted → IllegalSubmissionStateException")
+        void alreadySubmitted() {
+            Submission completed = startedSubmission();
+            completed.setSubmittedAt(LocalDateTime.of(2026, 6, 15, 10, 30));
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(completed));
+
+            assertThatThrownBy(() -> submit(mcAnswer(Q1_ID, Q1_OPT_C.toString())))
+                    .isInstanceOf(IllegalSubmissionStateException.class)
+                    .hasMessageContaining("Submission already completed");
+        }
+
+        @Test
+        @DisplayName("assessment not found during scoring → ResourceNotFoundException")
+        void assessmentNotFound_duringScoring() {
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(startedSubmission()));
+            lenient().when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> inv.getArgument(0));
             when(userAnswerRepository.saveAll(anyList())).thenAnswer(inv -> {
                 List<UserAnswer> list = inv.getArgument(0);
                 list.forEach(a -> a.setId(UUID.randomUUID()));
@@ -477,14 +561,35 @@ class SubmissionServiceTest {
     }
 
     // ════════════════════════════════════════════════════════════════
+    // submitAnswers — submittedAt set server-side
+    // ════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("submitAnswers — server-side timestamps")
+    class SubmitAnswers_Timestamps {
+
+        @Test
+        @DisplayName("submittedAt is set by the server, not the client")
+        void submittedAtSetServerSide() {
+            stubSubmitFlow();
+
+            SubmissionFeedbackResponse response = submit(
+                    openAnswer(Q_OPEN_ID, "Answer"));
+
+            assertThat(response.submittedAt()).isNotNull();
+            verify(submissionRepository, atLeast(1)).save(submissionCaptor.capture());
+            Submission saved = submissionCaptor.getAllValues().get(0);
+            assertThat(saved.getSubmittedAt()).isNotNull();
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
     // getSubmission
     // ════════════════════════════════════════════════════════════════
 
     @Nested
     @DisplayName("getSubmission")
     class GetSubmissionTests {
-
-        private final UUID SUBMISSION_ID = UUID.fromString("ff000000-0000-0000-0000-000000000001");
 
         private Submission storedSubmission() {
             Submission s = new Submission();

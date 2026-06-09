@@ -1,14 +1,16 @@
 package app.testero.service;
 
 import app.testero.dto.AnswerInput;
-import app.testero.dto.SubmissionCreateRequest;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
+import app.testero.dto.SubmissionStartResponse;
+import app.testero.dto.SubmissionSubmitRequest;
 import app.testero.entity.assessment.Assessment;
 import app.testero.entity.assessment.Option;
 import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.UserAnswer;
 import app.testero.entity.submission.UserAnswerSelectedOption;
+import app.testero.exception.IllegalSubmissionStateException;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentRepository;
 import app.testero.repository.OptionRepository;
@@ -24,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -49,18 +52,46 @@ public class SubmissionService {
     }
 
     @Transactional
-    public SubmissionFeedbackResponse createSubmission(UUID userId, SubmissionCreateRequest request) {
-        UUID assessmentUuid = UUID.fromString(request.assessmentId());
+    public SubmissionStartResponse startSubmission(UUID assessmentId, UUID userId) {
+        assessmentRepository.findById(assessmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Assessment not found"));
 
-        // 1. Create submission record
+        // Idempotent: if the user already started this assessment and hasn't submitted, return existing
+        Optional<Submission> existing = submissionRepository.findByAssessmentIdAndUserId(assessmentId, userId);
+        if (existing.isPresent() && existing.get().getSubmittedAt() == null) {
+            Submission s = existing.get();
+            return new SubmissionStartResponse(
+                    s.getId().toString(),
+                    s.getStartedAt().toString()
+            );
+        }
+
         Submission submission = new Submission();
         submission.setUserId(userId);
-        submission.setAssessmentId(assessmentUuid);
-        submission.setStartedAt(request.startedAt() != null
-                ? LocalDateTime.parse(request.startedAt())
-                : null);
-        submission.setSubmittedAt(LocalDateTime.now());
+        submission.setAssessmentId(assessmentId);
+        submission.setStartedAt(LocalDateTime.now());
         submission = submissionRepository.save(submission);
+
+        return new SubmissionStartResponse(
+                submission.getId().toString(),
+                submission.getStartedAt().toString()
+        );
+    }
+
+    @Transactional
+    public SubmissionFeedbackResponse submitAnswers(UUID submissionId, UUID userId,
+                                                     SubmissionSubmitRequest request) {
+        Submission submission = submissionRepository.findByIdAndUserId(submissionId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Submission not found"));
+
+        if (submission.getSubmittedAt() != null) {
+            throw new IllegalSubmissionStateException("Submission already completed");
+        }
+
+        UUID assessmentUuid = submission.getAssessmentId();
+
+        // 1. Set submitted timestamp
+        submission.setSubmittedAt(LocalDateTime.now());
 
         // 2. Create answer records
         List<UserAnswer> answers = new ArrayList<>();
@@ -76,7 +107,6 @@ public class SubmissionService {
         answers = userAnswerRepository.saveAll(answers);
 
         // 3. Create answer_selected_option records
-        // Build a map from questionId to UserAnswer for lookup
         Map<UUID, UserAnswer> answerByQuestion = new HashMap<>();
         for (UserAnswer a : answers) {
             answerByQuestion.put(a.getQuestionId(), a);
@@ -134,7 +164,6 @@ public class SubmissionService {
                 Set<UUID> selectedIds = selectedByAnswer.getOrDefault(answer.getId(), Set.of());
 
                 if (selectedIds.isEmpty()) {
-                    // Unanswered
                     answer.setIsCorrect(null);
                     answer.setPointsAwarded(0.0);
                 } else {
@@ -154,7 +183,6 @@ public class SubmissionService {
                         correctIds.stream().map(UUID::toString).toList()
                 ));
             } else {
-                // Open question: pending manual grading
                 answerResults.add(new AnswerResult(
                         answer.getQuestionId().toString(),
                         "open",
@@ -168,7 +196,7 @@ public class SubmissionService {
         submission.setScore(totalScore);
         submissionRepository.save(submission);
 
-        // 8. Return feedback (without score/points)
+        // 8. Return feedback
         return new SubmissionFeedbackResponse(
                 submission.getId().toString(),
                 submission.getUserId().toString(),
@@ -185,7 +213,6 @@ public class SubmissionService {
 
         List<UserAnswer> answers = userAnswerRepository.findBySubmissionId(submissionId);
 
-        // Fetch correct options for MC questions
         List<UUID> mcQuestionIds = answers.stream()
                 .filter(a -> "multiple".equals(a.getType()))
                 .map(UserAnswer::getQuestionId)
@@ -213,7 +240,7 @@ public class SubmissionService {
                 submission.getUserId().toString(),
                 submission.getAssessmentId().toString(),
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
-                submission.getSubmittedAt().toString(),
+                submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null,
                 answerResults
         );
     }

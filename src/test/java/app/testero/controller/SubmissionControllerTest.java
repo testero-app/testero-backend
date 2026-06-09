@@ -5,6 +5,8 @@ import app.testero.config.JwtProperties;
 import app.testero.config.SecurityConfig;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
+import app.testero.exception.IllegalSubmissionStateException;
+import app.testero.exception.ResourceNotFoundException;
 import app.testero.security.JwtService;
 import app.testero.security.UserPrincipal;
 import app.testero.service.SubmissionService;
@@ -31,7 +33,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SubmissionController.class)
@@ -65,25 +67,23 @@ class SubmissionControllerTest {
         );
     }
 
-    // ── POST /submissions ──────────────────────────────────────────
+    // ── PUT /submissions/{id} ─────────────────────────────────────
 
     @Nested
-    @DisplayName("POST /submissions")
-    class CreateSubmission {
+    @DisplayName("PUT /submissions/{id}")
+    class SubmitAnswers {
 
         @Test
-        @DisplayName("valid request → 201 with feedback")
+        @DisplayName("valid request → 200 with feedback")
         void success() throws Exception {
-            when(submissionService.createSubmission(eq(USER_ID), any()))
+            when(submissionService.submitAnswers(eq(SUBMISSION_ID), eq(USER_ID), any()))
                     .thenReturn(buildFeedback());
 
-            mockMvc.perform(post("/submissions")
+            mockMvc.perform(put("/submissions/{id}", SUBMISSION_ID)
                             .with(jwt())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                     {
-                                      "assessment_id": "assessment-1",
-                                      "started_at": "2026-06-09T10:00:00",
                                       "answers": [
                                         {
                                           "question_id": "q1",
@@ -93,38 +93,19 @@ class SubmissionControllerTest {
                                       ]
                                     }
                                     """))
-                    .andExpect(status().isCreated())
+                    .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(SUBMISSION_ID.toString()))
                     .andExpect(jsonPath("$.answers[0].is_correct").value(true));
         }
 
         @Test
-        @DisplayName("blank assessment_id → 400")
-        void blankAssessmentId() throws Exception {
-            mockMvc.perform(post("/submissions")
-                            .with(jwt())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("""
-                                    {
-                                      "assessment_id": "",
-                                      "answers": [
-                                        {"question_id": "q1", "type": "multiple"}
-                                      ]
-                                    }
-                                    """))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.detail").exists());
-        }
-
-        @Test
         @DisplayName("empty answers list → 400")
         void emptyAnswers() throws Exception {
-            mockMvc.perform(post("/submissions")
+            mockMvc.perform(put("/submissions/{id}", SUBMISSION_ID)
                             .with(jwt())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                     {
-                                      "assessment_id": "assessment-1",
                                       "answers": []
                                     }
                                     """))
@@ -133,13 +114,52 @@ class SubmissionControllerTest {
         }
 
         @Test
-        @DisplayName("no token → 403")
-        void unauthorized() throws Exception {
-            mockMvc.perform(post("/submissions")
+        @DisplayName("submission not found → 404")
+        void notFound() throws Exception {
+            when(submissionService.submitAnswers(eq(SUBMISSION_ID), eq(USER_ID), any()))
+                    .thenThrow(new ResourceNotFoundException("Submission not found"));
+
+            mockMvc.perform(put("/submissions/{id}", SUBMISSION_ID)
+                            .with(jwt())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                     {
-                                      "assessment_id": "a1",
+                                      "answers": [
+                                        {"question_id": "q1", "type": "multiple"}
+                                      ]
+                                    }
+                                    """))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.detail").value("Submission not found"));
+        }
+
+        @Test
+        @DisplayName("already submitted → 409")
+        void alreadySubmitted() throws Exception {
+            when(submissionService.submitAnswers(eq(SUBMISSION_ID), eq(USER_ID), any()))
+                    .thenThrow(new IllegalSubmissionStateException("Submission already completed"));
+
+            mockMvc.perform(put("/submissions/{id}", SUBMISSION_ID)
+                            .with(jwt())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "answers": [
+                                        {"question_id": "q1", "type": "multiple"}
+                                      ]
+                                    }
+                                    """))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.detail").value("Submission already completed"));
+        }
+
+        @Test
+        @DisplayName("no token → 403")
+        void unauthorized() throws Exception {
+            mockMvc.perform(put("/submissions/{id}", SUBMISSION_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
                                       "answers": [{"question_id": "q1", "type": "multiple"}]
                                     }
                                     """))

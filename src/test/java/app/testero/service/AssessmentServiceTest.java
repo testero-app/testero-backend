@@ -5,12 +5,10 @@ import app.testero.dto.AssessmentListResponse;
 import app.testero.dto.AssessmentQuestionsResponse;
 import app.testero.dto.AssessmentQuestionsResponse.QuestionDto;
 import app.testero.entity.assessment.Assessment;
-import app.testero.entity.assessment.AssessmentStart;
 import app.testero.entity.assessment.Option;
 import app.testero.entity.assessment.Question;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentRepository;
-import app.testero.repository.AssessmentStartRepository;
 import app.testero.repository.OptionRepository;
 import app.testero.repository.QuestionRepository;
 
@@ -18,14 +16,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,7 +28,6 @@ import app.testero.fixture.PythonCertificationFixture;
 
 import static app.testero.fixture.PythonCertificationFixture.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
@@ -45,12 +38,9 @@ class AssessmentServiceTest {
     @Mock AssessmentRepository assessmentRepository;
     @Mock QuestionRepository questionRepository;
     @Mock OptionRepository optionRepository;
-    @Mock AssessmentStartRepository assessmentStartRepository;
     @Mock QuestionPrepService questionPrepService;
 
     @InjectMocks AssessmentService assessmentService;
-
-    @Captor ArgumentCaptor<AssessmentStart> startCaptor;
 
     // ── Helpers ────────────────────────────────────────────────────
 
@@ -138,36 +128,6 @@ class AssessmentServiceTest {
 
             assertThatThrownBy(() ->
                     assessmentService.getAssessmentConfig(unknownId.toString()))
-                    .isInstanceOf(ResourceNotFoundException.class);
-        }
-    }
-
-    // ── recordAssessmentStart ──────────────────────────────────────
-
-    @Nested
-    @DisplayName("recordAssessmentStart")
-    class RecordAssessmentStart {
-
-        @Test
-        @DisplayName("saves AssessmentStart entity with correct assessment ID")
-        void savesEntity() {
-            when(assessmentRepository.findById(TEST_ID))
-                    .thenReturn(Optional.of(buildAssessment()));
-
-            assessmentService.recordAssessmentStart(TEST_ID.toString());
-
-            verify(assessmentStartRepository).save(startCaptor.capture());
-            assertThat(startCaptor.getValue().getAssessmentId()).isEqualTo(TEST_ID);
-        }
-
-        @Test
-        @DisplayName("throws ResourceNotFoundException when assessment not found")
-        void notFound() {
-            UUID unknownId = UUID.randomUUID();
-            when(assessmentRepository.findById(unknownId)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() ->
-                    assessmentService.recordAssessmentStart(unknownId.toString()))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
     }

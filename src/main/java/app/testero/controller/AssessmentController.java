@@ -3,11 +3,14 @@ package app.testero.controller;
 import app.testero.dto.AssessmentConfigResponse;
 import app.testero.dto.AssessmentListResponse;
 import app.testero.dto.AssessmentQuestionsResponse;
+import app.testero.dto.SubmissionStartResponse;
 import app.testero.entity.user.StudentProfile;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.StudentProfileRepository;
 import app.testero.security.UserPrincipal;
 import app.testero.service.AssessmentService;
+import app.testero.service.SubmissionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +19,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -24,11 +26,14 @@ import java.util.UUID;
 public class AssessmentController {
 
     private final AssessmentService assessmentService;
+    private final SubmissionService submissionService;
     private final StudentProfileRepository studentProfileRepository;
 
     public AssessmentController(AssessmentService assessmentService,
+                                SubmissionService submissionService,
                                 StudentProfileRepository studentProfileRepository) {
         this.assessmentService = assessmentService;
+        this.submissionService = submissionService;
         this.studentProfileRepository = studentProfileRepository;
     }
 
@@ -49,11 +54,12 @@ public class AssessmentController {
     }
 
     @PostMapping("/{assessmentId}/start")
-    public ResponseEntity<Map<String, Boolean>> recordAssessmentStart(
+    public ResponseEntity<SubmissionStartResponse> startAssessment(
             @PathVariable String assessmentId,
             @AuthenticationPrincipal UserPrincipal principal) {
-        assessmentService.recordAssessmentStart(assessmentId);
-        return ResponseEntity.ok(Map.of("ok", true));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(submissionService.startSubmission(
+                        UUID.fromString(assessmentId), principal.userId()));
     }
 
     @GetMapping("/{assessmentId}/questions")

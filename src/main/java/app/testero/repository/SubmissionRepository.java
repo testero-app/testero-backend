@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
     Optional<Submission> findByIdAndUserId(UUID id, UUID userId);
+
+    Optional<Submission> findByAssessmentIdAndUserId(UUID assessmentId, UUID userId);
 }
