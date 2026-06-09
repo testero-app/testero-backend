@@ -6,12 +6,10 @@ import app.testero.dto.AssessmentQuestionsResponse;
 import app.testero.dto.AssessmentQuestionsResponse.OptionDto;
 import app.testero.dto.AssessmentQuestionsResponse.QuestionDto;
 import app.testero.entity.assessment.Assessment;
-import app.testero.entity.assessment.AssessmentStart;
 import app.testero.entity.assessment.Option;
 import app.testero.entity.assessment.Question;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentRepository;
-import app.testero.repository.AssessmentStartRepository;
 import app.testero.repository.OptionRepository;
 import app.testero.repository.QuestionRepository;
 import org.springframework.stereotype.Service;
@@ -28,18 +26,15 @@ public class AssessmentService {
     private final AssessmentRepository assessmentRepository;
     private final QuestionRepository questionRepository;
     private final OptionRepository optionRepository;
-    private final AssessmentStartRepository assessmentStartRepository;
     private final QuestionPrepService questionPrepService;
 
     public AssessmentService(AssessmentRepository assessmentRepository,
                              QuestionRepository questionRepository,
                              OptionRepository optionRepository,
-                             AssessmentStartRepository assessmentStartRepository,
                              QuestionPrepService questionPrepService) {
         this.assessmentRepository = assessmentRepository;
         this.questionRepository = questionRepository;
         this.optionRepository = optionRepository;
-        this.assessmentStartRepository = assessmentStartRepository;
         this.questionPrepService = questionPrepService;
     }
 
@@ -74,14 +69,6 @@ public class AssessmentService {
                         assessment.getPtsWrong().doubleValue()
                 )
         );
-    }
-
-    public void recordAssessmentStart(String assessmentId) {
-        findAssessmentOrThrow(assessmentId);
-
-        AssessmentStart as = new AssessmentStart();
-        as.setAssessmentId(UUID.fromString(assessmentId));
-        assessmentStartRepository.save(as);
     }
 
     public AssessmentQuestionsResponse getAssessmentQuestions(String assessmentId) {

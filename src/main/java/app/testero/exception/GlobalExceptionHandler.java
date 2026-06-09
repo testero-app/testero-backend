@@ -24,6 +24,12 @@ public class GlobalExceptionHandler {
                 .body(Map.of("detail", e.getMessage()));
     }
 
+    @ExceptionHandler(IllegalSubmissionStateException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalSubmissionState(IllegalSubmissionStateException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("detail", e.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()

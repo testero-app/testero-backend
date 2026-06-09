@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.1-001
+      author: testero
+      changes:
+        - dropTable:
+            tableName: test_start
+        - dropNotNullConstraint:
+            tableName: submission
+            columnName: submitted_at
+            columnDataType: timestamp
+      rollback:
+        - addNotNullConstraint:
+            tableName: submission
+            columnName: submitted_at
+            columnDataType: timestamp
+        - createTable:
+            tableName: test_start
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: test_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: test_start
+            baseColumnNames: test_id
+            referencedTableName: test
+            referencedColumnNames: id
+            constraintName: fk_test_start_test_id
