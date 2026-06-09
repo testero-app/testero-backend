@@ -42,6 +42,7 @@ class StudentFlowIntegrationTest {
 
     private String token;
     private String assessmentId;
+    private String submissionId;
     private List<Map<String, Object>> questions;
 
     // ── 1. Login ───────────────────────────────────────────────────
@@ -140,11 +141,29 @@ class StudentFlowIntegrationTest {
         questions = q;
     }
 
-    // ── 5. Submit answers ──────────────────────────────────────────
+    // ── 5. Start assessment ──────────────────────────────────────────
 
     @Test
     @Order(5)
-    @DisplayName("POST /submissions → 201, returns graded feedback")
+    @DisplayName("POST /assessments/{id}/start → 201, returns submission_id")
+    void startAssessment() {
+        ResponseEntity<Map> response = rest.exchange(
+                "/assessments/{id}/start", HttpMethod.POST,
+                withAuth(null), Map.class, assessmentId);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).containsKey("submission_id");
+        assertThat(response.getBody()).containsKey("started_at");
+
+        submissionId = (String) response.getBody().get("submission_id");
+        assertThat(submissionId).isNotBlank();
+    }
+
+    // ── 6. Submit answers ──────────────────────────────────────────
+
+    @Test
+    @Order(6)
+    @DisplayName("PUT /submissions/{id} → 200, returns graded feedback")
     void submitAnswers() {
         List<Map<String, Object>> answers = questions.stream()
                 .map(q -> {
@@ -169,16 +188,13 @@ class StudentFlowIntegrationTest {
                 })
                 .toList();
 
-        Map<String, Object> submission = Map.of(
-                "assessment_id", assessmentId,
-                "answers", answers
-        );
+        Map<String, Object> submission = Map.of("answers", answers);
 
         ResponseEntity<Map> response = rest.exchange(
-                "/submissions", HttpMethod.POST,
-                withAuth(submission), Map.class);
+                "/submissions/{id}", HttpMethod.PUT,
+                withAuth(submission), Map.class, submissionId);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).containsKey("id");
         assertThat(response.getBody()).containsKey("answers");
 
@@ -196,7 +212,7 @@ class StudentFlowIntegrationTest {
     // ── 6. Verify security ─────────────────────────────────────────
 
     @Test
-    @Order(6)
+    @Order(7)
     @DisplayName("GET /assessments without token → 403")
     void unauthorizedAccess() {
         ResponseEntity<Map> response = rest.getForEntity(

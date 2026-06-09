@@ -9,12 +9,14 @@ import app.testero.dto.AssessmentListResponse.AssessmentListItem;
 import app.testero.dto.AssessmentQuestionsResponse;
 import app.testero.dto.AssessmentQuestionsResponse.OptionDto;
 import app.testero.dto.AssessmentQuestionsResponse.QuestionDto;
+import app.testero.dto.SubmissionStartResponse;
 import app.testero.entity.user.StudentProfile;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.StudentProfileRepository;
 import app.testero.security.JwtService;
 import app.testero.security.UserPrincipal;
 import app.testero.service.AssessmentService;
+import app.testero.service.SubmissionService;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -33,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -48,6 +51,7 @@ class AssessmentControllerTest {
     @Autowired MockMvc mockMvc;
 
     @MockitoBean AssessmentService assessmentService;
+    @MockitoBean SubmissionService submissionService;
     @MockitoBean StudentProfileRepository studentProfileRepository;
     @MockitoBean JwtService jwtService;
 
@@ -147,14 +151,21 @@ class AssessmentControllerTest {
 
     @Nested
     @DisplayName("POST /assessments/{id}/start")
-    class RecordStart {
+    class StartAssessment {
 
         @Test
-        @DisplayName("authenticated → 200 with ok:true")
+        @DisplayName("authenticated → 201 with submission_id and started_at")
         void success() throws Exception {
+            when(submissionService.startSubmission(
+                    eq(UUID.fromString(ASSESSMENT_ID)), eq(USER_ID)))
+                    .thenReturn(new SubmissionStartResponse(
+                            "ff000000-0000-0000-0000-000000000001",
+                            "2026-06-15T10:00:00"));
+
             mockMvc.perform(post("/assessments/{id}/start", ASSESSMENT_ID).with(jwt()))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.ok").value(true));
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.submission_id").value("ff000000-0000-0000-0000-000000000001"))
+                    .andExpect(jsonPath("$.started_at").value("2026-06-15T10:00:00"));
         }
     }
 
