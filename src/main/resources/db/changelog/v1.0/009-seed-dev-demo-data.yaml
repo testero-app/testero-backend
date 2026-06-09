@@ -16,3 +16,4 @@ databaseChangeLog:
             path: db/seed/dev/40_students.sql
         - sqlFile:
             path: db/seed/dev/50_demo_test.sql
+            splitStatements: false
