@@ -32,4 +32,10 @@ public class ClassAssessment {
 
     @Column(name = "deactivated_at")
     private LocalDateTime deactivatedAt;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", insertable = false, updatable = false)
+    private LocalDateTime updatedAt;
 }
