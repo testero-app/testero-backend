@@ -145,7 +145,7 @@ class SubmissionServiceTest {
         @DisplayName("creates new submission with server-side startedAt")
         void createsNewSubmission() {
             when(assessmentRepository.findById(TEST_ID)).thenReturn(Optional.of(defaultAssessment));
-            when(submissionRepository.findByAssessmentIdAndUserId(TEST_ID, STUDENT_ID))
+            when(submissionRepository.findByAssessmentIdAndUserIdAndSubmittedAtIsNull(TEST_ID, STUDENT_ID))
                     .thenReturn(Optional.empty());
             when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> {
                 Submission s = inv.getArgument(0);
@@ -171,13 +171,35 @@ class SubmissionServiceTest {
         void idempotent_returnsExisting() {
             Submission existing = startedSubmission();
             when(assessmentRepository.findById(TEST_ID)).thenReturn(Optional.of(defaultAssessment));
-            when(submissionRepository.findByAssessmentIdAndUserId(TEST_ID, STUDENT_ID))
+            when(submissionRepository.findByAssessmentIdAndUserIdAndSubmittedAtIsNull(TEST_ID, STUDENT_ID))
                     .thenReturn(Optional.of(existing));
 
             SubmissionStartResponse response = submissionService.startSubmission(TEST_ID, STUDENT_ID);
 
             assertThat(response.submissionId()).isEqualTo(SUBMISSION_ID.toString());
             verify(submissionRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("retake — creates new submission when previous one is completed")
+        void retake_createsNewWhenPreviousCompleted() {
+            when(assessmentRepository.findById(TEST_ID)).thenReturn(Optional.of(defaultAssessment));
+            when(submissionRepository.findByAssessmentIdAndUserIdAndSubmittedAtIsNull(TEST_ID, STUDENT_ID))
+                    .thenReturn(Optional.empty());
+            when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> {
+                Submission s = inv.getArgument(0);
+                s.setId(UUID.randomUUID());
+                return s;
+            });
+
+            SubmissionStartResponse response = submissionService.startSubmission(TEST_ID, STUDENT_ID);
+
+            assertThat(response.submissionId()).isNotNull();
+            assertThat(response.startedAt()).isNotNull();
+            verify(submissionRepository).save(submissionCaptor.capture());
+            Submission saved = submissionCaptor.getValue();
+            assertThat(saved.getUserId()).isEqualTo(STUDENT_ID);
+            assertThat(saved.getAssessmentId()).isEqualTo(TEST_ID);
         }
 
         @Test
