@@ -56,9 +56,10 @@ public class SubmissionService {
         assessmentRepository.findById(assessmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Assessment not found"));
 
-        // Idempotent: if the user already started this assessment and hasn't submitted, return existing
-        Optional<Submission> existing = submissionRepository.findByAssessmentIdAndUserId(assessmentId, userId);
-        if (existing.isPresent() && existing.get().getSubmittedAt() == null) {
+        // Idempotent: if the user has an in-progress submission for this assessment, return it.
+        // Completed submissions are ignored, allowing retakes.
+        Optional<Submission> existing = submissionRepository.findByAssessmentIdAndUserIdAndSubmittedAtIsNull(assessmentId, userId);
+        if (existing.isPresent()) {
             Submission s = existing.get();
             return new SubmissionStartResponse(
                     s.getId().toString(),
