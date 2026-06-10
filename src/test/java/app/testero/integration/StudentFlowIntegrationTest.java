@@ -209,10 +209,35 @@ class StudentFlowIntegrationTest {
         }
     }
 
-    // ── 6. Verify security ─────────────────────────────────────────
+    // ── 7. Get submission history ─────────────────────────────────
 
     @Test
     @Order(7)
+    @DisplayName("GET /submissions/mine → 200, returns submission history")
+    @SuppressWarnings("unchecked")
+    void getSubmissionHistory() {
+        ResponseEntity<Map> response = rest.exchange(
+                "/submissions/mine", HttpMethod.GET,
+                withAuth(null), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        List<Map<String, Object>> submissions =
+                (List<Map<String, Object>>) response.getBody()
+                        .get("submissions");
+        assertThat(submissions).hasSize(1);
+        assertThat(submissions.get(0))
+                .containsKey("assessment_title");
+        assertThat(submissions.get(0))
+                .containsKey("correct_count");
+        assertThat(submissions.get(0))
+                .containsKey("wrong_count");
+    }
+
+    // ── 8. Verify security ─────────────────────────────────────────
+
+    @Test
+    @Order(8)
     @DisplayName("GET /assessments without token → 403")
     void unauthorizedAccess() {
         ResponseEntity<Map> response = rest.getForEntity(

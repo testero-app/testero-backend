@@ -1,6 +1,7 @@
 package app.testero.controller;
 
 import app.testero.dto.SubmissionFeedbackResponse;
+import app.testero.dto.SubmissionHistoryResponse;
 import app.testero.dto.SubmissionSubmitRequest;
 import app.testero.security.UserPrincipal;
 import app.testero.service.SubmissionService;
@@ -24,6 +25,13 @@ public class SubmissionController {
 
     public SubmissionController(SubmissionService submissionService) {
         this.submissionService = submissionService;
+    }
+
+    @GetMapping("/mine")
+    public ResponseEntity<SubmissionHistoryResponse> getMySubmissions(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(
+                submissionService.getSubmissionHistory(principal.userId()));
     }
 
     @PutMapping("/{submissionId}")
