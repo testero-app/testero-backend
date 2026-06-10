@@ -50,6 +50,8 @@ would solve and any proposed solution.
 
 ### Submitting Code
 
+![Gitflow](docs/gitflow_v1.png)
+
 1. **Fork** the repository
 2. Create a branch from `main`:
    `git checkout -b feature/descriptive-name`
