@@ -18,7 +18,15 @@ This repository contains the **backend API**. The web frontend lives in
 - **Hosting**: [Render](https://render.com) via Docker (any container-compatible platform works)
 - **Build**: Maven (wrapper included)
 
+## Architecture
+
+![Data Model](docs/data_model_v3.png)
+
+![Assessment Flow](docs/assessment_flow_v1.png)
+
 ## Getting Started
+
+![Local Setup](docs/first_setup_v1.png)
 
 Prerequisites:
 
