@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0](https://github.com/testero-app/testero-backend/compare/v1.2.0...v1.3.0) (2026-06-10)
+
+
+### Features
+
+* add audit fields (created_at, updated_at) to all tables ([#71](https://github.com/testero-app/testero-backend/issues/71)) ([f3d44f1](https://github.com/testero-app/testero-backend/commit/f3d44f1411936211479e49c589f9655332354386)), closes [#37](https://github.com/testero-app/testero-backend/issues/37)
+
+
+### Documentation
+
+* add architecture and workflow diagrams ([#69](https://github.com/testero-app/testero-backend/issues/69)) ([6cef8ad](https://github.com/testero-app/testero-backend/commit/6cef8ade6146c7b5b6659be06699b4c72cafa5c0))
+
 ## [1.2.0](https://github.com/testero-app/testero-backend/compare/v1.1.1...v1.2.0) (2026-06-09)
 
 
