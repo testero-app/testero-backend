@@ -1,0 +1,418 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.1-002-add-audit-fields
+      author: testero
+      comment: >
+        Add created_at and updated_at columns to all tables. Both default to
+        CURRENT_TIMESTAMP. A reusable trigger function auto-updates updated_at
+        on every row modification.
+      changes:
+        # --- trigger function (reusable across tables) ---
+        - sql:
+            splitStatements: false
+            sql: >-
+              CREATE OR REPLACE FUNCTION set_updated_at()
+              RETURNS TRIGGER AS $body$
+              BEGIN
+                NEW.updated_at = CURRENT_TIMESTAMP;
+                RETURN NEW;
+              END;
+              $body$ LANGUAGE plpgsql;
+
+        # --- app_user: already has created_at, add updated_at ---
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_app_user_updated_at
+              BEFORE UPDATE ON app_user
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- app_role ---
+        - addColumn:
+            tableName: app_role
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_app_role_updated_at
+              BEFORE UPDATE ON app_role
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- app_user_role ---
+        - addColumn:
+            tableName: app_user_role
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_app_user_role_updated_at
+              BEFORE UPDATE ON app_user_role
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- teacher_profile ---
+        - addColumn:
+            tableName: teacher_profile
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_teacher_profile_updated_at
+              BEFORE UPDATE ON teacher_profile
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- student_profile ---
+        - addColumn:
+            tableName: student_profile
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_student_profile_updated_at
+              BEFORE UPDATE ON student_profile
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- user_class ---
+        - addColumn:
+            tableName: user_class
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_user_class_updated_at
+              BEFORE UPDATE ON user_class
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- teacher_class ---
+        - addColumn:
+            tableName: teacher_class
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_teacher_class_updated_at
+              BEFORE UPDATE ON teacher_class
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- test ---
+        - addColumn:
+            tableName: test
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_test_updated_at
+              BEFORE UPDATE ON test
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- subject ---
+        - addColumn:
+            tableName: subject
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_subject_updated_at
+              BEFORE UPDATE ON subject
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- test_subject ---
+        - addColumn:
+            tableName: test_subject
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_test_subject_updated_at
+              BEFORE UPDATE ON test_subject
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- class_test ---
+        - addColumn:
+            tableName: class_test
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_class_test_updated_at
+              BEFORE UPDATE ON class_test
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- question ---
+        - addColumn:
+            tableName: question
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_question_updated_at
+              BEFORE UPDATE ON question
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- option ---
+        - addColumn:
+            tableName: option
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_option_updated_at
+              BEFORE UPDATE ON option
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- submission ---
+        - addColumn:
+            tableName: submission
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_submission_updated_at
+              BEFORE UPDATE ON submission
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- user_answer ---
+        - addColumn:
+            tableName: user_answer
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_user_answer_updated_at
+              BEFORE UPDATE ON user_answer
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+        # --- user_answer_selected_option ---
+        - addColumn:
+            tableName: user_answer_selected_option
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_user_answer_selected_option_updated_at
+              BEFORE UPDATE ON user_answer_selected_option
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+      rollback:
+        - sql:
+            sql: |
+              DROP TRIGGER IF EXISTS trg_user_answer_selected_option_updated_at ON user_answer_selected_option;
+              DROP TRIGGER IF EXISTS trg_user_answer_updated_at ON user_answer;
+              DROP TRIGGER IF EXISTS trg_submission_updated_at ON submission;
+              DROP TRIGGER IF EXISTS trg_option_updated_at ON option;
+              DROP TRIGGER IF EXISTS trg_question_updated_at ON question;
+              DROP TRIGGER IF EXISTS trg_class_test_updated_at ON class_test;
+              DROP TRIGGER IF EXISTS trg_test_subject_updated_at ON test_subject;
+              DROP TRIGGER IF EXISTS trg_subject_updated_at ON subject;
+              DROP TRIGGER IF EXISTS trg_test_updated_at ON test;
+              DROP TRIGGER IF EXISTS trg_teacher_class_updated_at ON teacher_class;
+              DROP TRIGGER IF EXISTS trg_user_class_updated_at ON user_class;
+              DROP TRIGGER IF EXISTS trg_student_profile_updated_at ON student_profile;
+              DROP TRIGGER IF EXISTS trg_teacher_profile_updated_at ON teacher_profile;
+              DROP TRIGGER IF EXISTS trg_app_user_role_updated_at ON app_user_role;
+              DROP TRIGGER IF EXISTS trg_app_role_updated_at ON app_role;
+              DROP TRIGGER IF EXISTS trg_app_user_updated_at ON app_user;
+              DROP FUNCTION IF EXISTS set_updated_at();
+        - dropColumn:
+            tableName: user_answer_selected_option
+            columnName: updated_at
+        - dropColumn:
+            tableName: user_answer_selected_option
+            columnName: created_at
+        - dropColumn:
+            tableName: user_answer
+            columnName: updated_at
+        - dropColumn:
+            tableName: user_answer
+            columnName: created_at
+        - dropColumn:
+            tableName: submission
+            columnName: updated_at
+        - dropColumn:
+            tableName: submission
+            columnName: created_at
+        - dropColumn:
+            tableName: option
+            columnName: updated_at
+        - dropColumn:
+            tableName: option
+            columnName: created_at
+        - dropColumn:
+            tableName: question
+            columnName: updated_at
+        - dropColumn:
+            tableName: question
+            columnName: created_at
+        - dropColumn:
+            tableName: class_test
+            columnName: updated_at
+        - dropColumn:
+            tableName: class_test
+            columnName: created_at
+        - dropColumn:
+            tableName: test_subject
+            columnName: updated_at
+        - dropColumn:
+            tableName: test_subject
+            columnName: created_at
+        - dropColumn:
+            tableName: subject
+            columnName: updated_at
+        - dropColumn:
+            tableName: subject
+            columnName: created_at
+        - dropColumn:
+            tableName: test
+            columnName: updated_at
+        - dropColumn:
+            tableName: test
+            columnName: created_at
+        - dropColumn:
+            tableName: teacher_class
+            columnName: updated_at
+        - dropColumn:
+            tableName: teacher_class
+            columnName: created_at
+        - dropColumn:
+            tableName: user_class
+            columnName: updated_at
+        - dropColumn:
+            tableName: user_class
+            columnName: created_at
+        - dropColumn:
+            tableName: student_profile
+            columnName: updated_at
+        - dropColumn:
+            tableName: student_profile
+            columnName: created_at
+        - dropColumn:
+            tableName: teacher_profile
+            columnName: updated_at
+        - dropColumn:
+            tableName: teacher_profile
+            columnName: created_at
+        - dropColumn:
+            tableName: app_user_role
+            columnName: updated_at
+        - dropColumn:
+            tableName: app_user_role
+            columnName: created_at
+        - dropColumn:
+            tableName: app_role
+            columnName: updated_at
+        - dropColumn:
+            tableName: app_role
+            columnName: created_at
+        - dropColumn:
+            tableName: app_user
+            columnName: updated_at
