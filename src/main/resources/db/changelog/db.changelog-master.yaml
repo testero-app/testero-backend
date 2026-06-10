@@ -19,3 +19,5 @@ databaseChangeLog:
       file: db/changelog/v1.0/009-seed-dev-demo-data.yaml
   - include:
       file: db/changelog/v1.1/001-drop-test-start-and-alter-submission.yaml
+  - include:
+      file: db/changelog/v1.1/002-add-audit-fields.yaml
