@@ -58,7 +58,8 @@ public class SubmissionService {
 
         // Idempotent: if the user has an in-progress submission for this assessment, return it.
         // Completed submissions are ignored, allowing retakes.
-        Optional<Submission> existing = submissionRepository.findByAssessmentIdAndUserIdAndSubmittedAtIsNull(assessmentId, userId);
+        Optional<Submission> existing = submissionRepository
+                .findByAssessmentIdAndUserIdAndSubmittedAtIsNull(assessmentId, userId);
         if (existing.isPresent()) {
             Submission s = existing.get();
             return new SubmissionStartResponse(
