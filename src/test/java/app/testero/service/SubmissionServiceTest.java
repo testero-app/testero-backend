@@ -3,6 +3,8 @@ package app.testero.service;
 import app.testero.dto.AnswerInput;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
+import app.testero.dto.SubmissionHistoryResponse;
+import app.testero.dto.SubmissionHistoryResponse.SubmissionSummary;
 import app.testero.dto.SubmissionStartResponse;
 import app.testero.dto.SubmissionSubmitRequest;
 import app.testero.entity.assessment.Assessment;
@@ -697,6 +699,80 @@ class SubmissionServiceTest {
             AnswerResult openResult = response.answers().get(1);
             assertThat(mcResult.correctOptionIds()).containsExactly(Q1_OPT_C.toString());
             assertThat(openResult.correctOptionIds()).isEmpty();
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // getSubmissionHistory
+    // ════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("getSubmissionHistory")
+    class GetSubmissionHistoryTests {
+
+        @Test
+        @DisplayName("returns empty list when no completed submissions")
+        void returnsEmptyListWhenNoSubmissions() {
+            when(submissionRepository
+                    .findByUserIdAndSubmittedAtIsNotNullOrderBySubmittedAtDesc(
+                            STUDENT_ID))
+                    .thenReturn(List.of());
+
+            SubmissionHistoryResponse response =
+                    submissionService.getSubmissionHistory(STUDENT_ID);
+
+            assertThat(response.submissions()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("returns submission with correct counts")
+        void returnsSubmissionWithCorrectCounts() {
+            Submission sub = startedSubmission();
+            sub.setSubmittedAt(LocalDateTime.of(2026, 6, 15, 10, 25));
+            sub.setScore(3.25);
+
+            when(submissionRepository
+                    .findByUserIdAndSubmittedAtIsNotNullOrderBySubmittedAtDesc(
+                            STUDENT_ID))
+                    .thenReturn(List.of(sub));
+            when(assessmentRepository.findAllById(List.of(TEST_ID)))
+                    .thenReturn(List.of(defaultAssessment));
+
+            UserAnswer correct1 = mcAnswer(SUBMISSION_ID, true);
+            UserAnswer correct2 = mcAnswer(SUBMISSION_ID, true);
+            UserAnswer wrong1 = mcAnswer(SUBMISSION_ID, false);
+            UserAnswer unanswered1 = mcAnswer(SUBMISSION_ID, null);
+
+            when(userAnswerRepository
+                    .findBySubmissionIdIn(List.of(SUBMISSION_ID)))
+                    .thenReturn(List.of(
+                            correct1, correct2, wrong1, unanswered1));
+
+            SubmissionHistoryResponse response =
+                    submissionService.getSubmissionHistory(STUDENT_ID);
+
+            assertThat(response.submissions()).hasSize(1);
+            SubmissionSummary summary = response.submissions().get(0);
+            assertThat(summary.id())
+                    .isEqualTo(SUBMISSION_ID.toString());
+            assertThat(summary.assessmentTitle())
+                    .isEqualTo(defaultAssessment.getTitle());
+            assertThat(summary.correctCount()).isEqualTo(2);
+            assertThat(summary.wrongCount()).isEqualTo(1);
+            assertThat(summary.unansweredCount()).isEqualTo(1);
+            assertThat(summary.totalQuestions()).isEqualTo(4);
+            assertThat(summary.score()).isEqualTo(3.25);
+        }
+
+        private UserAnswer mcAnswer(UUID submissionId,
+                                     Boolean isCorrect) {
+            UserAnswer a = new UserAnswer();
+            a.setId(UUID.randomUUID());
+            a.setSubmissionId(submissionId);
+            a.setQuestionId(UUID.randomUUID());
+            a.setType("multiple");
+            a.setIsCorrect(isCorrect);
+            return a;
         }
     }
 }

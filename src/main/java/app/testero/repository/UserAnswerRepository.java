@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface UserAnswerRepository extends JpaRepository<UserAnswer, UUID> {
 
     List<UserAnswer> findBySubmissionId(UUID submissionId);
+
+    List<UserAnswer> findBySubmissionIdIn(List<UUID> submissionIds);
 }
