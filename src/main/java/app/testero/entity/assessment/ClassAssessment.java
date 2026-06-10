@@ -24,8 +24,8 @@ public class ClassAssessment {
     private UUID classId;
 
     @Id
-    @Column(name = "test_id")
-    private UUID assessmentId;
+    @Column(name = "assessment_snapshot_id")
+    private UUID assessmentSnapshotId;
 
     @Column(name = "activated_at")
     private LocalDateTime activatedAt;

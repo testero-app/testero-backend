@@ -60,7 +60,7 @@ class SubmissionControllerTest {
         return new SubmissionFeedbackResponse(
                 SUBMISSION_ID.toString(),
                 USER_ID.toString(),
-                "assessment-1",
+                "snapshot-1",
                 "2026-06-09T10:00:00",
                 "2026-06-09T10:30:00",
                 List.of(new AnswerResult("q1", "multiple", true, List.of("opt-1")))

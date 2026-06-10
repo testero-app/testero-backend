@@ -4,13 +4,13 @@ import app.testero.dto.AssessmentConfigResponse;
 import app.testero.dto.AssessmentListResponse;
 import app.testero.dto.AssessmentQuestionsResponse;
 import app.testero.dto.AssessmentQuestionsResponse.QuestionDto;
-import app.testero.entity.assessment.Assessment;
-import app.testero.entity.assessment.Option;
-import app.testero.entity.assessment.Question;
+import app.testero.entity.snapshot.AssessmentSnapshot;
+import app.testero.entity.snapshot.OptionSnapshot;
+import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.exception.ResourceNotFoundException;
-import app.testero.repository.AssessmentRepository;
-import app.testero.repository.OptionRepository;
-import app.testero.repository.QuestionRepository;
+import app.testero.repository.AssessmentSnapshotRepository;
+import app.testero.repository.OptionSnapshotRepository;
+import app.testero.repository.QuestionSnapshotRepository;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import app.testero.fixture.PythonCertificationFixture;
-
 import static app.testero.fixture.PythonCertificationFixture.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -35,9 +33,9 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class AssessmentServiceTest {
 
-    @Mock AssessmentRepository assessmentRepository;
-    @Mock QuestionRepository questionRepository;
-    @Mock OptionRepository optionRepository;
+    @Mock AssessmentSnapshotRepository snapshotRepository;
+    @Mock QuestionSnapshotRepository questionSnapshotRepository;
+    @Mock OptionSnapshotRepository optionSnapshotRepository;
     @Mock QuestionPrepService questionPrepService;
 
     @InjectMocks AssessmentService assessmentService;
@@ -46,18 +44,18 @@ class AssessmentServiceTest {
 
     private static final UUID CLASS_ID = UUID.fromString("bb000000-0000-0000-0000-000000000099");
 
-    private Question buildQuestion(UUID id, String type, int position) {
-        Question q = new Question();
+    private QuestionSnapshot buildQuestionSnapshot(UUID id, String type, int position) {
+        QuestionSnapshot q = new QuestionSnapshot();
         q.setId(id);
-        q.setAssessmentId(TEST_ID);
+        q.setAssessmentSnapshotId(SNAPSHOT_ID);
         q.setType(type);
         q.setText("Question " + position);
         q.setPosition(position);
         return q;
     }
 
-    private Option buildOpt(UUID id, UUID questionId, String text, int position) {
-        return buildOption(id, questionId, text, false, false, position);
+    private OptionSnapshot buildOpt(UUID id, UUID questionSnapshotId, String text, int position) {
+        return buildOptionSnapshot(id, questionSnapshotId, text, false, position);
     }
 
     // ── getAvailableAssessments ────────────────────────────────────
@@ -69,25 +67,24 @@ class AssessmentServiceTest {
         @Test
         @DisplayName("returns mapped list from repository")
         void returnsMappedList() {
-            Assessment a = buildAssessment();
-            when(assessmentRepository.findAssessmentsByClassId(CLASS_ID))
-                    .thenReturn(List.of(a));
+            AssessmentSnapshot s = buildAssessmentSnapshot();
+            when(snapshotRepository.findSnapshotsByClassId(CLASS_ID))
+                    .thenReturn(List.of(s));
 
             AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID);
 
             assertThat(response.assessments()).hasSize(1);
             var item = response.assessments().get(0);
-            assertThat(item.id()).isEqualTo(TEST_ID.toString());
+            assertThat(item.id()).isEqualTo(SNAPSHOT_ID.toString());
             assertThat(item.title()).isEqualTo(TITLE);
-            assertThat(item.date()).isEqualTo(PythonCertificationFixture.DATE.toString());
             assertThat(item.timerMinutes()).isEqualTo(TIMER_MINUTES);
             assertThat(item.questionsPerAssessment()).isEqualTo(QUESTIONS_PER_ASSESSMENT);
         }
 
         @Test
-        @DisplayName("returns empty list when no assessments exist")
+        @DisplayName("returns empty list when no snapshots exist")
         void emptyList() {
-            when(assessmentRepository.findAssessmentsByClassId(CLASS_ID))
+            when(snapshotRepository.findSnapshotsByClassId(CLASS_ID))
                     .thenReturn(List.of());
 
             AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID);
@@ -105,16 +102,15 @@ class AssessmentServiceTest {
         @Test
         @DisplayName("returns correctly mapped config DTO")
         void returnsMappedConfig() {
-            Assessment a = buildAssessment();
-            when(assessmentRepository.findById(TEST_ID)).thenReturn(Optional.of(a));
+            AssessmentSnapshot s = buildAssessmentSnapshot();
+            when(snapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(s));
 
             AssessmentConfigResponse response =
-                    assessmentService.getAssessmentConfig(TEST_ID.toString());
+                    assessmentService.getAssessmentConfig(SNAPSHOT_ID.toString());
 
-            assertThat(response.assessmentId()).isEqualTo(TEST_ID.toString());
+            assertThat(response.assessmentId()).isEqualTo(SNAPSHOT_ID.toString());
             assertThat(response.title()).isEqualTo(TITLE);
             assertThat(response.timerMinutes()).isEqualTo(TIMER_MINUTES);
-            assertThat(response.totalPool()).isEqualTo(TOTAL_POOL);
             assertThat(response.questionsPerAssessment()).isEqualTo(QUESTIONS_PER_ASSESSMENT);
             assertThat(response.scoring().pointsPerCorrect()).isEqualTo(PTS_CORRECT.doubleValue());
             assertThat(response.scoring().pointsPerWrong()).isEqualTo(PTS_WRONG.doubleValue());
@@ -124,7 +120,7 @@ class AssessmentServiceTest {
         @DisplayName("throws ResourceNotFoundException when not found")
         void notFound() {
             UUID unknownId = UUID.randomUUID();
-            when(assessmentRepository.findById(unknownId)).thenReturn(Optional.empty());
+            when(snapshotRepository.findById(unknownId)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() ->
                     assessmentService.getAssessmentConfig(unknownId.toString()))
@@ -141,18 +137,18 @@ class AssessmentServiceTest {
         @Test
         @DisplayName("fetches questions and options, delegates to QuestionPrepService")
         void fullFlow() {
-            Assessment a = buildAssessment();
-            Question q1 = buildQuestion(Q1_ID, "multiple", 1);
-            Question q2 = buildQuestion(Q2_ID, "multiple", 2);
+            AssessmentSnapshot s = buildAssessmentSnapshot();
+            QuestionSnapshot q1 = buildQuestionSnapshot(Q1_ID, "multiple", 1);
+            QuestionSnapshot q2 = buildQuestionSnapshot(Q2_ID, "multiple", 2);
 
-            Option opt1a = buildOpt(Q1_OPT_A, Q1_ID, "Opt A", 1);
-            Option opt1b = buildOpt(Q1_OPT_B, Q1_ID, "Opt B", 2);
-            Option opt2a = buildOpt(Q2_OPT_A, Q2_ID, "Opt A", 1);
+            OptionSnapshot opt1a = buildOpt(Q1_OPT_A, Q1_ID, "Opt A", 1);
+            OptionSnapshot opt1b = buildOpt(Q1_OPT_B, Q1_ID, "Opt B", 2);
+            OptionSnapshot opt2a = buildOpt(Q2_OPT_A, Q2_ID, "Opt A", 1);
 
-            when(assessmentRepository.findById(TEST_ID)).thenReturn(Optional.of(a));
-            when(questionRepository.findByAssessmentIdOrderByPosition(TEST_ID))
+            when(snapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(s));
+            when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
                     .thenReturn(List.of(q1, q2));
-            when(optionRepository.findByQuestionIdInOrderByPosition(List.of(Q1_ID, Q2_ID)))
+            when(optionSnapshotRepository.findByQuestionSnapshotIdInOrderByPosition(List.of(Q1_ID, Q2_ID)))
                     .thenReturn(List.of(opt1a, opt1b, opt2a));
 
             // QuestionPrepService returns its input unchanged for this test
@@ -160,9 +156,9 @@ class AssessmentServiceTest {
                     .thenAnswer(inv -> inv.getArgument(0));
 
             AssessmentQuestionsResponse response =
-                    assessmentService.getAssessmentQuestions(TEST_ID.toString());
+                    assessmentService.getAssessmentQuestions(SNAPSHOT_ID.toString());
 
-            assertThat(response.assessmentId()).isEqualTo(TEST_ID.toString());
+            assertThat(response.assessmentId()).isEqualTo(SNAPSHOT_ID.toString());
             assertThat(response.title()).isEqualTo(TITLE);
             assertThat(response.questions()).hasSize(2);
 
@@ -181,10 +177,10 @@ class AssessmentServiceTest {
         }
 
         @Test
-        @DisplayName("throws ResourceNotFoundException when assessment not found")
+        @DisplayName("throws ResourceNotFoundException when snapshot not found")
         void notFound() {
             UUID unknownId = UUID.randomUUID();
-            when(assessmentRepository.findById(unknownId)).thenReturn(Optional.empty());
+            when(snapshotRepository.findById(unknownId)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() ->
                     assessmentService.getAssessmentQuestions(unknownId.toString()))
@@ -192,18 +188,18 @@ class AssessmentServiceTest {
         }
 
         @Test
-        @DisplayName("returns empty questions when assessment has none")
+        @DisplayName("returns empty questions when snapshot has none")
         void noQuestions() {
-            Assessment a = buildAssessment();
-            when(assessmentRepository.findById(TEST_ID)).thenReturn(Optional.of(a));
-            when(questionRepository.findByAssessmentIdOrderByPosition(TEST_ID))
+            AssessmentSnapshot s = buildAssessmentSnapshot();
+            when(snapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(s));
+            when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
                     .thenReturn(List.of());
 
             when(questionPrepService.prepare(anyList(), anyInt()))
                     .thenAnswer(inv -> inv.getArgument(0));
 
             AssessmentQuestionsResponse response =
-                    assessmentService.getAssessmentQuestions(TEST_ID.toString());
+                    assessmentService.getAssessmentQuestions(SNAPSHOT_ID.toString());
 
             assertThat(response.questions()).isEmpty();
             assertThat(response.totalQuestions()).isZero();

@@ -10,7 +10,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
     Optional<Submission> findByIdAndUserId(UUID id, UUID userId);
 
-    Optional<Submission> findByAssessmentIdAndUserIdAndSubmittedAtIsNull(UUID assessmentId, UUID userId);
+    Optional<Submission> findByAssessmentSnapshotIdAndUserIdAndSubmittedAtIsNull(
+            UUID assessmentSnapshotId, UUID userId);
 
     List<Submission> findByUserIdAndSubmittedAtIsNotNullOrderBySubmittedAtDesc(UUID userId);
 }
