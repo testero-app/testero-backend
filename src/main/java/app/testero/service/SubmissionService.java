@@ -3,6 +3,8 @@ package app.testero.service;
 import app.testero.dto.AnswerInput;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
+import app.testero.dto.SubmissionHistoryResponse;
+import app.testero.dto.SubmissionHistoryResponse.SubmissionSummary;
 import app.testero.dto.SubmissionStartResponse;
 import app.testero.dto.SubmissionSubmitRequest;
 import app.testero.entity.assessment.Assessment;
@@ -29,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class SubmissionService {
@@ -245,5 +248,76 @@ public class SubmissionService {
                 submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null,
                 answerResults
         );
+    }
+
+    @Transactional(readOnly = true)
+    public SubmissionHistoryResponse getSubmissionHistory(UUID userId) {
+        List<Submission> submissions = submissionRepository
+                .findByUserIdAndSubmittedAtIsNotNullOrderBySubmittedAtDesc(userId);
+
+        if (submissions.isEmpty()) {
+            return new SubmissionHistoryResponse(List.of());
+        }
+
+        // Batch-fetch assessment titles
+        List<UUID> assessmentIds = submissions.stream()
+                .map(Submission::getAssessmentId)
+                .distinct()
+                .toList();
+        Map<UUID, Assessment> assessmentMap = assessmentRepository
+                .findAllById(assessmentIds).stream()
+                .collect(Collectors.toMap(Assessment::getId, a -> a));
+
+        // Batch-fetch answers for correct/wrong counts
+        List<UUID> submissionIds = submissions.stream()
+                .map(Submission::getId)
+                .toList();
+        Map<UUID, List<UserAnswer>> answersBySubmission =
+                userAnswerRepository.findBySubmissionIdIn(submissionIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(
+                                UserAnswer::getSubmissionId));
+
+        List<SubmissionSummary> summaries = submissions.stream()
+                .map(s -> {
+                    Assessment assessment = assessmentMap
+                            .get(s.getAssessmentId());
+                    String title = assessment != null
+                            ? assessment.getTitle() : "Unknown";
+
+                    List<UserAnswer> answers = answersBySubmission
+                            .getOrDefault(s.getId(), List.of());
+                    List<UserAnswer> mcAnswers = answers.stream()
+                            .filter(a -> "multiple".equals(a.getType()))
+                            .toList();
+
+                    int correct = (int) mcAnswers.stream()
+                            .filter(a -> Boolean.TRUE.equals(
+                                    a.getIsCorrect()))
+                            .count();
+                    int wrong = (int) mcAnswers.stream()
+                            .filter(a -> Boolean.FALSE.equals(
+                                    a.getIsCorrect()))
+                            .count();
+                    int unanswered = mcAnswers.size() - correct - wrong;
+
+                    return new SubmissionSummary(
+                            s.getId().toString(),
+                            s.getAssessmentId().toString(),
+                            title,
+                            s.getStartedAt() != null
+                                    ? s.getStartedAt().toString()
+                                    : null,
+                            s.getSubmittedAt().toString(),
+                            s.getScore(),
+                            mcAnswers.size(),
+                            correct,
+                            wrong,
+                            unanswered
+                    );
+                })
+                .toList();
+
+        return new SubmissionHistoryResponse(summaries);
     }
 }
