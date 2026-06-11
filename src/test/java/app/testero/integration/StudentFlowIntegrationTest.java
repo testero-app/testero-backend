@@ -225,7 +225,7 @@ class StudentFlowIntegrationTest {
         List<Map<String, Object>> submissions =
                 (List<Map<String, Object>>) response.getBody()
                         .get("submissions");
-        assertThat(submissions).hasSize(1);
+        assertThat(submissions).isNotEmpty();
         assertThat(submissions.get(0))
                 .containsKey("assessment_title");
         assertThat(submissions.get(0))

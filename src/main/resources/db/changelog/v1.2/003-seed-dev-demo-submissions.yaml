@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.2-seed-dev-demo-submissions
+      author: testero
+      context: dev
+      changes:
+        - sqlFile:
+            path: db/seed/dev/70_demo_submissions.sql
+            splitStatements: false
