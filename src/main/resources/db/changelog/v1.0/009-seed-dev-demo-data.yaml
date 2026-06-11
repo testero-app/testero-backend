@@ -3,6 +3,8 @@ databaseChangeLog:
       id: v1.0-seed-dev-demo
       author: testero
       context: dev
+      validCheckSum:
+        - 9:3ce2e4f671221287c8644317c4a3d0ee
       changes:
         - sqlFile:
             path: db/seed/dev/10_roles.sql
