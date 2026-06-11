@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0](https://github.com/testero-app/testero-backend/compare/v1.6.0...v1.7.0) (2026-06-11)
+
+
+### Features
+
+* add submission review endpoint with full snapshot data ([#84](https://github.com/testero-app/testero-backend/issues/84)) ([a33c1e4](https://github.com/testero-app/testero-backend/commit/a33c1e4fd1615b5fdf93979f90a733751c61dfc0))
+
+
+### Documentation
+
+* add v4 data model and v2 assessment flow diagrams (draw.io) ([#82](https://github.com/testero-app/testero-backend/issues/82)) ([7ab5d67](https://github.com/testero-app/testero-backend/commit/7ab5d670ea7bec1b014c2c77985117915b7956be))
+
 ## [1.6.0](https://github.com/testero-app/testero-backend/compare/v1.5.0...v1.6.0) (2026-06-11)
 
 
