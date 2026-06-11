@@ -26,8 +26,8 @@ public class UserAnswer {
     @Column(name = "submission_id", nullable = false)
     private UUID submissionId;
 
-    @Column(name = "question_id", nullable = false)
-    private UUID questionId;
+    @Column(name = "question_snapshot_id", nullable = false)
+    private UUID questionSnapshotId;
 
     @Column(nullable = false)
     private String type;

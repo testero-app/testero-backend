@@ -15,44 +15,21 @@ import lombok.Setter;
 /**
  * Application flow:
  *
- * - A user starts an Assessment -> a Submission is created (the "blank exam sheet")
- * - For each Question in the assessment, the user provides a response -> a UserAnswer is
- *   created, linked to this Submission and to the Question
- *     - If the Question is open-ended: UserAnswer contains text (the written response)
- *     - If the Question is multiple-choice: UserAnswer alone is not enough — the user
- *       selects one or more Options -> for each one, a record is created in
- *       UserAnswerSelectedOption (bridge table between UserAnswer and Option)
+ * A user starts an Assessment via a published snapshot -> a Submission is created.
+ *
+ * All references point to snapshot tables (immutable, frozen at publish time):
+ *   - Submission -> AssessmentSnapshot
+ *   - UserAnswer -> QuestionSnapshot
+ *   - UserAnswerSelectedOption -> OptionSnapshot
  *
  * Submission (the exam)
- *   └── UserAnswer (one response per question)
+ *   └── UserAnswer (one response per question snapshot)
  *         ├── text/motivation              -> for open-ended questions
  *         └── UserAnswerSelectedOption     -> for multiple-choice questions
- *               └── Option                 -> the selected option
+ *               └── OptionSnapshot         -> the selected option (frozen)
  *
- * UserAnswerSelectedOption exists because a multiple-choice question can have multiple
- * correct answers (checkboxes, not just radio buttons). If it were always a single
- * option, a simple selectedOptionId on UserAnswer would suffice.
- *
- * Scoring logic:
- *
- * The "correct" field on Option is the ground truth (defined by the teacher), while
- * "isCorrect" and "pointsAwarded" on UserAnswer are the result computed by the system.
- *   1. The user selects Options (via UserAnswerSelectedOption)
- *   2. The system compares selected options against the correct Options
- *   3. The system writes on UserAnswer: isCorrect and pointsAwarded (using ptsCorrect /
- *      ptsWrong from the Assessment)
- *
- * Why not just rely on Option.correct?
- *   - Scoring depends on the Assessment (ptsCorrect, ptsWrong) — the same question in
- *     different assessments can be worth different points
- *   - For open-ended questions there are no Options -> isCorrect must be
- *     calculated/assigned manually by the teacher
- *   - Materialising the result on UserAnswer avoids recalculating it every time and
- *     allows the teacher to override it (e.g. partial credit)
- *
- * Note: UserAnswerSelectedOption has neither isCorrect nor points — it is only a bridge
- * table. The overall judgement lives on UserAnswer, which looks at the set of selected
- * options vs the correct ones.
+ * Scoring uses snapshot data (ptsCorrect/ptsWrong from the snapshot, correct flags
+ * from OptionSnapshot). Results are materialized on UserAnswer (isCorrect, pointsAwarded).
  */
 @Entity
 @Table(name = "submission")
@@ -68,8 +45,8 @@ public class Submission {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "test_id", nullable = false)
-    private UUID assessmentId;
+    @Column(name = "assessment_snapshot_id", nullable = false)
+    private UUID assessmentSnapshotId;
 
     @Column(name = "started_at")
     private LocalDateTime startedAt;

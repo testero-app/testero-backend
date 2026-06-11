@@ -1,0 +1,59 @@
+package app.testero.entity.snapshot;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "assessment_snapshot")
+@Getter
+@Setter
+@NoArgsConstructor
+public class AssessmentSnapshot {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @Column(name = "assessment_id", nullable = false)
+    private UUID assessmentId;
+
+    @Column(name = "content_hash", nullable = false, length = 64)
+    private String contentHash;
+
+    @Column(nullable = false)
+    private int version;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(name = "timer_minutes", nullable = false)
+    private int timerMinutes;
+
+    @Column(name = "questions_per_assessment", nullable = false)
+    private int questionsPerAssessment;
+
+    @Column(name = "pts_correct", nullable = false)
+    private BigDecimal ptsCorrect;
+
+    @Column(name = "pts_wrong", nullable = false)
+    private BigDecimal ptsWrong;
+
+    @Column(name = "published_at", nullable = false)
+    private LocalDateTime publishedAt;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", insertable = false, updatable = false)
+    private LocalDateTime updatedAt;
+}

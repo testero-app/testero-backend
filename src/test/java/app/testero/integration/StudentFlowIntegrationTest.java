@@ -205,7 +205,7 @@ class StudentFlowIntegrationTest {
 
         for (Map<String, Object> result : answerResults) {
             assertThat(result).containsKey("is_correct");
-            assertThat(result).containsKey("correct_option_ids");
+            assertThat(result).containsKey("correct_option_snapshot_ids");
         }
     }
 

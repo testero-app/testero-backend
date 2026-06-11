@@ -16,5 +16,5 @@ import lombok.Setter;
 public class ClassAssessmentId implements Serializable {
 
     private UUID classId;
-    private UUID assessmentId;
+    private UUID assessmentSnapshotId;
 }

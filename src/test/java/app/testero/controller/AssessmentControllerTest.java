@@ -16,6 +16,7 @@ import app.testero.repository.StudentProfileRepository;
 import app.testero.security.JwtService;
 import app.testero.security.UserPrincipal;
 import app.testero.service.AssessmentService;
+import app.testero.service.SnapshotService;
 import app.testero.service.SubmissionService;
 
 import org.junit.jupiter.api.DisplayName;
@@ -52,6 +53,7 @@ class AssessmentControllerTest {
 
     @MockitoBean AssessmentService assessmentService;
     @MockitoBean SubmissionService submissionService;
+    @MockitoBean SnapshotService snapshotService;
     @MockitoBean StudentProfileRepository studentProfileRepository;
     @MockitoBean JwtService jwtService;
 

@@ -5,13 +5,13 @@ import app.testero.dto.AssessmentListResponse;
 import app.testero.dto.AssessmentQuestionsResponse;
 import app.testero.dto.AssessmentQuestionsResponse.OptionDto;
 import app.testero.dto.AssessmentQuestionsResponse.QuestionDto;
-import app.testero.entity.assessment.Assessment;
-import app.testero.entity.assessment.Option;
-import app.testero.entity.assessment.Question;
+import app.testero.entity.snapshot.AssessmentSnapshot;
+import app.testero.entity.snapshot.OptionSnapshot;
+import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.exception.ResourceNotFoundException;
-import app.testero.repository.AssessmentRepository;
-import app.testero.repository.OptionRepository;
-import app.testero.repository.QuestionRepository;
+import app.testero.repository.AssessmentSnapshotRepository;
+import app.testero.repository.OptionSnapshotRepository;
+import app.testero.repository.QuestionSnapshotRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -23,76 +23,74 @@ import java.util.stream.Collectors;
 @Service
 public class AssessmentService {
 
-    private final AssessmentRepository assessmentRepository;
-    private final QuestionRepository questionRepository;
-    private final OptionRepository optionRepository;
+    private final AssessmentSnapshotRepository snapshotRepository;
+    private final QuestionSnapshotRepository questionSnapshotRepository;
+    private final OptionSnapshotRepository optionSnapshotRepository;
     private final QuestionPrepService questionPrepService;
 
-    public AssessmentService(AssessmentRepository assessmentRepository,
-                             QuestionRepository questionRepository,
-                             OptionRepository optionRepository,
+    public AssessmentService(AssessmentSnapshotRepository snapshotRepository,
+                             QuestionSnapshotRepository questionSnapshotRepository,
+                             OptionSnapshotRepository optionSnapshotRepository,
                              QuestionPrepService questionPrepService) {
-        this.assessmentRepository = assessmentRepository;
-        this.questionRepository = questionRepository;
-        this.optionRepository = optionRepository;
+        this.snapshotRepository = snapshotRepository;
+        this.questionSnapshotRepository = questionSnapshotRepository;
+        this.optionSnapshotRepository = optionSnapshotRepository;
         this.questionPrepService = questionPrepService;
     }
 
     public AssessmentListResponse getAvailableAssessments(UUID classId) {
-        List<Assessment> assessments = assessmentRepository.findAssessmentsByClassId(classId);
+        List<AssessmentSnapshot> snapshots = snapshotRepository.findSnapshotsByClassId(classId);
 
-        List<AssessmentListResponse.AssessmentListItem> items = assessments.stream()
-                .map(a -> new AssessmentListResponse.AssessmentListItem(
-                        a.getId().toString(),
-                        a.getTitle(),
-                        a.getDate().toString(),
-                        a.getTimerMinutes(),
-                        a.getQuestionsPerAssessment()
+        List<AssessmentListResponse.AssessmentListItem> items = snapshots.stream()
+                .map(s -> new AssessmentListResponse.AssessmentListItem(
+                        s.getId().toString(),
+                        s.getTitle(),
+                        s.getPublishedAt().toLocalDate().toString(),
+                        s.getTimerMinutes(),
+                        s.getQuestionsPerAssessment()
                 ))
                 .toList();
 
         return new AssessmentListResponse(items);
     }
 
-    public AssessmentConfigResponse getAssessmentConfig(String assessmentId) {
-        Assessment assessment = findAssessmentOrThrow(assessmentId);
+    public AssessmentConfigResponse getAssessmentConfig(String snapshotId) {
+        AssessmentSnapshot snapshot = findSnapshotOrThrow(snapshotId);
 
         return new AssessmentConfigResponse(
-                assessment.getId().toString(),
-                assessment.getTitle(),
-                assessment.getDate().toString(),
-                assessment.getTimerMinutes(),
-                assessment.getTotalPool(),
-                assessment.getQuestionsPerAssessment(),
+                snapshot.getId().toString(),
+                snapshot.getTitle(),
+                snapshot.getPublishedAt().toLocalDate().toString(),
+                snapshot.getTimerMinutes(),
+                snapshot.getQuestionsPerAssessment(),
+                snapshot.getQuestionsPerAssessment(),
                 new AssessmentConfigResponse.ScoringRules(
-                        assessment.getPtsCorrect().doubleValue(),
-                        assessment.getPtsWrong().doubleValue()
+                        snapshot.getPtsCorrect().doubleValue(),
+                        snapshot.getPtsWrong().doubleValue()
                 )
         );
     }
 
-    public AssessmentQuestionsResponse getAssessmentQuestions(String assessmentId) {
-        Assessment assessment = findAssessmentOrThrow(assessmentId);
+    public AssessmentQuestionsResponse getAssessmentQuestions(String snapshotId) {
+        AssessmentSnapshot snapshot = findSnapshotOrThrow(snapshotId);
 
-        // Fetch all questions for the assessment, ordered by position
-        List<Question> questions = questionRepository.findByAssessmentIdOrderByPosition(assessment.getId());
-        List<UUID> questionIds = questions.stream().map(Question::getId).toList();
+        List<QuestionSnapshot> questions = questionSnapshotRepository
+                .findByAssessmentSnapshotIdOrderByPosition(snapshot.getId());
+        List<UUID> questionIds = questions.stream().map(QuestionSnapshot::getId).toList();
 
-        // Fetch all options for these questions in one query
-        List<Option> allOptions = questionIds.isEmpty()
+        List<OptionSnapshot> allOptions = questionIds.isEmpty()
                 ? List.of()
-                : optionRepository.findByQuestionIdInOrderByPosition(questionIds);
+                : optionSnapshotRepository.findByQuestionSnapshotIdInOrderByPosition(questionIds);
 
-        // Group options by question ID
-        Map<UUID, List<Option>> optionsByQuestion = allOptions.stream()
-                .collect(Collectors.groupingBy(Option::getQuestionId));
+        Map<UUID, List<OptionSnapshot>> optionsByQuestion = allOptions.stream()
+                .collect(Collectors.groupingBy(OptionSnapshot::getQuestionSnapshotId));
 
-        // Map to DTOs (including correct field stripped — we never include it)
         List<QuestionDto> questionDtos = questions.stream()
                 .map(q -> {
-                    List<Option> opts = optionsByQuestion.getOrDefault(q.getId(), List.of());
+                    List<OptionSnapshot> opts = optionsByQuestion
+                            .getOrDefault(q.getId(), List.of());
                     List<OptionDto> optionDtos = opts.stream()
-                            .map(o -> new OptionDto(o.getId().toString(), o.getText(), o.isFallback()))
+                            .map(o -> new OptionDto(o.getId().toString(), o.getText(), null))
                             .toList();
                     return new QuestionDto(
                             q.getId().toString(),
@@ -107,21 +105,21 @@ public class AssessmentService {
         // Run through preparation pipeline: random subset, shuffle, shuffle options
         List<QuestionDto> prepared = questionPrepService.prepare(
                 new ArrayList<>(questionDtos),
-                assessment.getQuestionsPerAssessment()
+                snapshot.getQuestionsPerAssessment()
         );
 
         return new AssessmentQuestionsResponse(
-                assessment.getId().toString(),
-                assessment.getTitle(),
-                assessment.getDate().toString(),
-                assessment.getTimerMinutes(),
+                snapshot.getId().toString(),
+                snapshot.getTitle(),
+                snapshot.getPublishedAt().toLocalDate().toString(),
+                snapshot.getTimerMinutes(),
                 prepared.size(),
                 prepared
         );
     }
 
-    private Assessment findAssessmentOrThrow(String assessmentId) {
-        return assessmentRepository.findById(UUID.fromString(assessmentId))
-                .orElseThrow(() -> new ResourceNotFoundException("Assessment not found"));
+    private AssessmentSnapshot findSnapshotOrThrow(String snapshotId) {
+        return snapshotRepository.findById(UUID.fromString(snapshotId))
+                .orElseThrow(() -> new ResourceNotFoundException("Assessment snapshot not found"));
     }
 }

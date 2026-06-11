@@ -1,4 +1,4 @@
-package app.testero.entity.submission;
+package app.testero.entity.snapshot;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -6,7 +6,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Getter;
@@ -14,22 +13,33 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "user_answer_selected_option",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"answer_id", "option_snapshot_id"}))
+@Table(name = "question_snapshot")
 @Getter
 @Setter
 @NoArgsConstructor
-public class UserAnswerSelectedOption {
+public class QuestionSnapshot {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "answer_id", nullable = false)
-    private UUID answerId;
+    @Column(name = "assessment_snapshot_id", nullable = false)
+    private UUID assessmentSnapshotId;
 
-    @Column(name = "option_snapshot_id", nullable = false)
-    private UUID optionSnapshotId;
+    @Column(name = "original_question_id")
+    private UUID originalQuestionId;
+
+    @Column(nullable = false)
+    private String type;
+
+    @Column(nullable = false, columnDefinition = "text")
+    private String text;
+
+    @Column(columnDefinition = "text")
+    private String code;
+
+    @Column(nullable = false)
+    private int position;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;

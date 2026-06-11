@@ -8,7 +8,7 @@ public record SubmissionHistoryResponse(
 ) {
     public record SubmissionSummary(
             String id,
-            @JsonProperty("assessment_id") String assessmentId,
+            @JsonProperty("assessment_snapshot_id") String assessmentSnapshotId,
             @JsonProperty("assessment_title") String assessmentTitle,
             @JsonProperty("started_at") String startedAt,
             @JsonProperty("submitted_at") String submittedAt,
