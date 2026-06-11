@@ -2,6 +2,7 @@ package app.testero.controller;
 
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionHistoryResponse;
+import app.testero.dto.SubmissionReviewResponse;
 import app.testero.dto.SubmissionSubmitRequest;
 import app.testero.security.UserPrincipal;
 import app.testero.service.SubmissionService;
@@ -50,5 +51,13 @@ public class SubmissionController {
         SubmissionFeedbackResponse response = submissionService.getSubmission(
                 submissionId, principal.userId());
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{submissionId}/review")
+    public ResponseEntity<SubmissionReviewResponse> getSubmissionReview(
+            @PathVariable UUID submissionId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(
+                submissionService.getSubmissionReview(submissionId, principal.userId()));
     }
 }

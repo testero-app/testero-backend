@@ -5,10 +5,14 @@ import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
 import app.testero.dto.SubmissionHistoryResponse;
 import app.testero.dto.SubmissionHistoryResponse.SubmissionSummary;
+import app.testero.dto.SubmissionReviewResponse;
+import app.testero.dto.SubmissionReviewResponse.ReviewOption;
+import app.testero.dto.SubmissionReviewResponse.ReviewQuestion;
 import app.testero.dto.SubmissionStartResponse;
 import app.testero.dto.SubmissionSubmitRequest;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
+import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.UserAnswer;
 import app.testero.entity.submission.UserAnswerSelectedOption;
@@ -16,6 +20,7 @@ import app.testero.exception.IllegalSubmissionStateException;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.OptionSnapshotRepository;
+import app.testero.repository.QuestionSnapshotRepository;
 import app.testero.repository.SubmissionRepository;
 import app.testero.repository.UserAnswerRepository;
 import app.testero.repository.UserAnswerSelectedOptionRepository;
@@ -41,17 +46,20 @@ public class SubmissionService {
     private final UserAnswerSelectedOptionRepository userAnswerSelectedOptionRepository;
     private final OptionSnapshotRepository optionSnapshotRepository;
     private final AssessmentSnapshotRepository assessmentSnapshotRepository;
+    private final QuestionSnapshotRepository questionSnapshotRepository;
 
     public SubmissionService(SubmissionRepository submissionRepository,
                              UserAnswerRepository userAnswerRepository,
                              UserAnswerSelectedOptionRepository userAnswerSelectedOptionRepository,
                              OptionSnapshotRepository optionSnapshotRepository,
-                             AssessmentSnapshotRepository assessmentSnapshotRepository) {
+                             AssessmentSnapshotRepository assessmentSnapshotRepository,
+                             QuestionSnapshotRepository questionSnapshotRepository) {
         this.submissionRepository = submissionRepository;
         this.userAnswerRepository = userAnswerRepository;
         this.userAnswerSelectedOptionRepository = userAnswerSelectedOptionRepository;
         this.optionSnapshotRepository = optionSnapshotRepository;
         this.assessmentSnapshotRepository = assessmentSnapshotRepository;
+        this.questionSnapshotRepository = questionSnapshotRepository;
     }
 
     @Transactional
@@ -323,5 +331,96 @@ public class SubmissionService {
                 .toList();
 
         return new SubmissionHistoryResponse(summaries);
+    }
+
+    @Transactional(readOnly = true)
+    public SubmissionReviewResponse getSubmissionReview(UUID submissionId, UUID userId) {
+        Submission submission = submissionRepository.findByIdAndUserId(submissionId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Submission not found"));
+
+        if (submission.getSubmittedAt() == null) {
+            throw new IllegalSubmissionStateException("Submission not yet completed");
+        }
+
+        AssessmentSnapshot snapshot = assessmentSnapshotRepository
+                .findById(submission.getAssessmentSnapshotId())
+                .orElseThrow(() -> new ResourceNotFoundException("Assessment snapshot not found"));
+
+        List<QuestionSnapshot> questions = questionSnapshotRepository
+                .findByAssessmentSnapshotIdOrderByPosition(snapshot.getId());
+
+        List<UUID> questionIds = questions.stream()
+                .map(QuestionSnapshot::getId)
+                .toList();
+
+        // Fetch all options for these questions
+        List<OptionSnapshot> allOptions = questionIds.isEmpty()
+                ? List.of()
+                : optionSnapshotRepository.findByQuestionSnapshotIdInOrderByPosition(questionIds);
+        Map<UUID, List<OptionSnapshot>> optionsByQuestion = allOptions.stream()
+                .collect(Collectors.groupingBy(OptionSnapshot::getQuestionSnapshotId));
+
+        // Fetch user answers
+        List<UserAnswer> answers = userAnswerRepository.findBySubmissionId(submissionId);
+        Map<UUID, UserAnswer> answerByQuestion = new HashMap<>();
+        for (UserAnswer a : answers) {
+            answerByQuestion.put(a.getQuestionSnapshotId(), a);
+        }
+
+        // Fetch selected options
+        List<UUID> answerIds = answers.stream().map(UserAnswer::getId).toList();
+        List<UserAnswerSelectedOption> selectedOptions = answerIds.isEmpty()
+                ? List.of()
+                : userAnswerSelectedOptionRepository.findByAnswerIdIn(answerIds);
+        Map<UUID, List<UserAnswerSelectedOption>> selectedByAnswer = selectedOptions.stream()
+                .collect(Collectors.groupingBy(UserAnswerSelectedOption::getAnswerId));
+
+        // Assemble review questions
+        List<ReviewQuestion> reviewQuestions = questions.stream()
+                .map(q -> {
+                    UserAnswer answer = answerByQuestion.get(q.getId());
+
+                    List<String> selectedOptionIds = List.of();
+                    if (answer != null) {
+                        List<UserAnswerSelectedOption> sel = selectedByAnswer
+                                .getOrDefault(answer.getId(), List.of());
+                        selectedOptionIds = sel.stream()
+                                .map(s -> s.getOptionSnapshotId().toString())
+                                .toList();
+                    }
+
+                    List<ReviewOption> reviewOptions = optionsByQuestion
+                            .getOrDefault(q.getId(), List.of()).stream()
+                            .map(o -> new ReviewOption(
+                                    o.getId().toString(),
+                                    o.getText(),
+                                    o.getPosition(),
+                                    o.isCorrect()
+                            ))
+                            .toList();
+
+                    return new ReviewQuestion(
+                            q.getId().toString(),
+                            q.getType(),
+                            q.getText(),
+                            q.getCode(),
+                            q.getPosition(),
+                            answer != null ? answer.getIsCorrect() : null,
+                            selectedOptionIds,
+                            answer != null ? answer.getText() : null,
+                            answer != null ? answer.getMotivation() : null,
+                            reviewOptions
+                    );
+                })
+                .toList();
+
+        return new SubmissionReviewResponse(
+                submission.getId().toString(),
+                snapshot.getTitle(),
+                submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
+                submission.getSubmittedAt().toString(),
+                submission.getScore(),
+                reviewQuestions
+        );
     }
 }
