@@ -2,9 +2,12 @@ package app.testero.fixture;
 
 import app.testero.entity.assessment.Assessment;
 import app.testero.entity.assessment.Option;
+import app.testero.entity.snapshot.AssessmentSnapshot;
+import app.testero.entity.snapshot.OptionSnapshot;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +24,7 @@ public final class PythonCertificationFixture {
 
     // ── Test configuration (from prod seed) ────────────────────────
     public static final UUID TEST_ID = UUID.fromString("aa000000-0000-0000-0000-000000000001");
+    public static final UUID SNAPSHOT_ID = UUID.fromString("aa000000-0000-0000-0000-000000000099");
     public static final String TITLE = "Grading Test Fixture";
     public static final LocalDate DATE = LocalDate.of(2026, 6, 15);
     public static final int TIMER_MINUTES = 45;
@@ -94,6 +98,27 @@ public final class PythonCertificationFixture {
         return assessment;
     }
 
+    /** Build the assessment snapshot entity with default scoring (1.00 / -0.25). */
+    public static AssessmentSnapshot buildAssessmentSnapshot() {
+        return buildAssessmentSnapshot(PTS_CORRECT, PTS_WRONG);
+    }
+
+    /** Build the assessment snapshot entity with custom scoring. */
+    public static AssessmentSnapshot buildAssessmentSnapshot(BigDecimal ptsCorrect, BigDecimal ptsWrong) {
+        AssessmentSnapshot snapshot = new AssessmentSnapshot();
+        snapshot.setId(SNAPSHOT_ID);
+        snapshot.setAssessmentId(TEST_ID);
+        snapshot.setContentHash("fixture-hash");
+        snapshot.setVersion(1);
+        snapshot.setTitle(TITLE);
+        snapshot.setTimerMinutes(TIMER_MINUTES);
+        snapshot.setQuestionsPerAssessment(QUESTIONS_PER_ASSESSMENT);
+        snapshot.setPtsCorrect(ptsCorrect);
+        snapshot.setPtsWrong(ptsWrong);
+        snapshot.setPublishedAt(LocalDateTime.of(2026, 6, 15, 0, 0));
+        return snapshot;
+    }
+
     /** Correct options for Q1 through Q5 (one correct each). */
     public static List<Option> allCorrectOptions() {
         return List.of(
@@ -113,6 +138,25 @@ public final class PythonCertificationFixture {
                 .toList();
     }
 
+    /** Correct option snapshots for Q1 through Q5 (one correct each). */
+    public static List<OptionSnapshot> allCorrectOptionSnapshots() {
+        return List.of(
+                buildOptionSnapshot(Q1_OPT_C, Q1_ID, "Option Q1-3-correct", true, 3),
+                buildOptionSnapshot(Q2_OPT_D, Q2_ID, "Option Q2-4-correct", true, 4),
+                buildOptionSnapshot(Q3_OPT_B, Q3_ID, "Option Q3-2-correct", true, 2),
+                buildOptionSnapshot(Q4_OPT_A, Q4_ID, "Option Q4-1-correct", true, 1),
+                buildOptionSnapshot(Q5_OPT_A, Q5_ID, "Option Q5-1-correct", true, 1)
+        );
+    }
+
+    /** Correct option snapshots for a specific subset of question snapshot IDs. */
+    public static List<OptionSnapshot> correctOptionSnapshotsFor(UUID... questionSnapshotIds) {
+        List<UUID> ids = List.of(questionSnapshotIds);
+        return allCorrectOptionSnapshots().stream()
+                .filter(opt -> ids.contains(opt.getQuestionSnapshotId()))
+                .toList();
+    }
+
     /** Build a single option entity. */
     public static Option buildOption(UUID id, UUID questionId, String text,
                                      boolean correct, boolean fallback, int position) {
@@ -126,9 +170,27 @@ public final class PythonCertificationFixture {
         return opt;
     }
 
+    /** Build a single option snapshot entity. */
+    public static OptionSnapshot buildOptionSnapshot(UUID id, UUID questionSnapshotId,
+                                                      String text, boolean correct, int position) {
+        OptionSnapshot opt = new OptionSnapshot();
+        opt.setId(id);
+        opt.setQuestionSnapshotId(questionSnapshotId);
+        opt.setText(text);
+        opt.setCorrect(correct);
+        opt.setPosition(position);
+        return opt;
+    }
+
     /** Build a fallback "Nessuna" option for Q1. */
     public static Option buildFallbackOption(boolean correct) {
         return buildOption(Q1_OPT_FALLBACK, Q1_ID, "Option Q1-5-fallback",
                 correct, true, 5);
+    }
+
+    /** Build a fallback "Nessuna" option snapshot for Q1. */
+    public static OptionSnapshot buildFallbackOptionSnapshot(boolean correct) {
+        return buildOptionSnapshot(Q1_OPT_FALLBACK, Q1_ID, "Option Q1-5-fallback",
+                correct, 5);
     }
 }

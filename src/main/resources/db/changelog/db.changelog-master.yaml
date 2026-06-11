@@ -21,3 +21,7 @@ databaseChangeLog:
       file: db/changelog/v1.1/001-drop-test-start-and-alter-submission.yaml
   - include:
       file: db/changelog/v1.1/002-add-audit-fields.yaml
+  - include:
+      file: db/changelog/v1.2/001-create-snapshot-tables.yaml
+  - include:
+      file: db/changelog/v1.2/002-seed-dev-snapshot-data.yaml

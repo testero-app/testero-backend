@@ -9,6 +9,7 @@ import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.StudentProfileRepository;
 import app.testero.security.UserPrincipal;
 import app.testero.service.AssessmentService;
+import app.testero.service.SnapshotService;
 import app.testero.service.SubmissionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,13 +28,16 @@ public class AssessmentController {
 
     private final AssessmentService assessmentService;
     private final SubmissionService submissionService;
+    private final SnapshotService snapshotService;
     private final StudentProfileRepository studentProfileRepository;
 
     public AssessmentController(AssessmentService assessmentService,
                                 SubmissionService submissionService,
+                                SnapshotService snapshotService,
                                 StudentProfileRepository studentProfileRepository) {
         this.assessmentService = assessmentService;
         this.submissionService = submissionService;
+        this.snapshotService = snapshotService;
         this.studentProfileRepository = studentProfileRepository;
     }
 
@@ -46,26 +50,34 @@ public class AssessmentController {
         return ResponseEntity.ok(assessmentService.getAvailableAssessments(classId));
     }
 
-    @GetMapping("/{assessmentId}/config")
+    @GetMapping("/{snapshotId}/config")
     public ResponseEntity<AssessmentConfigResponse> getAssessmentConfig(
-            @PathVariable String assessmentId,
+            @PathVariable String snapshotId,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(assessmentService.getAssessmentConfig(assessmentId));
+        return ResponseEntity.ok(assessmentService.getAssessmentConfig(snapshotId));
     }
 
-    @PostMapping("/{assessmentId}/start")
+    @PostMapping("/{snapshotId}/start")
     public ResponseEntity<SubmissionStartResponse> startAssessment(
-            @PathVariable String assessmentId,
+            @PathVariable String snapshotId,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(submissionService.startSubmission(
-                        UUID.fromString(assessmentId), principal.userId()));
+                        UUID.fromString(snapshotId), principal.userId()));
     }
 
-    @GetMapping("/{assessmentId}/questions")
+    @GetMapping("/{snapshotId}/questions")
     public ResponseEntity<AssessmentQuestionsResponse> getAssessmentQuestions(
-            @PathVariable String assessmentId,
+            @PathVariable String snapshotId,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(assessmentService.getAssessmentQuestions(assessmentId));
+        return ResponseEntity.ok(assessmentService.getAssessmentQuestions(snapshotId));
+    }
+
+    @PostMapping("/{assessmentId}/publish")
+    public ResponseEntity<Void> publishAssessment(
+            @PathVariable UUID assessmentId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        snapshotService.publishSnapshot(assessmentId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }

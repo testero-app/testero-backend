@@ -1,4 +1,7 @@
 -- Demo test — Programming Basics (5 questions)
+-- Creates the assessment draft (questions + options).
+-- Snapshot publishing and class assignment happen in 60_demo_test_snapshot.sql
+-- (after the v1.2 migration creates the snapshot tables).
 DO $$
 DECLARE
   v_test_id uuid;
@@ -15,15 +18,12 @@ BEGIN
   ON CONFLICT DO NOTHING;
   SELECT id INTO v_subject_id FROM subject WHERE label = 'Programming';
 
-  -- Test
+  -- Test (draft)
   v_test_id := gen_random_uuid();
   INSERT INTO test (id, title, date, timer_minutes, total_pool, questions_per_test, pts_correct, pts_wrong)
   VALUES (v_test_id, 'Programming Basics — Demo', '2026-12-31', 30, 5, 5, 1.00, -0.25);
 
   INSERT INTO test_subject (test_id, subject_id) VALUES (v_test_id, v_subject_id);
-
-  INSERT INTO class_test (class_id, test_id, activated_at)
-  SELECT c.id, v_test_id, NOW() FROM user_class c WHERE c.name = 'Demo-2026';
 
   -- Q1
   v_q_id := gen_random_uuid();

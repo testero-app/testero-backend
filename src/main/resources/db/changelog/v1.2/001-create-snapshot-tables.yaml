@@ -1,0 +1,373 @@
+databaseChangeLog:
+  # ── Step 1: Create snapshot tables ──────────────────────────────
+  - changeSet:
+      id: v1.2-001-create-assessment-snapshot
+      author: testero
+      comment: >
+        Frozen copy of an assessment at publish time. Each publish creates
+        a new row only when the content hash changes.
+      changes:
+        - createTable:
+            tableName: assessment_snapshot
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: assessment_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content_hash
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: timer_minutes
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: questions_per_assessment
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: pts_correct
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: pts_wrong
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: published_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addForeignKeyConstraint:
+            baseTableName: assessment_snapshot
+            baseColumnNames: assessment_id
+            referencedTableName: test
+            referencedColumnNames: id
+            constraintName: fk_assessment_snapshot_assessment_id
+        - addUniqueConstraint:
+            tableName: assessment_snapshot
+            columnNames: assessment_id, content_hash
+            constraintName: uq_assessment_snapshot_hash
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_assessment_snapshot_updated_at
+              BEFORE UPDATE ON assessment_snapshot
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+      rollback:
+        - sql:
+            sql: >-
+              DROP TRIGGER IF EXISTS trg_assessment_snapshot_updated_at
+              ON assessment_snapshot;
+        - dropTable:
+            tableName: assessment_snapshot
+
+  - changeSet:
+      id: v1.2-002-create-question-snapshot
+      author: testero
+      comment: >
+        Frozen copy of a question, linked to an assessment snapshot.
+      changes:
+        - createTable:
+            tableName: question_snapshot
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: assessment_snapshot_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: original_question_id
+                  type: uuid
+              - column:
+                  name: type
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: text
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: code
+                  type: text
+              - column:
+                  name: position
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addForeignKeyConstraint:
+            baseTableName: question_snapshot
+            baseColumnNames: assessment_snapshot_id
+            referencedTableName: assessment_snapshot
+            referencedColumnNames: id
+            constraintName: fk_question_snapshot_assessment_snapshot_id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: question_snapshot
+            baseColumnNames: original_question_id
+            referencedTableName: question
+            referencedColumnNames: id
+            constraintName: fk_question_snapshot_original_question_id
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_question_snapshot_updated_at
+              BEFORE UPDATE ON question_snapshot
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+      rollback:
+        - sql:
+            sql: >-
+              DROP TRIGGER IF EXISTS trg_question_snapshot_updated_at
+              ON question_snapshot;
+        - dropTable:
+            tableName: question_snapshot
+
+  - changeSet:
+      id: v1.2-003-create-option-snapshot
+      author: testero
+      comment: >
+        Frozen copy of an option, linked to a question snapshot.
+      changes:
+        - createTable:
+            tableName: option_snapshot
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: question_snapshot_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: original_option_id
+                  type: uuid
+              - column:
+                  name: text
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_correct
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addForeignKeyConstraint:
+            baseTableName: option_snapshot
+            baseColumnNames: question_snapshot_id
+            referencedTableName: question_snapshot
+            referencedColumnNames: id
+            constraintName: fk_option_snapshot_question_snapshot_id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: option_snapshot
+            baseColumnNames: original_option_id
+            referencedTableName: option
+            referencedColumnNames: id
+            constraintName: fk_option_snapshot_original_option_id
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_option_snapshot_updated_at
+              BEFORE UPDATE ON option_snapshot
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+      rollback:
+        - sql:
+            sql: >-
+              DROP TRIGGER IF EXISTS trg_option_snapshot_updated_at
+              ON option_snapshot;
+        - dropTable:
+            tableName: option_snapshot
+
+  # ── Step 2: Migrate FKs on existing tables ─────────────────────
+  - changeSet:
+      id: v1.2-004-migrate-class-test-fk
+      author: testero
+      comment: >
+        Replace class_test.test_id with assessment_snapshot_id.
+        Drops existing data (breaking change, no backward compat).
+      changes:
+        - sql:
+            sql: DELETE FROM class_test;
+        - dropPrimaryKey:
+            tableName: class_test
+            constraintName: pk_class_test
+        - dropForeignKeyConstraint:
+            baseTableName: class_test
+            constraintName: fk_class_test_test_id
+        - dropColumn:
+            tableName: class_test
+            columnName: test_id
+        - addColumn:
+            tableName: class_test
+            columns:
+              - column:
+                  name: assessment_snapshot_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: class_test
+            columnNames: class_id, assessment_snapshot_id
+            constraintName: pk_class_test
+        - addForeignKeyConstraint:
+            baseTableName: class_test
+            baseColumnNames: assessment_snapshot_id
+            referencedTableName: assessment_snapshot
+            referencedColumnNames: id
+            constraintName: fk_class_test_assessment_snapshot_id
+
+  - changeSet:
+      id: v1.2-005-migrate-submission-fk
+      author: testero
+      comment: >
+        Replace submission.test_id with assessment_snapshot_id.
+        Drops existing data (breaking change).
+      changes:
+        - sql:
+            sql: DELETE FROM submission;
+        - dropForeignKeyConstraint:
+            baseTableName: submission
+            constraintName: fk_submission_test_id
+        - dropColumn:
+            tableName: submission
+            columnName: test_id
+        - addColumn:
+            tableName: submission
+            columns:
+              - column:
+                  name: assessment_snapshot_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: submission
+            baseColumnNames: assessment_snapshot_id
+            referencedTableName: assessment_snapshot
+            referencedColumnNames: id
+            constraintName: fk_submission_assessment_snapshot_id
+
+  - changeSet:
+      id: v1.2-006-migrate-user-answer-fk
+      author: testero
+      comment: >
+        Replace user_answer.question_id with question_snapshot_id.
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: user_answer
+            constraintName: fk_user_answer_question_id
+        - dropColumn:
+            tableName: user_answer
+            columnName: question_id
+        - addColumn:
+            tableName: user_answer
+            columns:
+              - column:
+                  name: question_snapshot_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: user_answer
+            baseColumnNames: question_snapshot_id
+            referencedTableName: question_snapshot
+            referencedColumnNames: id
+            constraintName: fk_user_answer_question_snapshot_id
+
+  - changeSet:
+      id: v1.2-007-migrate-user-answer-selected-option-fk
+      author: testero
+      comment: >
+        Replace user_answer_selected_option.option_id with option_snapshot_id.
+      changes:
+        - dropUniqueConstraint:
+            tableName: user_answer_selected_option
+            constraintName: uq_user_answer_selected_option
+        - dropForeignKeyConstraint:
+            baseTableName: user_answer_selected_option
+            constraintName: fk_user_answer_selected_option_option_id
+        - dropColumn:
+            tableName: user_answer_selected_option
+            columnName: option_id
+        - addColumn:
+            tableName: user_answer_selected_option
+            columns:
+              - column:
+                  name: option_snapshot_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: user_answer_selected_option
+            columnNames: answer_id, option_snapshot_id
+            constraintName: uq_user_answer_selected_option
+        - addForeignKeyConstraint:
+            baseTableName: user_answer_selected_option
+            baseColumnNames: option_snapshot_id
+            referencedTableName: option_snapshot
+            referencedColumnNames: id
+            constraintName: fk_user_answer_selected_option_option_snapshot_id
