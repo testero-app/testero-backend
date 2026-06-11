@@ -20,9 +20,9 @@ This repository contains the **backend API**. The web frontend lives in
 
 ## Architecture
 
-![Data Model](docs/data_model_v3.png)
+![Data Model](docs/data_model_v4.png)
 
-![Assessment Flow](docs/assessment_flow_v1.png)
+![Assessment Flow](docs/assessment_flow_v2.png)
 
 ## Getting Started
 
