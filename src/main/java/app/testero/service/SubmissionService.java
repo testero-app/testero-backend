@@ -1,6 +1,7 @@
 package app.testero.service;
 
 import app.testero.dto.AnswerInput;
+import app.testero.dto.SaveAnswerRequest;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
 import app.testero.dto.SubmissionHistoryResponse;
@@ -14,8 +15,11 @@ import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.submission.Submission;
+import app.testero.entity.submission.SubmissionStatus;
 import app.testero.entity.submission.UserAnswer;
 import app.testero.entity.submission.UserAnswerSelectedOption;
+import app.testero.event.SubmissionCompletedEvent;
+import app.testero.event.SubmissionStartedEvent;
 import app.testero.exception.IllegalSubmissionStateException;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentSnapshotRepository;
@@ -24,10 +28,12 @@ import app.testero.repository.QuestionSnapshotRepository;
 import app.testero.repository.SubmissionRepository;
 import app.testero.repository.UserAnswerRepository;
 import app.testero.repository.UserAnswerSelectedOptionRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,29 +53,33 @@ public class SubmissionService {
     private final OptionSnapshotRepository optionSnapshotRepository;
     private final AssessmentSnapshotRepository assessmentSnapshotRepository;
     private final QuestionSnapshotRepository questionSnapshotRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public SubmissionService(SubmissionRepository submissionRepository,
                              UserAnswerRepository userAnswerRepository,
                              UserAnswerSelectedOptionRepository userAnswerSelectedOptionRepository,
                              OptionSnapshotRepository optionSnapshotRepository,
                              AssessmentSnapshotRepository assessmentSnapshotRepository,
-                             QuestionSnapshotRepository questionSnapshotRepository) {
+                             QuestionSnapshotRepository questionSnapshotRepository,
+                             ApplicationEventPublisher eventPublisher) {
         this.submissionRepository = submissionRepository;
         this.userAnswerRepository = userAnswerRepository;
         this.userAnswerSelectedOptionRepository = userAnswerSelectedOptionRepository;
         this.optionSnapshotRepository = optionSnapshotRepository;
         this.assessmentSnapshotRepository = assessmentSnapshotRepository;
         this.questionSnapshotRepository = questionSnapshotRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
     public SubmissionStartResponse startSubmission(UUID assessmentSnapshotId, UUID userId) {
-        assessmentSnapshotRepository.findById(assessmentSnapshotId)
+        AssessmentSnapshot snapshot = assessmentSnapshotRepository.findById(assessmentSnapshotId)
                 .orElseThrow(() -> new ResourceNotFoundException("Assessment snapshot not found"));
 
         // Idempotent: if the user has an in-progress submission for this snapshot, return it.
         Optional<Submission> existing = submissionRepository
-                .findByAssessmentSnapshotIdAndUserIdAndSubmittedAtIsNull(assessmentSnapshotId, userId);
+                .findByAssessmentSnapshotIdAndUserIdAndStatus(
+                        assessmentSnapshotId, userId, SubmissionStatus.IN_PROGRESS);
         if (existing.isPresent()) {
             Submission s = existing.get();
             return new SubmissionStartResponse(
@@ -81,8 +91,19 @@ public class SubmissionService {
         Submission submission = new Submission();
         submission.setUserId(userId);
         submission.setAssessmentSnapshotId(assessmentSnapshotId);
+        submission.setStatus(SubmissionStatus.IN_PROGRESS);
         submission.setStartedAt(LocalDateTime.now());
         submission = submissionRepository.save(submission);
+
+        // Schedule auto-close at startedAt + timerMinutes + 1s grace
+        eventPublisher.publishEvent(new SubmissionStartedEvent(
+                submission.getId(),
+                submission.getStartedAt()
+                        .plusMinutes(snapshot.getTimerMinutes())
+                        .plusSeconds(1)
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant()
+        ));
 
         return new SubmissionStartResponse(
                 submission.getId().toString(),
@@ -91,21 +112,82 @@ public class SubmissionService {
     }
 
     @Transactional
+    public void saveAnswer(UUID submissionId, UUID questionSnapshotId,
+                           UUID userId, SaveAnswerRequest request) {
+        Submission submission = submissionRepository.findByIdAndUserId(submissionId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Submission not found"));
+
+        if (submission.getStatus() != SubmissionStatus.IN_PROGRESS) {
+            throw new IllegalSubmissionStateException("Submission is not in progress");
+        }
+
+        // Validate question belongs to this submission's assessment snapshot
+        questionSnapshotRepository.findById(questionSnapshotId)
+                .filter(q -> q.getAssessmentSnapshotId().equals(submission.getAssessmentSnapshotId()))
+                .orElseThrow(() -> new ResourceNotFoundException("Question not found in this assessment"));
+
+        // Upsert: find existing or create new
+        Optional<UserAnswer> existingAnswer = userAnswerRepository
+                .findBySubmissionIdAndQuestionSnapshotId(submissionId, questionSnapshotId);
+
+        UserAnswer answer;
+        if (existingAnswer.isPresent()) {
+            answer = existingAnswer.get();
+            answer.setType(request.type());
+            answer.setText(request.text() != null ? request.text() : "");
+            answer.setMotivation(request.motivation() != null ? request.motivation() : "");
+            // Clear old selected options
+            userAnswerSelectedOptionRepository.deleteByAnswerId(answer.getId());
+        } else {
+            answer = new UserAnswer();
+            answer.setSubmissionId(submissionId);
+            answer.setQuestionSnapshotId(questionSnapshotId);
+            answer.setType(request.type());
+            answer.setText(request.text() != null ? request.text() : "");
+            answer.setMotivation(request.motivation() != null ? request.motivation() : "");
+        }
+        answer = userAnswerRepository.save(answer);
+
+        // Save selected options
+        if (!request.selectedOptionIds().isEmpty()) {
+            List<UserAnswerSelectedOption> options = new ArrayList<>();
+            for (String optionId : request.selectedOptionIds()) {
+                UserAnswerSelectedOption aso = new UserAnswerSelectedOption();
+                aso.setAnswerId(answer.getId());
+                aso.setOptionSnapshotId(UUID.fromString(optionId));
+                options.add(aso);
+            }
+            userAnswerSelectedOptionRepository.saveAll(options);
+        }
+    }
+
+    @Transactional
     public SubmissionFeedbackResponse submitAnswers(UUID submissionId, UUID userId,
                                                      SubmissionSubmitRequest request) {
         Submission submission = submissionRepository.findByIdAndUserId(submissionId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Submission not found"));
 
-        if (submission.getSubmittedAt() != null) {
+        if (submission.getStatus() != SubmissionStatus.IN_PROGRESS) {
             throw new IllegalSubmissionStateException("Submission already completed");
         }
 
-        UUID snapshotId = submission.getAssessmentSnapshotId();
-
-        // 1. Set submitted timestamp
+        // 1. Set submitted timestamp and status
         submission.setSubmittedAt(LocalDateTime.now());
+        submission.setStatus(SubmissionStatus.SUBMITTED);
 
-        // 2. Create answer records (referencing question snapshots)
+        // 2. Delete any pre-existing answers from incremental saves
+        List<UserAnswer> existingAnswers = userAnswerRepository.findBySubmissionId(submissionId);
+        if (!existingAnswers.isEmpty()) {
+            List<UUID> existingAnswerIds = existingAnswers.stream()
+                    .map(UserAnswer::getId).toList();
+            if (!existingAnswerIds.isEmpty()) {
+                userAnswerSelectedOptionRepository.findByAnswerIdIn(existingAnswerIds)
+                        .forEach(aso -> userAnswerSelectedOptionRepository.delete(aso));
+            }
+            userAnswerRepository.deleteAll(existingAnswers);
+        }
+
+        // 3. Create answer records (referencing question snapshots)
         List<UserAnswer> answers = new ArrayList<>();
         for (AnswerInput input : request.answers()) {
             UserAnswer answer = new UserAnswer();
@@ -118,7 +200,7 @@ public class SubmissionService {
         }
         answers = userAnswerRepository.saveAll(answers);
 
-        // 3. Create answer_selected_option records (referencing option snapshots)
+        // 4. Create answer_selected_option records (referencing option snapshots)
         Map<UUID, UserAnswer> answerByQuestion = new HashMap<>();
         for (UserAnswer a : answers) {
             answerByQuestion.put(a.getQuestionSnapshotId(), a);
@@ -140,78 +222,12 @@ public class SubmissionService {
             userAnswerSelectedOptionRepository.saveAll(selectedOptions);
         }
 
-        // 4. Fetch snapshot scoring rules
-        AssessmentSnapshot snapshot = assessmentSnapshotRepository.findById(snapshotId)
-                .orElseThrow(() -> new ResourceNotFoundException("Assessment snapshot not found"));
-        double ptsCorrect = snapshot.getPtsCorrect().doubleValue();
-        double ptsWrong = snapshot.getPtsWrong().doubleValue();
+        // 5. Score and save
+        List<AnswerResult> answerResults = scoreSubmission(submission, answers, selectedOptions);
 
-        // 5. Fetch correct options from option_snapshot for all MC questions
-        List<UUID> mcQuestionSnapshotIds = answers.stream()
-                .filter(a -> "multiple".equals(a.getType()))
-                .map(UserAnswer::getQuestionSnapshotId)
-                .toList();
+        // 6. Notify scheduler to cancel auto-close
+        eventPublisher.publishEvent(new SubmissionCompletedEvent(submission.getId()));
 
-        Map<UUID, Set<UUID>> correctMap = new HashMap<>();
-        if (!mcQuestionSnapshotIds.isEmpty()) {
-            List<OptionSnapshot> correctOptions = optionSnapshotRepository
-                    .findByQuestionSnapshotIdInAndCorrectTrue(mcQuestionSnapshotIds);
-            for (OptionSnapshot opt : correctOptions) {
-                correctMap.computeIfAbsent(opt.getQuestionSnapshotId(), k -> new HashSet<>())
-                        .add(opt.getId());
-            }
-        }
-
-        // Build selected options map: answerId -> set of selected option snapshot IDs
-        Map<UUID, Set<UUID>> selectedByAnswer = new HashMap<>();
-        for (UserAnswerSelectedOption aso : selectedOptions) {
-            selectedByAnswer.computeIfAbsent(aso.getAnswerId(), k -> new HashSet<>())
-                    .add(aso.getOptionSnapshotId());
-        }
-
-        // 6. Score each answer
-        double totalScore = 0.0;
-        List<AnswerResult> answerResults = new ArrayList<>();
-
-        for (UserAnswer answer : answers) {
-            if ("multiple".equals(answer.getType())) {
-                Set<UUID> correctIds = correctMap.getOrDefault(answer.getQuestionSnapshotId(), Set.of());
-                Set<UUID> selectedIds = selectedByAnswer.getOrDefault(answer.getId(), Set.of());
-
-                if (selectedIds.isEmpty()) {
-                    answer.setIsCorrect(null);
-                    answer.setPointsAwarded(0.0);
-                } else {
-                    boolean isCorrect = selectedIds.equals(correctIds);
-                    double points = isCorrect ? ptsCorrect : ptsWrong;
-                    answer.setIsCorrect(isCorrect);
-                    answer.setPointsAwarded(points);
-                    totalScore += points;
-                }
-
-                userAnswerRepository.save(answer);
-
-                answerResults.add(new AnswerResult(
-                        answer.getQuestionSnapshotId().toString(),
-                        "multiple",
-                        answer.getIsCorrect(),
-                        correctIds.stream().map(UUID::toString).toList()
-                ));
-            } else {
-                answerResults.add(new AnswerResult(
-                        answer.getQuestionSnapshotId().toString(),
-                        "open",
-                        null,
-                        List.of()
-                ));
-            }
-        }
-
-        // 7. Update submission score
-        submission.setScore(totalScore);
-        submissionRepository.save(submission);
-
-        // 8. Return feedback
         return new SubmissionFeedbackResponse(
                 submission.getId().toString(),
                 submission.getUserId().toString(),
@@ -220,6 +236,30 @@ public class SubmissionService {
                 submission.getSubmittedAt().toString(),
                 answerResults
         );
+    }
+
+    @Transactional
+    public void autoCloseSubmission(UUID submissionId) {
+        Submission submission = submissionRepository.findById(submissionId).orElse(null);
+        if (submission == null || submission.getStatus() != SubmissionStatus.IN_PROGRESS) {
+            return;
+        }
+
+        submission.setStatus(SubmissionStatus.AUTO_CLOSED);
+        submission.setSubmittedAt(LocalDateTime.now());
+
+        List<UserAnswer> answers = userAnswerRepository.findBySubmissionId(submissionId);
+
+        if (!answers.isEmpty()) {
+            // Load selected options for scoring
+            List<UUID> answerIds = answers.stream().map(UserAnswer::getId).toList();
+            List<UserAnswerSelectedOption> selectedOptions =
+                    userAnswerSelectedOptionRepository.findByAnswerIdIn(answerIds);
+            scoreSubmission(submission, answers, selectedOptions);
+        } else {
+            submission.setScore(0.0);
+            submissionRepository.save(submission);
+        }
     }
 
     public SubmissionFeedbackResponse getSubmission(UUID submissionId, UUID userId) {
@@ -265,7 +305,9 @@ public class SubmissionService {
     @Transactional(readOnly = true)
     public SubmissionHistoryResponse getSubmissionHistory(UUID userId) {
         List<Submission> submissions = submissionRepository
-                .findByUserIdAndSubmittedAtIsNotNullOrderBySubmittedAtDesc(userId);
+                .findByUserIdAndStatusInOrderBySubmittedAtDesc(
+                        userId,
+                        List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED));
 
         if (submissions.isEmpty()) {
             return new SubmissionHistoryResponse(List.of());
@@ -320,7 +362,9 @@ public class SubmissionService {
                             s.getStartedAt() != null
                                     ? s.getStartedAt().toString()
                                     : null,
-                            s.getSubmittedAt().toString(),
+                            s.getSubmittedAt() != null
+                                    ? s.getSubmittedAt().toString()
+                                    : null,
                             s.getScore(),
                             mcAnswers.size(),
                             correct,
@@ -338,7 +382,7 @@ public class SubmissionService {
         Submission submission = submissionRepository.findByIdAndUserId(submissionId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Submission not found"));
 
-        if (submission.getSubmittedAt() == null) {
+        if (submission.getStatus() == SubmissionStatus.IN_PROGRESS) {
             throw new IllegalSubmissionStateException("Submission not yet completed");
         }
 
@@ -418,9 +462,86 @@ public class SubmissionService {
                 submission.getId().toString(),
                 snapshot.getTitle(),
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
-                submission.getSubmittedAt().toString(),
+                submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null,
                 submission.getScore(),
                 reviewQuestions
         );
+    }
+
+    // ── Private scoring helper ────────────────────────────────────────
+
+    private List<AnswerResult> scoreSubmission(Submission submission,
+                                                List<UserAnswer> answers,
+                                                List<UserAnswerSelectedOption> selectedOptions) {
+        UUID snapshotId = submission.getAssessmentSnapshotId();
+
+        AssessmentSnapshot snapshot = assessmentSnapshotRepository.findById(snapshotId)
+                .orElseThrow(() -> new ResourceNotFoundException("Assessment snapshot not found"));
+        double ptsCorrect = snapshot.getPtsCorrect().doubleValue();
+        double ptsWrong = snapshot.getPtsWrong().doubleValue();
+
+        List<UUID> mcQuestionSnapshotIds = answers.stream()
+                .filter(a -> "multiple".equals(a.getType()))
+                .map(UserAnswer::getQuestionSnapshotId)
+                .toList();
+
+        Map<UUID, Set<UUID>> correctMap = new HashMap<>();
+        if (!mcQuestionSnapshotIds.isEmpty()) {
+            List<OptionSnapshot> correctOpts = optionSnapshotRepository
+                    .findByQuestionSnapshotIdInAndCorrectTrue(mcQuestionSnapshotIds);
+            for (OptionSnapshot opt : correctOpts) {
+                correctMap.computeIfAbsent(opt.getQuestionSnapshotId(), k -> new HashSet<>())
+                        .add(opt.getId());
+            }
+        }
+
+        // Build selected options map: answerId -> set of selected option snapshot IDs
+        Map<UUID, Set<UUID>> selectedByAnswer = new HashMap<>();
+        for (UserAnswerSelectedOption aso : selectedOptions) {
+            selectedByAnswer.computeIfAbsent(aso.getAnswerId(), k -> new HashSet<>())
+                    .add(aso.getOptionSnapshotId());
+        }
+
+        double totalScore = 0.0;
+        List<AnswerResult> answerResults = new ArrayList<>();
+
+        for (UserAnswer answer : answers) {
+            if ("multiple".equals(answer.getType())) {
+                Set<UUID> correctIds = correctMap.getOrDefault(answer.getQuestionSnapshotId(), Set.of());
+                Set<UUID> selectedIds = selectedByAnswer.getOrDefault(answer.getId(), Set.of());
+
+                if (selectedIds.isEmpty()) {
+                    answer.setIsCorrect(null);
+                    answer.setPointsAwarded(0.0);
+                } else {
+                    boolean isCorrect = selectedIds.equals(correctIds);
+                    double points = isCorrect ? ptsCorrect : ptsWrong;
+                    answer.setIsCorrect(isCorrect);
+                    answer.setPointsAwarded(points);
+                    totalScore += points;
+                }
+
+                userAnswerRepository.save(answer);
+
+                answerResults.add(new AnswerResult(
+                        answer.getQuestionSnapshotId().toString(),
+                        "multiple",
+                        answer.getIsCorrect(),
+                        correctIds.stream().map(UUID::toString).toList()
+                ));
+            } else {
+                answerResults.add(new AnswerResult(
+                        answer.getQuestionSnapshotId().toString(),
+                        "open",
+                        null,
+                        List.of()
+                ));
+            }
+        }
+
+        submission.setScore(totalScore);
+        submissionRepository.save(submission);
+
+        return answerResults;
     }
 }
