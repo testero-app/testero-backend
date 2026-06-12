@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0](https://github.com/testero-app/testero-backend/compare/v1.8.1...v1.9.0) (2026-06-12)
+
+
+### Features
+
+* handle orphaned submissions with incremental save and auto-close ([#92](https://github.com/testero-app/testero-backend/issues/92)) ([3cf5856](https://github.com/testero-app/testero-backend/commit/3cf5856e64c9569a9ce7925540552e9d2d23b6d8)), closes [#68](https://github.com/testero-app/testero-backend/issues/68)
+
 ## [1.8.1](https://github.com/testero-app/testero-backend/compare/v1.8.0...v1.8.1) (2026-06-12)
 
 
