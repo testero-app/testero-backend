@@ -27,3 +27,5 @@ databaseChangeLog:
       file: db/changelog/v1.2/002-seed-dev-snapshot-data.yaml
   - include:
       file: db/changelog/v1.2/003-seed-dev-demo-submissions.yaml
+  - include:
+      file: db/changelog/v1.3/001-add-submission-status.yaml

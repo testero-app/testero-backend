@@ -1,6 +1,7 @@
 package app.testero.repository;
 
 import app.testero.entity.submission.Submission;
+import app.testero.entity.submission.SubmissionStatus;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -10,8 +11,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
     Optional<Submission> findByIdAndUserId(UUID id, UUID userId);
 
-    Optional<Submission> findByAssessmentSnapshotIdAndUserIdAndSubmittedAtIsNull(
-            UUID assessmentSnapshotId, UUID userId);
+    Optional<Submission> findByAssessmentSnapshotIdAndUserIdAndStatus(
+            UUID assessmentSnapshotId, UUID userId, SubmissionStatus status);
 
-    List<Submission> findByUserIdAndSubmittedAtIsNotNullOrderBySubmittedAtDesc(UUID userId);
+    List<Submission> findByUserIdAndStatusInOrderBySubmittedAtDesc(
+            UUID userId, List<SubmissionStatus> statuses);
+
+    List<Submission> findByStatus(SubmissionStatus status);
 }

@@ -1,6 +1,7 @@
 package app.testero.service;
 
 import app.testero.dto.AnswerInput;
+import app.testero.dto.SaveAnswerRequest;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
 import app.testero.dto.SubmissionHistoryResponse;
@@ -9,12 +10,16 @@ import app.testero.dto.SubmissionStartResponse;
 import app.testero.dto.SubmissionSubmitRequest;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
+import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.submission.Submission;
+import app.testero.entity.submission.SubmissionStatus;
 import app.testero.entity.submission.UserAnswer;
+import app.testero.entity.submission.UserAnswerSelectedOption;
 import app.testero.exception.IllegalSubmissionStateException;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.OptionSnapshotRepository;
+import app.testero.repository.QuestionSnapshotRepository;
 import app.testero.repository.SubmissionRepository;
 import app.testero.repository.UserAnswerRepository;
 import app.testero.repository.UserAnswerSelectedOptionRepository;
@@ -26,9 +31,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -51,8 +56,10 @@ class SubmissionServiceTest {
     @Mock UserAnswerSelectedOptionRepository userAnswerSelectedOptionRepository;
     @Mock OptionSnapshotRepository optionSnapshotRepository;
     @Mock AssessmentSnapshotRepository assessmentSnapshotRepository;
+    @Mock QuestionSnapshotRepository questionSnapshotRepository;
+    @Mock ApplicationEventPublisher eventPublisher;
 
-    @InjectMocks SubmissionService submissionService;
+    SubmissionService submissionService;
 
     @Captor ArgumentCaptor<Submission> submissionCaptor;
 
@@ -71,6 +78,10 @@ class SubmissionServiceTest {
     @BeforeEach
     void setUp() {
         defaultSnapshot = buildAssessmentSnapshot();
+        submissionService = new SubmissionService(
+                submissionRepository, userAnswerRepository, userAnswerSelectedOptionRepository,
+                optionSnapshotRepository, assessmentSnapshotRepository, questionSnapshotRepository,
+                eventPublisher);
     }
 
     // ── Stub helpers ───────────────────────────────────────────────
@@ -80,6 +91,7 @@ class SubmissionServiceTest {
         s.setId(SUBMISSION_ID);
         s.setUserId(STUDENT_ID);
         s.setAssessmentSnapshotId(SNAPSHOT_ID);
+        s.setStatus(SubmissionStatus.IN_PROGRESS);
         s.setStartedAt(LocalDateTime.of(2026, 6, 15, 10, 0));
         return s;
     }
@@ -93,6 +105,10 @@ class SubmissionServiceTest {
                 .thenReturn(Optional.of(startedSubmission()));
 
         when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Stub for deleting pre-existing incremental answers (empty by default)
+        lenient().when(userAnswerRepository.findBySubmissionId(SUBMISSION_ID))
+                .thenReturn(List.of());
 
         AtomicInteger idx = new AtomicInteger(0);
         when(userAnswerRepository.saveAll(anyList())).thenAnswer(inv -> {
@@ -147,7 +163,8 @@ class SubmissionServiceTest {
         @DisplayName("creates new submission with server-side startedAt")
         void createsNewSubmission() {
             when(assessmentSnapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(defaultSnapshot));
-            when(submissionRepository.findByAssessmentSnapshotIdAndUserIdAndSubmittedAtIsNull(SNAPSHOT_ID, STUDENT_ID))
+            when(submissionRepository.findByAssessmentSnapshotIdAndUserIdAndStatus(
+                    SNAPSHOT_ID, STUDENT_ID, SubmissionStatus.IN_PROGRESS))
                     .thenReturn(Optional.empty());
             when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> {
                 Submission s = inv.getArgument(0);
@@ -164,8 +181,11 @@ class SubmissionServiceTest {
             Submission saved = submissionCaptor.getValue();
             assertThat(saved.getStartedAt()).isNotNull();
             assertThat(saved.getSubmittedAt()).isNull();
+            assertThat(saved.getStatus()).isEqualTo(SubmissionStatus.IN_PROGRESS);
             assertThat(saved.getUserId()).isEqualTo(STUDENT_ID);
             assertThat(saved.getAssessmentSnapshotId()).isEqualTo(SNAPSHOT_ID);
+
+            verify(eventPublisher).publishEvent(any(app.testero.event.SubmissionStartedEvent.class));
         }
 
         @Test
@@ -173,7 +193,8 @@ class SubmissionServiceTest {
         void idempotent_returnsExisting() {
             Submission existing = startedSubmission();
             when(assessmentSnapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(defaultSnapshot));
-            when(submissionRepository.findByAssessmentSnapshotIdAndUserIdAndSubmittedAtIsNull(SNAPSHOT_ID, STUDENT_ID))
+            when(submissionRepository.findByAssessmentSnapshotIdAndUserIdAndStatus(
+                    SNAPSHOT_ID, STUDENT_ID, SubmissionStatus.IN_PROGRESS))
                     .thenReturn(Optional.of(existing));
 
             SubmissionStartResponse response = submissionService.startSubmission(SNAPSHOT_ID, STUDENT_ID);
@@ -186,7 +207,8 @@ class SubmissionServiceTest {
         @DisplayName("retake — creates new submission when previous one is completed")
         void retake_createsNewWhenPreviousCompleted() {
             when(assessmentSnapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(defaultSnapshot));
-            when(submissionRepository.findByAssessmentSnapshotIdAndUserIdAndSubmittedAtIsNull(SNAPSHOT_ID, STUDENT_ID))
+            when(submissionRepository.findByAssessmentSnapshotIdAndUserIdAndStatus(
+                    SNAPSHOT_ID, STUDENT_ID, SubmissionStatus.IN_PROGRESS))
                     .thenReturn(Optional.empty());
             when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> {
                 Submission s = inv.getArgument(0);
@@ -212,6 +234,201 @@ class SubmissionServiceTest {
 
             assertThatThrownBy(() -> submissionService.startSubmission(unknownId, STUDENT_ID))
                     .isInstanceOf(ResourceNotFoundException.class);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // saveAnswer
+    // ════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("saveAnswer")
+    class SaveAnswerTests {
+
+        private QuestionSnapshot buildQuestionSnapshot() {
+            QuestionSnapshot qs = new QuestionSnapshot();
+            qs.setId(Q1_ID);
+            qs.setAssessmentSnapshotId(SNAPSHOT_ID);
+            qs.setType("multiple");
+            qs.setText("Question 1");
+            qs.setPosition(1);
+            return qs;
+        }
+
+        @Test
+        @DisplayName("creates new answer for a question not yet answered")
+        void createsNewAnswer() {
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(startedSubmission()));
+            when(questionSnapshotRepository.findById(Q1_ID))
+                    .thenReturn(Optional.of(buildQuestionSnapshot()));
+            when(userAnswerRepository.findBySubmissionIdAndQuestionSnapshotId(SUBMISSION_ID, Q1_ID))
+                    .thenReturn(Optional.empty());
+            when(userAnswerRepository.save(any(UserAnswer.class))).thenAnswer(inv -> {
+                UserAnswer a = inv.getArgument(0);
+                a.setId(ANSWER_1_ID);
+                return a;
+            });
+
+            SaveAnswerRequest request = new SaveAnswerRequest(
+                    "multiple", null, null, List.of(Q1_OPT_C.toString()));
+
+            submissionService.saveAnswer(SUBMISSION_ID, Q1_ID, STUDENT_ID, request);
+
+            verify(userAnswerRepository).save(any(UserAnswer.class));
+            verify(userAnswerSelectedOptionRepository).saveAll(anyList());
+        }
+
+        @Test
+        @DisplayName("updates existing answer (upsert)")
+        void updatesExistingAnswer() {
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(startedSubmission()));
+            when(questionSnapshotRepository.findById(Q1_ID))
+                    .thenReturn(Optional.of(buildQuestionSnapshot()));
+            UserAnswer existing = new UserAnswer();
+            existing.setId(ANSWER_1_ID);
+            existing.setSubmissionId(SUBMISSION_ID);
+            existing.setQuestionSnapshotId(Q1_ID);
+            existing.setType("multiple");
+            when(userAnswerRepository.findBySubmissionIdAndQuestionSnapshotId(SUBMISSION_ID, Q1_ID))
+                    .thenReturn(Optional.of(existing));
+            when(userAnswerRepository.save(any(UserAnswer.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            SaveAnswerRequest request = new SaveAnswerRequest(
+                    "multiple", null, null, List.of(Q1_OPT_A.toString()));
+
+            submissionService.saveAnswer(SUBMISSION_ID, Q1_ID, STUDENT_ID, request);
+
+            verify(userAnswerSelectedOptionRepository).deleteByAnswerId(ANSWER_1_ID);
+            verify(userAnswerRepository).save(any(UserAnswer.class));
+        }
+
+        @Test
+        @DisplayName("rejects if submission is not in progress")
+        void rejectsIfNotInProgress() {
+            Submission completed = startedSubmission();
+            completed.setStatus(SubmissionStatus.SUBMITTED);
+            completed.setSubmittedAt(LocalDateTime.of(2026, 6, 15, 10, 30));
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(completed));
+
+            SaveAnswerRequest request = new SaveAnswerRequest("multiple", null, null, List.of());
+
+            assertThatThrownBy(() -> submissionService.saveAnswer(SUBMISSION_ID, Q1_ID, STUDENT_ID, request))
+                    .isInstanceOf(IllegalSubmissionStateException.class);
+        }
+
+        @Test
+        @DisplayName("rejects if question not in assessment snapshot")
+        void rejectsIfQuestionNotInSnapshot() {
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(startedSubmission()));
+            // Question exists but belongs to a different snapshot
+            QuestionSnapshot wrongSnapshot = buildQuestionSnapshot();
+            wrongSnapshot.setAssessmentSnapshotId(UUID.randomUUID());
+            when(questionSnapshotRepository.findById(Q1_ID))
+                    .thenReturn(Optional.of(wrongSnapshot));
+
+            SaveAnswerRequest request = new SaveAnswerRequest("multiple", null, null, List.of());
+
+            assertThatThrownBy(() -> submissionService.saveAnswer(SUBMISSION_ID, Q1_ID, STUDENT_ID, request))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("saves empty answer (student navigated away without answering)")
+        void savesEmptyAnswer() {
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(startedSubmission()));
+            when(questionSnapshotRepository.findById(Q1_ID))
+                    .thenReturn(Optional.of(buildQuestionSnapshot()));
+            when(userAnswerRepository.findBySubmissionIdAndQuestionSnapshotId(SUBMISSION_ID, Q1_ID))
+                    .thenReturn(Optional.empty());
+            when(userAnswerRepository.save(any(UserAnswer.class))).thenAnswer(inv -> {
+                UserAnswer a = inv.getArgument(0);
+                a.setId(ANSWER_1_ID);
+                return a;
+            });
+
+            SaveAnswerRequest request = new SaveAnswerRequest("multiple", "", "", List.of());
+
+            submissionService.saveAnswer(SUBMISSION_ID, Q1_ID, STUDENT_ID, request);
+
+            verify(userAnswerRepository).save(any(UserAnswer.class));
+            verify(userAnswerSelectedOptionRepository, never()).saveAll(anyList());
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // autoCloseSubmission
+    // ════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("autoCloseSubmission")
+    class AutoCloseTests {
+
+        @Test
+        @DisplayName("closes in-progress submission and scores partial answers")
+        void closesInProgressSubmission() {
+            Submission submission = startedSubmission();
+            when(submissionRepository.findById(SUBMISSION_ID)).thenReturn(Optional.of(submission));
+            when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            UserAnswer mc = new UserAnswer();
+            mc.setId(ANSWER_1_ID);
+            mc.setSubmissionId(SUBMISSION_ID);
+            mc.setQuestionSnapshotId(Q1_ID);
+            mc.setType("multiple");
+            when(userAnswerRepository.findBySubmissionId(SUBMISSION_ID)).thenReturn(List.of(mc));
+
+            UserAnswerSelectedOption aso = new UserAnswerSelectedOption();
+            aso.setAnswerId(ANSWER_1_ID);
+            aso.setOptionSnapshotId(Q1_OPT_C);
+            when(userAnswerSelectedOptionRepository.findByAnswerIdIn(List.of(ANSWER_1_ID)))
+                    .thenReturn(List.of(aso));
+
+            when(assessmentSnapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(defaultSnapshot));
+            when(optionSnapshotRepository.findByQuestionSnapshotIdInAndCorrectTrue(anyList()))
+                    .thenReturn(correctOptionSnapshotsFor(Q1_ID));
+            when(userAnswerRepository.save(any(UserAnswer.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            submissionService.autoCloseSubmission(SUBMISSION_ID);
+
+            verify(submissionRepository).save(submissionCaptor.capture());
+            Submission saved = submissionCaptor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(SubmissionStatus.AUTO_CLOSED);
+            assertThat(saved.getSubmittedAt()).isNotNull();
+            assertThat(saved.getScore()).isCloseTo(1.0, within(0.001));
+        }
+
+        @Test
+        @DisplayName("no-op if submission is already submitted")
+        void noOpIfAlreadySubmitted() {
+            Submission completed = startedSubmission();
+            completed.setStatus(SubmissionStatus.SUBMITTED);
+            completed.setSubmittedAt(LocalDateTime.of(2026, 6, 15, 10, 30));
+            when(submissionRepository.findById(SUBMISSION_ID)).thenReturn(Optional.of(completed));
+
+            submissionService.autoCloseSubmission(SUBMISSION_ID);
+
+            verify(submissionRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("closes with zero score when no answers saved")
+        void closesWithZeroScoreWhenNoAnswers() {
+            Submission submission = startedSubmission();
+            when(submissionRepository.findById(SUBMISSION_ID)).thenReturn(Optional.of(submission));
+            when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(userAnswerRepository.findBySubmissionId(SUBMISSION_ID)).thenReturn(List.of());
+
+            submissionService.autoCloseSubmission(SUBMISSION_ID);
+
+            verify(submissionRepository).save(submissionCaptor.capture());
+            Submission saved = submissionCaptor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(SubmissionStatus.AUTO_CLOSED);
+            assertThat(saved.getScore()).isEqualTo(0.0);
         }
     }
 
@@ -556,6 +773,7 @@ class SubmissionServiceTest {
         @DisplayName("already submitted → IllegalSubmissionStateException")
         void alreadySubmitted() {
             Submission completed = startedSubmission();
+            completed.setStatus(SubmissionStatus.SUBMITTED);
             completed.setSubmittedAt(LocalDateTime.of(2026, 6, 15, 10, 30));
             when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
                     .thenReturn(Optional.of(completed));
@@ -568,9 +786,11 @@ class SubmissionServiceTest {
         @Test
         @DisplayName("assessment snapshot not found during scoring → ResourceNotFoundException")
         void assessmentNotFound_duringScoring() {
+            Submission sub = startedSubmission();
             when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
-                    .thenReturn(Optional.of(startedSubmission()));
+                    .thenReturn(Optional.of(sub));
             lenient().when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(userAnswerRepository.findBySubmissionId(SUBMISSION_ID)).thenReturn(List.of());
             when(userAnswerRepository.saveAll(anyList())).thenAnswer(inv -> {
                 List<UserAnswer> list = inv.getArgument(0);
                 list.forEach(a -> a.setId(UUID.randomUUID()));
@@ -604,6 +824,7 @@ class SubmissionServiceTest {
             verify(submissionRepository, atLeast(1)).save(submissionCaptor.capture());
             Submission saved = submissionCaptor.getAllValues().get(0);
             assertThat(saved.getSubmittedAt()).isNotNull();
+            assertThat(saved.getStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
         }
     }
 
@@ -620,6 +841,7 @@ class SubmissionServiceTest {
             s.setId(SUBMISSION_ID);
             s.setUserId(STUDENT_ID);
             s.setAssessmentSnapshotId(SNAPSHOT_ID);
+            s.setStatus(SubmissionStatus.SUBMITTED);
             s.setStartedAt(LocalDateTime.of(2026, 6, 15, 10, 0));
             s.setSubmittedAt(LocalDateTime.of(2026, 6, 15, 10, 30));
             s.setScore(2.75);
@@ -714,8 +936,9 @@ class SubmissionServiceTest {
         @DisplayName("returns empty list when no completed submissions")
         void returnsEmptyListWhenNoSubmissions() {
             when(submissionRepository
-                    .findByUserIdAndSubmittedAtIsNotNullOrderBySubmittedAtDesc(
-                            STUDENT_ID))
+                    .findByUserIdAndStatusInOrderBySubmittedAtDesc(
+                            STUDENT_ID,
+                            List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED)))
                     .thenReturn(List.of());
 
             SubmissionHistoryResponse response =
@@ -728,12 +951,14 @@ class SubmissionServiceTest {
         @DisplayName("returns submission with correct counts")
         void returnsSubmissionWithCorrectCounts() {
             Submission sub = startedSubmission();
+            sub.setStatus(SubmissionStatus.SUBMITTED);
             sub.setSubmittedAt(LocalDateTime.of(2026, 6, 15, 10, 25));
             sub.setScore(3.25);
 
             when(submissionRepository
-                    .findByUserIdAndSubmittedAtIsNotNullOrderBySubmittedAtDesc(
-                            STUDENT_ID))
+                    .findByUserIdAndStatusInOrderBySubmittedAtDesc(
+                            STUDENT_ID,
+                            List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED)))
                     .thenReturn(List.of(sub));
             when(assessmentSnapshotRepository.findAllById(List.of(SNAPSHOT_ID)))
                     .thenReturn(List.of(defaultSnapshot));

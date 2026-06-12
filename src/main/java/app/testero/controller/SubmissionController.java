@@ -1,5 +1,6 @@
 package app.testero.controller;
 
+import app.testero.dto.SaveAnswerRequest;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionHistoryResponse;
 import app.testero.dto.SubmissionReviewResponse;
@@ -33,6 +34,16 @@ public class SubmissionController {
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(
                 submissionService.getSubmissionHistory(principal.userId()));
+    }
+
+    @PutMapping("/{submissionId}/answers/{questionSnapshotId}")
+    public ResponseEntity<Void> saveAnswer(
+            @PathVariable UUID submissionId,
+            @PathVariable UUID questionSnapshotId,
+            @Valid @RequestBody SaveAnswerRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        submissionService.saveAnswer(submissionId, questionSnapshotId, principal.userId(), request);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{submissionId}")

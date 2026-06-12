@@ -2,6 +2,8 @@ package app.testero.entity.submission;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -48,10 +50,14 @@ public class Submission {
     @Column(name = "assessment_snapshot_id", nullable = false)
     private UUID assessmentSnapshotId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private SubmissionStatus status = SubmissionStatus.IN_PROGRESS;
+
     @Column(name = "started_at")
     private LocalDateTime startedAt;
 
-    @Column(name = "submitted_at", nullable = false)
+    @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
 
     private Double score;
