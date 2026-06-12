@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1](https://github.com/testero-app/testero-backend/compare/v1.8.0...v1.8.1) (2026-06-12)
+
+
+### Bug Fixes
+
+* set Liquibase context to prod to exclude dev seed data ([#90](https://github.com/testero-app/testero-backend/issues/90)) ([dd4418b](https://github.com/testero-app/testero-backend/commit/dd4418bedf4cc1d214bb2e0d15427a92d8777837))
+
 ## [1.8.0](https://github.com/testero-app/testero-backend/compare/v1.7.1...v1.8.0) (2026-06-11)
 
 
