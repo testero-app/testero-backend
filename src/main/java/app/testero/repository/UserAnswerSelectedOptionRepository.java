@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface UserAnswerSelectedOptionRepository extends JpaRepository<UserAnswerSelectedOption, UUID> {
 
     List<UserAnswerSelectedOption> findByAnswerIdIn(List<UUID> answerIds);
+
+    void deleteByAnswerId(UUID answerId);
 }

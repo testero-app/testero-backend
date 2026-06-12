@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.3-001-add-submission-status
+      author: testero
+      changes:
+        - addColumn:
+            tableName: submission
+            columns:
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: IN_PROGRESS
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: UPDATE submission SET status = 'SUBMITTED' WHERE submitted_at IS NOT NULL
+        - createIndex:
+            tableName: submission
+            indexName: idx_submission_status
+            columns:
+              - column:
+                  name: status
+
+  - changeSet:
+      id: v1.3-002-add-user-answer-unique-constraint
+      author: testero
+      changes:
+        - addUniqueConstraint:
+            tableName: user_answer
+            columnNames: submission_id, question_snapshot_id
+            constraintName: uq_user_answer_submission_question
