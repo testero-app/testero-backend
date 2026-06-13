@@ -20,13 +20,10 @@ This repository contains the **backend API**. The web frontend lives in
 
 ## Architecture
 
-![Data Model](docs/data_model_v4.png)
-
-![Assessment Flow](docs/assessment_flow_v2.png)
+See [testero-docs](https://github.com/testero-app/testero-docs) for
+architecture diagrams, data model, and functional documentation.
 
 ## Getting Started
-
-![Local Setup](docs/first_setup_v1.png)
 
 Prerequisites:
 
