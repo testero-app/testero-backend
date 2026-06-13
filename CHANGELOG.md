@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1](https://github.com/testero-app/testero-backend/compare/v1.9.0...v1.9.1) (2026-06-13)
+
+
+### Bug Fixes
+
+* resolve checkstyle violations (file length, constant name) ([#95](https://github.com/testero-app/testero-backend/issues/95)) ([a2fe6d6](https://github.com/testero-app/testero-backend/commit/a2fe6d6f321cf4b099fbaf088f2e03f1ade0b5b6))
+
 ## [1.9.0](https://github.com/testero-app/testero-backend/compare/v1.8.1...v1.9.0) (2026-06-12)
 
 
