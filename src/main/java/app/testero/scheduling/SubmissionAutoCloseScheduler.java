@@ -26,7 +26,7 @@ import java.util.concurrent.ScheduledFuture;
 @Component
 public class SubmissionAutoCloseScheduler {
 
-    private static final Logger log = LoggerFactory.getLogger(SubmissionAutoCloseScheduler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SubmissionAutoCloseScheduler.class);
 
     private final SubmissionService submissionService;
     private final SubmissionRepository submissionRepository;
@@ -62,7 +62,7 @@ public class SubmissionAutoCloseScheduler {
                     .findById(submission.getAssessmentSnapshotId())
                     .orElse(null);
             if (snapshot == null) {
-                log.warn("Snapshot not found for submission {}, closing immediately", submission.getId());
+                LOG.warn("Snapshot not found for submission {}, closing immediately", submission.getId());
                 submissionService.autoCloseSubmission(submission.getId());
                 continue;
             }
@@ -74,15 +74,15 @@ public class SubmissionAutoCloseScheduler {
                     .toInstant();
 
             if (autoCloseAt.isBefore(Instant.now())) {
-                log.info("Submission {} expired during downtime, closing immediately", submission.getId());
+                LOG.info("Submission {} expired during downtime, closing immediately", submission.getId());
                 submissionService.autoCloseSubmission(submission.getId());
             } else {
-                log.info("Rescheduling auto-close for submission {} at {}", submission.getId(), autoCloseAt);
+                LOG.info("Rescheduling auto-close for submission {} at {}", submission.getId(), autoCloseAt);
                 scheduleAutoClose(submission.getId(), autoCloseAt);
             }
         }
         if (!openSubmissions.isEmpty()) {
-            log.info("Recovery complete: processed {} open submission(s)", openSubmissions.size());
+            LOG.info("Recovery complete: processed {} open submission(s)", openSubmissions.size());
         }
     }
 
@@ -112,14 +112,14 @@ public class SubmissionAutoCloseScheduler {
             }
         }
         if (closed > 0) {
-            log.info("Nightly cleanup: closed {} orphaned submission(s)", closed);
+            LOG.info("Nightly cleanup: closed {} orphaned submission(s)", closed);
         }
     }
 
     private void scheduleAutoClose(UUID submissionId, Instant fireAt) {
         ScheduledFuture<?> future = taskScheduler.schedule(() -> {
             scheduledTasks.remove(submissionId);
-            log.info("Auto-closing submission {}", submissionId);
+            LOG.info("Auto-closing submission {}", submissionId);
             submissionService.autoCloseSubmission(submissionId);
         }, fireAt);
         scheduledTasks.put(submissionId, future);
