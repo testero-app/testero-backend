@@ -59,6 +59,7 @@ class SubmissionServiceTest {
     @Mock QuestionSnapshotRepository questionSnapshotRepository;
     @Mock ApplicationEventPublisher eventPublisher;
 
+    ScoringService scoringService;
     SubmissionService submissionService;
 
     @Captor ArgumentCaptor<Submission> submissionCaptor;
@@ -78,10 +79,13 @@ class SubmissionServiceTest {
     @BeforeEach
     void setUp() {
         defaultSnapshot = buildAssessmentSnapshot();
+        scoringService = new ScoringService(
+                submissionRepository, userAnswerRepository,
+                optionSnapshotRepository, assessmentSnapshotRepository);
         submissionService = new SubmissionService(
                 submissionRepository, userAnswerRepository, userAnswerSelectedOptionRepository,
                 optionSnapshotRepository, assessmentSnapshotRepository, questionSnapshotRepository,
-                eventPublisher);
+                scoringService, eventPublisher);
     }
 
     // ── Stub helpers ───────────────────────────────────────────────
