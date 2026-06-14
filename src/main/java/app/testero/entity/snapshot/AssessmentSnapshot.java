@@ -1,7 +1,10 @@
 package app.testero.entity.snapshot;
 
+import app.testero.entity.assessment.Difficulty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -47,6 +50,10 @@ public class AssessmentSnapshot {
 
     @Column(name = "pts_wrong", nullable = false)
     private BigDecimal ptsWrong;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private Difficulty difficulty;
 
     @Column(name = "published_at", nullable = false)
     private LocalDateTime publishedAt;

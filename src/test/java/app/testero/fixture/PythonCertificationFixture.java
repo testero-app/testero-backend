@@ -1,6 +1,7 @@
 package app.testero.fixture;
 
 import app.testero.entity.assessment.Assessment;
+import app.testero.entity.assessment.Difficulty;
 import app.testero.entity.assessment.Option;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
@@ -32,6 +33,7 @@ public final class PythonCertificationFixture {
     public static final int QUESTIONS_PER_ASSESSMENT = 5;
     public static final BigDecimal PTS_CORRECT = new BigDecimal("1.00");
     public static final BigDecimal PTS_WRONG = new BigDecimal("-0.25");
+    public static final Difficulty DIFFICULTY = Difficulty.INTERMEDIATE;
 
     // ── Student ────────────────────────────────────────────────────
     public static final UUID STUDENT_ID = UUID.fromString("bb000000-0000-0000-0000-000000000001");
@@ -95,6 +97,7 @@ public final class PythonCertificationFixture {
         assessment.setQuestionsPerAssessment(QUESTIONS_PER_ASSESSMENT);
         assessment.setPtsCorrect(ptsCorrect);
         assessment.setPtsWrong(ptsWrong);
+        assessment.setDifficulty(DIFFICULTY);
         return assessment;
     }
 
@@ -115,6 +118,7 @@ public final class PythonCertificationFixture {
         snapshot.setQuestionsPerAssessment(QUESTIONS_PER_ASSESSMENT);
         snapshot.setPtsCorrect(ptsCorrect);
         snapshot.setPtsWrong(ptsWrong);
+        snapshot.setDifficulty(DIFFICULTY);
         snapshot.setPublishedAt(LocalDateTime.of(2026, 6, 15, 0, 0));
         return snapshot;
     }
