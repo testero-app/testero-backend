@@ -463,6 +463,39 @@ class SubmissionServiceTest {
         }
 
         @Test
+        @DisplayName("submit after incremental save → upserts existing answers without constraint violation")
+        void submitAfterIncrementalSave() {
+            // Simulate pre-existing answer saved incrementally during the test
+            UserAnswer existingAnswer = new UserAnswer();
+            existingAnswer.setId(ANSWER_1_ID);
+            existingAnswer.setSubmissionId(SUBMISSION_ID);
+            existingAnswer.setQuestionSnapshotId(Q1_ID);
+            existingAnswer.setType("multiple");
+            existingAnswer.setText("");
+            existingAnswer.setMotivation("");
+
+            // Override the default stub: return pre-existing answers
+            stubSubmitFlow();
+            when(userAnswerRepository.findBySubmissionId(SUBMISSION_ID))
+                    .thenReturn(List.of(existingAnswer));
+            when(userAnswerSelectedOptionRepository.findByAnswerIdIn(List.of(ANSWER_1_ID)))
+                    .thenReturn(List.of());
+            when(optionSnapshotRepository.findByQuestionSnapshotIdInAndCorrectTrue(anyList()))
+                    .thenReturn(correctOptionSnapshotsFor(Q1_ID));
+
+            SubmissionFeedbackResponse response = submit(
+                    mcAnswer(Q1_ID, Q1_OPT_C.toString()));
+
+            assertThat(response.answers()).hasSize(1);
+            assertThat(response.answers().get(0).isCorrect()).isTrue();
+            assertScore(1.0);
+
+            // Verify no new UserAnswer was created — the existing one was reused
+            verify(userAnswerRepository).saveAll(argThat((List<UserAnswer> list) ->
+                    list.size() == 1 && list.get(0).getId().equals(ANSWER_1_ID)));
+        }
+
+        @Test
         @DisplayName("all wrong (Q1 selects wrong option) → isCorrect=false, score=-0.25")
         void allWrong_singleQuestion() {
             stubSubmitFlow();
