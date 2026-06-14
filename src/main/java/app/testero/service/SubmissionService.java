@@ -229,12 +229,20 @@ public class SubmissionService {
         // 6. Notify scheduler to cancel auto-close
         eventPublisher.publishEvent(new SubmissionCompletedEvent(submission.getId()));
 
+        AssessmentSnapshot snapshot = assessmentSnapshotRepository
+                .findById(submission.getAssessmentSnapshotId())
+                .orElse(null);
+
         return new SubmissionFeedbackResponse(
                 submission.getId().toString(),
                 submission.getUserId().toString(),
                 submission.getAssessmentSnapshotId().toString(),
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt().toString(),
+                submission.getScore(),
+                computePassed(submission.getScore(), snapshot),
+                snapshot != null && snapshot.getPassingScore() != null
+                        ? snapshot.getPassingScore().doubleValue() : null,
                 answerResults
         );
     }
@@ -293,12 +301,20 @@ public class SubmissionService {
                 ))
                 .toList();
 
+        AssessmentSnapshot feedbackSnapshot = assessmentSnapshotRepository
+                .findById(submission.getAssessmentSnapshotId())
+                .orElse(null);
+
         return new SubmissionFeedbackResponse(
                 submission.getId().toString(),
                 submission.getUserId().toString(),
                 submission.getAssessmentSnapshotId().toString(),
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null,
+                submission.getScore(),
+                computePassed(submission.getScore(), feedbackSnapshot),
+                feedbackSnapshot != null && feedbackSnapshot.getPassingScore() != null
+                        ? feedbackSnapshot.getPassingScore().doubleValue() : null,
                 answerResults
         );
     }
@@ -367,6 +383,7 @@ public class SubmissionService {
                                     ? s.getSubmittedAt().toString()
                                     : null,
                             s.getScore(),
+                            computePassed(s.getScore(), snapshot),
                             mcAnswers.size(),
                             correct,
                             wrong,
@@ -470,4 +487,10 @@ public class SubmissionService {
         );
     }
 
+    private static Boolean computePassed(Double score, AssessmentSnapshot snapshot) {
+        if (snapshot == null || snapshot.getPassingScore() == null || score == null) {
+            return null;
+        }
+        return score >= snapshot.getPassingScore().doubleValue();
+    }
 }

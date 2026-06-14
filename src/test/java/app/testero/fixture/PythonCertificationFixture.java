@@ -34,6 +34,7 @@ public final class PythonCertificationFixture {
     public static final BigDecimal PTS_CORRECT = new BigDecimal("1.00");
     public static final BigDecimal PTS_WRONG = new BigDecimal("-0.25");
     public static final Difficulty DIFFICULTY = Difficulty.INTERMEDIATE;
+    public static final BigDecimal PASSING_SCORE = new BigDecimal("3.00");
 
     // ── Student ────────────────────────────────────────────────────
     public static final UUID STUDENT_ID = UUID.fromString("bb000000-0000-0000-0000-000000000001");
@@ -98,6 +99,7 @@ public final class PythonCertificationFixture {
         assessment.setPtsCorrect(ptsCorrect);
         assessment.setPtsWrong(ptsWrong);
         assessment.setDifficulty(DIFFICULTY);
+        assessment.setPassingScore(PASSING_SCORE);
         return assessment;
     }
 
@@ -119,6 +121,7 @@ public final class PythonCertificationFixture {
         snapshot.setPtsCorrect(ptsCorrect);
         snapshot.setPtsWrong(ptsWrong);
         snapshot.setDifficulty(DIFFICULTY);
+        snapshot.setPassingScore(PASSING_SCORE);
         snapshot.setPublishedAt(LocalDateTime.of(2026, 6, 15, 0, 0));
         return snapshot;
     }
