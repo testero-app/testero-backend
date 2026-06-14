@@ -450,6 +450,7 @@ public class SubmissionService {
                             q.getText(),
                             q.getCode(),
                             q.getPosition(),
+                            q.getExplanation(),
                             answer != null ? answer.getIsCorrect() : null,
                             selectedOptionIds,
                             answer != null ? answer.getText() : null,
