@@ -194,7 +194,9 @@ public final class PythonCertificationFixture {
 
     /** Build a fallback "Nessuna" option snapshot for Q1. */
     public static OptionSnapshot buildFallbackOptionSnapshot(boolean correct) {
-        return buildOptionSnapshot(Q1_OPT_FALLBACK, Q1_ID, "Option Q1-5-fallback",
+        OptionSnapshot opt = buildOptionSnapshot(Q1_OPT_FALLBACK, Q1_ID, "Option Q1-5-fallback",
                 correct, 5);
+        opt.setFallback(true);
+        return opt;
     }
 }

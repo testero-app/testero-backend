@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.3-005-add-is-fallback-to-option-snapshot
+      author: testero
+      changes:
+        - addColumn:
+            tableName: option_snapshot
+            columns:
+              - column:
+                  name: is_fallback
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
