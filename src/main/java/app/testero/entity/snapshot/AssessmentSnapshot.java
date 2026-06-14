@@ -55,6 +55,9 @@ public class AssessmentSnapshot {
     @Column(length = 20)
     private Difficulty difficulty;
 
+    @Column(name = "passing_score")
+    private BigDecimal passingScore;
+
     @Column(name = "published_at", nullable = false)
     private LocalDateTime publishedAt;
 

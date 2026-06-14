@@ -49,6 +49,9 @@ public class Assessment {
     @Column(length = 20)
     private Difficulty difficulty;
 
+    @Column(name = "passing_score")
+    private BigDecimal passingScore;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
