@@ -91,7 +91,7 @@ public class AssessmentService {
                     List<OptionSnapshot> opts = optionsByQuestion
                             .getOrDefault(q.getId(), List.of());
                     List<OptionDto> optionDtos = opts.stream()
-                            .map(o -> new OptionDto(o.getId().toString(), o.getText(), null))
+                            .map(o -> new OptionDto(o.getId().toString(), o.getText(), o.isFallback()))
                             .toList();
                     return new QuestionDto(
                             q.getId().toString(),
