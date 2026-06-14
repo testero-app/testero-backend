@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0](https://github.com/testero-app/testero-backend/compare/v1.12.1...v1.13.0) (2026-06-14)
+
+
+### Features
+
+* add passing_score to Assessment and pass/fail logic ([#131](https://github.com/testero-app/testero-backend/issues/131)) ([65b3185](https://github.com/testero-app/testero-backend/commit/65b318525066fbe9e912ea050a2d02a1c9030d83)), closes [#103](https://github.com/testero-app/testero-backend/issues/103)
+
+
+### Bug Fixes
+
+* duplicate key on submit with saved answers ([#133](https://github.com/testero-app/testero-backend/issues/133)) ([2596742](https://github.com/testero-app/testero-backend/commit/25967424c29bcef4f7d0224e86ada10bb9c55abf))
+
 ## [1.12.1](https://github.com/testero-app/testero-backend/compare/v1.12.0...v1.12.1) (2026-06-14)
 
 
