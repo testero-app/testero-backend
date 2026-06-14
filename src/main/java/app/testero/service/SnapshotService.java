@@ -91,6 +91,7 @@ public class SnapshotService {
         snapshot.setQuestionsPerAssessment(assessment.getQuestionsPerAssessment());
         snapshot.setPtsCorrect(assessment.getPtsCorrect());
         snapshot.setPtsWrong(assessment.getPtsWrong());
+        snapshot.setDifficulty(assessment.getDifficulty());
         snapshot.setPublishedAt(LocalDateTime.now());
         snapshot = snapshotRepository.save(snapshot);
 
@@ -129,6 +130,7 @@ public class SnapshotService {
         sb.append('|').append(assessment.getPtsCorrect().toPlainString());
         sb.append('|').append(assessment.getPtsWrong().toPlainString());
         sb.append('|').append(assessment.getQuestionsPerAssessment());
+        sb.append('|').append(assessment.getDifficulty() != null ? assessment.getDifficulty().name() : "");
 
         for (Question q : questions) {
             sb.append("||Q|").append(q.getType());

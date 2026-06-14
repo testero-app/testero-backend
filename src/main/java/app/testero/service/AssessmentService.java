@@ -47,7 +47,8 @@ public class AssessmentService {
                         s.getTitle(),
                         s.getPublishedAt().toLocalDate().toString(),
                         s.getTimerMinutes(),
-                        s.getQuestionsPerAssessment()
+                        s.getQuestionsPerAssessment(),
+                        s.getDifficulty() != null ? s.getDifficulty().name() : null
                 ))
                 .toList();
 

@@ -79,6 +79,7 @@ class AssessmentServiceTest {
             assertThat(item.title()).isEqualTo(TITLE);
             assertThat(item.timerMinutes()).isEqualTo(TIMER_MINUTES);
             assertThat(item.questionsPerAssessment()).isEqualTo(QUESTIONS_PER_ASSESSMENT);
+            assertThat(item.difficulty()).isEqualTo(DIFFICULTY.name());
         }
 
         @Test
