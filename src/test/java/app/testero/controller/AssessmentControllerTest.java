@@ -87,7 +87,7 @@ class AssessmentControllerTest {
                     .thenReturn(Optional.of(buildProfile()));
             when(assessmentService.getAvailableAssessments(CLASS_ID))
                     .thenReturn(new AssessmentListResponse(List.of(
-                            new AssessmentListItem(ASSESSMENT_ID, "Test 1", "2026-06-15", 45, 5)
+                            new AssessmentListItem(ASSESSMENT_ID, "Test 1", "2026-06-15", 45, 5, "INTERMEDIATE")
                     )));
 
             mockMvc.perform(get("/assessments").with(jwt()))

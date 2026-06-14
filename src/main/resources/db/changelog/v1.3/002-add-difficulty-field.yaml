@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.3-003-add-difficulty-to-test
+      author: testero
+      changes:
+        - addColumn:
+            tableName: test
+            columns:
+              - column:
+                  name: difficulty
+                  type: varchar(20)
+                  constraints:
+                    nullable: true
+
+  - changeSet:
+      id: v1.3-004-add-difficulty-to-assessment-snapshot
+      author: testero
+      changes:
+        - addColumn:
+            tableName: assessment_snapshot
+            columns:
+              - column:
+                  name: difficulty
+                  type: varchar(20)
+                  constraints:
+                    nullable: true

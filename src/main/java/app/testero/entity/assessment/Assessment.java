@@ -2,6 +2,8 @@ package app.testero.entity.assessment;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
@@ -42,6 +44,10 @@ public class Assessment {
 
     @Column(name = "pts_wrong", nullable = false)
     private BigDecimal ptsWrong;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private Difficulty difficulty;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;

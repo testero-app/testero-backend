@@ -29,3 +29,5 @@ databaseChangeLog:
       file: db/changelog/v1.2/003-seed-dev-demo-submissions.yaml
   - include:
       file: db/changelog/v1.3/001-add-submission-status.yaml
+  - include:
+      file: db/changelog/v1.3/002-add-difficulty-field.yaml
