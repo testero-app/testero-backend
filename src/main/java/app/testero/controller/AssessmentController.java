@@ -47,7 +47,7 @@ public class AssessmentController {
         StudentProfile profile = studentProfileRepository.findByUserId(principal.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("Student profile not found"));
         UUID classId = profile.getClassId();
-        return ResponseEntity.ok(assessmentService.getAvailableAssessments(classId));
+        return ResponseEntity.ok(assessmentService.getAvailableAssessments(classId, principal.userId()));
     }
 
     @GetMapping("/{snapshotId}/config")

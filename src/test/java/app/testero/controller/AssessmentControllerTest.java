@@ -85,9 +85,9 @@ class AssessmentControllerTest {
         void success() throws Exception {
             when(studentProfileRepository.findByUserId(USER_ID))
                     .thenReturn(Optional.of(buildProfile()));
-            when(assessmentService.getAvailableAssessments(CLASS_ID))
+            when(assessmentService.getAvailableAssessments(CLASS_ID, USER_ID))
                     .thenReturn(new AssessmentListResponse(List.of(
-                            new AssessmentListItem(ASSESSMENT_ID, "Test 1", "2026-06-15", 45, 5, "INTERMEDIATE")
+                            new AssessmentListItem(ASSESSMENT_ID, "Test 1", "2026-06-15", 45, 5, "INTERMEDIATE", "NOT_STARTED", null)
                     )));
 
             mockMvc.perform(get("/assessments").with(jwt()))

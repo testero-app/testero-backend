@@ -18,4 +18,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
             UUID userId, List<SubmissionStatus> statuses);
 
     List<Submission> findByStatus(SubmissionStatus status);
+
+    List<Submission> findByUserIdAndAssessmentSnapshotIdIn(UUID userId, List<UUID> snapshotIds);
 }
