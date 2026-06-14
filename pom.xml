@@ -11,7 +11,7 @@
 
     <groupId>app.testero</groupId>
     <artifactId>testero-backend</artifactId>
-    <version>1.10.0</version>
+    <version>1.10.1</version>
     <name>testero-backend</name>
     <description>Backend API for Testero — test administration for educational settings</description>
 
