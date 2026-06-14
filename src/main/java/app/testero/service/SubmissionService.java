@@ -176,24 +176,22 @@ public class SubmissionService {
         submission.setSubmittedAt(LocalDateTime.now());
         submission.setStatus(SubmissionStatus.SUBMITTED);
 
-        // 2. Delete any pre-existing answers from incremental saves
-        List<UserAnswer> existingAnswers = userAnswerRepository.findBySubmissionId(submissionId);
-        if (!existingAnswers.isEmpty()) {
-            List<UUID> existingAnswerIds = existingAnswers.stream()
-                    .map(UserAnswer::getId).toList();
-            if (!existingAnswerIds.isEmpty()) {
-                userAnswerSelectedOptionRepository.findByAnswerIdIn(existingAnswerIds)
-                        .forEach(aso -> userAnswerSelectedOptionRepository.delete(aso));
-            }
-            userAnswerRepository.deleteAll(existingAnswers);
-        }
+        // 2. Upsert answers: reuse pre-existing answers from incremental saves
+        Map<UUID, UserAnswer> existingByQuestion = userAnswerRepository
+                .findBySubmissionId(submissionId).stream()
+                .collect(Collectors.toMap(UserAnswer::getQuestionSnapshotId, a -> a));
 
-        // 3. Create answer records (referencing question snapshots)
         List<UserAnswer> answers = new ArrayList<>();
         for (AnswerInput input : request.answers()) {
-            UserAnswer answer = new UserAnswer();
-            answer.setSubmissionId(submission.getId());
-            answer.setQuestionSnapshotId(UUID.fromString(input.questionId()));
+            UUID qsId = UUID.fromString(input.questionId());
+            UserAnswer answer = existingByQuestion.getOrDefault(qsId, new UserAnswer());
+            if (answer.getId() != null) {
+                userAnswerSelectedOptionRepository.deleteAll(
+                        userAnswerSelectedOptionRepository.findByAnswerIdIn(List.of(answer.getId())));
+            } else {
+                answer.setSubmissionId(submission.getId());
+                answer.setQuestionSnapshotId(qsId);
+            }
             answer.setType(input.type());
             answer.setText(input.text() != null ? input.text() : "");
             answer.setMotivation(input.motivation() != null ? input.motivation() : "");
