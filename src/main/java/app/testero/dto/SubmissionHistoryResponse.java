@@ -13,6 +13,7 @@ public record SubmissionHistoryResponse(
             @JsonProperty("started_at") String startedAt,
             @JsonProperty("submitted_at") String submittedAt,
             Double score,
+            Boolean passed,
             @JsonProperty("total_questions") int totalQuestions,
             @JsonProperty("correct_count") int correctCount,
             @JsonProperty("wrong_count") int wrongCount,

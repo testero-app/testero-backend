@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.3-008-add-passing-score-to-test
+      author: testero
+      changes:
+        - addColumn:
+            tableName: test
+            columns:
+              - column:
+                  name: passing_score
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: true
+
+  - changeSet:
+      id: v1.3-009-add-passing-score-to-assessment-snapshot
+      author: testero
+      changes:
+        - addColumn:
+            tableName: assessment_snapshot
+            columns:
+              - column:
+                  name: passing_score
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: true

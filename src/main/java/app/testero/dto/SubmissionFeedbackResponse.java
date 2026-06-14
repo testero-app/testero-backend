@@ -9,6 +9,9 @@ public record SubmissionFeedbackResponse(
         @JsonProperty("assessment_snapshot_id") String assessmentSnapshotId,
         @JsonProperty("started_at") String startedAt,
         @JsonProperty("submitted_at") String submittedAt,
+        Double score,
+        Boolean passed,
+        @JsonProperty("passing_score") Double passingScore,
         List<AnswerResult> answers
 ) {
     public record AnswerResult(
