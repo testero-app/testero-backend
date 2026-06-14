@@ -103,6 +103,7 @@ public class SnapshotService {
             qs.setType(q.getType());
             qs.setText(q.getText());
             qs.setCode(q.getCode());
+            qs.setExplanation(q.getExplanation());
             qs.setPosition(q.getPosition());
             qs = questionSnapshotRepository.save(qs);
 
@@ -137,6 +138,7 @@ public class SnapshotService {
             sb.append("||Q|").append(q.getType());
             sb.append('|').append(q.getText());
             sb.append('|').append(q.getCode() != null ? q.getCode() : "");
+            sb.append('|').append(q.getExplanation() != null ? q.getExplanation() : "");
 
             List<Option> opts = optionsByQuestion.getOrDefault(q.getId(), List.of());
             for (Option o : opts) {

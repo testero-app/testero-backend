@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.3-006-add-explanation-to-question
+      author: testero
+      changes:
+        - addColumn:
+            tableName: question
+            columns:
+              - column:
+                  name: explanation
+                  type: text
+                  constraints:
+                    nullable: true
+
+  - changeSet:
+      id: v1.3-007-add-explanation-to-question-snapshot
+      author: testero
+      changes:
+        - addColumn:
+            tableName: question_snapshot
+            columns:
+              - column:
+                  name: explanation
+                  type: text
+                  constraints:
+                    nullable: true
