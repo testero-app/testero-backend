@@ -38,6 +38,9 @@ public class QuestionSnapshot {
     @Column(columnDefinition = "text")
     private String code;
 
+    @Column(columnDefinition = "text")
+    private String explanation;
+
     @Column(nullable = false)
     private int position;
 

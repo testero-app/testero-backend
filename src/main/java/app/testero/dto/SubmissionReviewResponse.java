@@ -17,6 +17,7 @@ public record SubmissionReviewResponse(
             String text,
             String code,
             int position,
+            String explanation,
             @JsonProperty("is_correct") Boolean isCorrect,
             @JsonProperty("selected_option_ids") List<String> selectedOptionIds,
             @JsonProperty("answer_text") String answerText,
