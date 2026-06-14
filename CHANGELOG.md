@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0](https://github.com/testero-app/testero-backend/compare/v1.10.1...v1.11.0) (2026-06-14)
+
+
+### Features
+
+* add explanation field to Question and QuestionSnapshot ([#125](https://github.com/testero-app/testero-backend/issues/125)) ([6a3f76f](https://github.com/testero-app/testero-backend/commit/6a3f76fb453323e4eec5b83d25b1c731d1eac80d)), closes [#104](https://github.com/testero-app/testero-backend/issues/104)
+
 ## [1.10.1](https://github.com/testero-app/testero-backend/compare/v1.10.0...v1.10.1) (2026-06-14)
 
 
