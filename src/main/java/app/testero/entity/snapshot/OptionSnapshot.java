@@ -35,6 +35,9 @@ public class OptionSnapshot {
     @Column(name = "is_correct", nullable = false)
     private boolean correct;
 
+    @Column(name = "is_fallback", nullable = false)
+    private boolean fallback;
+
     @Column(nullable = false)
     private int position;
 

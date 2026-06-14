@@ -113,6 +113,7 @@ public class SnapshotService {
                 os.setOriginalOptionId(o.getId());
                 os.setText(o.getText());
                 os.setCorrect(o.isCorrect());
+                os.setFallback(o.isFallback());
                 os.setPosition(o.getPosition());
                 optionSnapshotRepository.save(os);
             }
@@ -141,6 +142,7 @@ public class SnapshotService {
             for (Option o : opts) {
                 sb.append("|O|").append(o.getText());
                 sb.append('|').append(o.isCorrect());
+                sb.append('|').append(o.isFallback());
             }
         }
 
