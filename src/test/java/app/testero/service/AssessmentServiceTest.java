@@ -7,10 +7,13 @@ import app.testero.dto.AssessmentQuestionsResponse.QuestionDto;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
+import app.testero.entity.submission.Submission;
+import app.testero.entity.submission.SubmissionStatus;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.OptionSnapshotRepository;
 import app.testero.repository.QuestionSnapshotRepository;
+import app.testero.repository.SubmissionRepository;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,6 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,6 +40,7 @@ class AssessmentServiceTest {
     @Mock AssessmentSnapshotRepository snapshotRepository;
     @Mock QuestionSnapshotRepository questionSnapshotRepository;
     @Mock OptionSnapshotRepository optionSnapshotRepository;
+    @Mock SubmissionRepository submissionRepository;
     @Mock QuestionPrepService questionPrepService;
 
     @InjectMocks AssessmentService assessmentService;
@@ -65,13 +70,16 @@ class AssessmentServiceTest {
     class GetAvailableAssessments {
 
         @Test
-        @DisplayName("returns mapped list from repository")
-        void returnsMappedList() {
+        @DisplayName("returns NOT_STARTED when no submissions exist")
+        void notStarted() {
             AssessmentSnapshot s = buildAssessmentSnapshot();
             when(snapshotRepository.findSnapshotsByClassId(CLASS_ID))
                     .thenReturn(List.of(s));
+            when(submissionRepository.findByUserIdAndAssessmentSnapshotIdIn(
+                    STUDENT_ID, List.of(SNAPSHOT_ID)))
+                    .thenReturn(List.of());
 
-            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID);
+            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID);
 
             assertThat(response.assessments()).hasSize(1);
             var item = response.assessments().get(0);
@@ -80,6 +88,57 @@ class AssessmentServiceTest {
             assertThat(item.timerMinutes()).isEqualTo(TIMER_MINUTES);
             assertThat(item.questionsPerAssessment()).isEqualTo(QUESTIONS_PER_ASSESSMENT);
             assertThat(item.difficulty()).isEqualTo(DIFFICULTY.name());
+            assertThat(item.status()).isEqualTo("NOT_STARTED");
+            assertThat(item.score()).isNull();
+        }
+
+        @Test
+        @DisplayName("returns IN_PROGRESS when submission is in progress")
+        void inProgress() {
+            AssessmentSnapshot s = buildAssessmentSnapshot();
+            Submission sub = new Submission();
+            sub.setId(UUID.randomUUID());
+            sub.setUserId(STUDENT_ID);
+            sub.setAssessmentSnapshotId(SNAPSHOT_ID);
+            sub.setStatus(SubmissionStatus.IN_PROGRESS);
+            sub.setStartedAt(LocalDateTime.now());
+
+            when(snapshotRepository.findSnapshotsByClassId(CLASS_ID))
+                    .thenReturn(List.of(s));
+            when(submissionRepository.findByUserIdAndAssessmentSnapshotIdIn(
+                    STUDENT_ID, List.of(SNAPSHOT_ID)))
+                    .thenReturn(List.of(sub));
+
+            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID);
+
+            var item = response.assessments().get(0);
+            assertThat(item.status()).isEqualTo("IN_PROGRESS");
+            assertThat(item.score()).isNull();
+        }
+
+        @Test
+        @DisplayName("returns COMPLETED with score when submission is submitted")
+        void completed() {
+            AssessmentSnapshot s = buildAssessmentSnapshot();
+            Submission sub = new Submission();
+            sub.setId(UUID.randomUUID());
+            sub.setUserId(STUDENT_ID);
+            sub.setAssessmentSnapshotId(SNAPSHOT_ID);
+            sub.setStatus(SubmissionStatus.SUBMITTED);
+            sub.setSubmittedAt(LocalDateTime.now());
+            sub.setScore(82.0);
+
+            when(snapshotRepository.findSnapshotsByClassId(CLASS_ID))
+                    .thenReturn(List.of(s));
+            when(submissionRepository.findByUserIdAndAssessmentSnapshotIdIn(
+                    STUDENT_ID, List.of(SNAPSHOT_ID)))
+                    .thenReturn(List.of(sub));
+
+            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID);
+
+            var item = response.assessments().get(0);
+            assertThat(item.status()).isEqualTo("COMPLETED");
+            assertThat(item.score()).isEqualTo(82.0);
         }
 
         @Test
@@ -88,7 +147,7 @@ class AssessmentServiceTest {
             when(snapshotRepository.findSnapshotsByClassId(CLASS_ID))
                     .thenReturn(List.of());
 
-            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID);
+            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID);
 
             assertThat(response.assessments()).isEmpty();
         }
