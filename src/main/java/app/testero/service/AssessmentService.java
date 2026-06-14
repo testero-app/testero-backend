@@ -103,8 +103,12 @@ public class AssessmentService {
         // Both same status — prefer the one with the latest timestamp
         LocalDateTime aTime = a.getSubmittedAt() != null ? a.getSubmittedAt() : a.getStartedAt();
         LocalDateTime bTime = b.getSubmittedAt() != null ? b.getSubmittedAt() : b.getStartedAt();
-        if (aTime == null) return b;
-        if (bTime == null) return a;
+        if (aTime == null) {
+            return b;
+        }
+        if (bTime == null) {
+            return a;
+        }
         return aTime.isAfter(bTime) ? a : b;
     }
 
