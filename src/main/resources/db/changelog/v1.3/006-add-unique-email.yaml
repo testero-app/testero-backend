@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.3-006-add-unique-email
+      author: testero
+      changes:
+        - addUniqueConstraint:
+            tableName: app_user
+            columnNames: email
+            constraintName: uq_app_user_email

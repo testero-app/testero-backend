@@ -1026,6 +1026,7 @@ class SubmissionServiceTest {
             assertThat(summary.unansweredCount()).isEqualTo(1);
             assertThat(summary.totalQuestions()).isEqualTo(4);
             assertThat(summary.score()).isEqualTo(3.25);
+            assertThat(summary.maxScore()).isEqualTo(5.0);
         }
 
         private UserAnswer mcAnswer(UUID submissionId,

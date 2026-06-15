@@ -64,6 +64,7 @@ class SubmissionControllerTest {
                 "2026-06-09T10:00:00",
                 "2026-06-09T10:30:00",
                 4.0,
+                16.0,
                 true,
                 3.0,
                 List.of(new AnswerResult("q1", "multiple", true, List.of("opt-1")))
