@@ -2,7 +2,8 @@ package app.testero.dto;
 
 import java.util.List;
 
-public record AssessmentListResponse(List<AssessmentListItem> assessments) {
+public record AssessmentListResponse(List<AssessmentListItem> assessments,
+                                     PaginationMetadata pagination) {
 
     public record AssessmentListItem(
             String id,

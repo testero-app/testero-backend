@@ -6,6 +6,7 @@ import app.testero.config.SecurityConfig;
 import app.testero.dto.AssessmentConfigResponse;
 import app.testero.dto.AssessmentListResponse;
 import app.testero.dto.AssessmentListResponse.AssessmentListItem;
+import app.testero.dto.PaginationMetadata;
 import app.testero.dto.AssessmentQuestionsResponse;
 import app.testero.dto.AssessmentQuestionsResponse.OptionDto;
 import app.testero.dto.AssessmentQuestionsResponse.QuestionDto;
@@ -85,10 +86,10 @@ class AssessmentControllerTest {
         void success() throws Exception {
             when(studentProfileRepository.findByUserId(USER_ID))
                     .thenReturn(Optional.of(buildProfile()));
-            when(assessmentService.getAvailableAssessments(CLASS_ID, USER_ID))
+            when(assessmentService.getAvailableAssessments(CLASS_ID, USER_ID, 0, 20))
                     .thenReturn(new AssessmentListResponse(List.of(
                             new AssessmentListItem(ASSESSMENT_ID, "Test 1", "2026-06-15", 45, 5, "INTERMEDIATE", "NOT_STARTED", null)
-                    )));
+                    ), new PaginationMetadata(1, 1, 0, 20)));
 
             mockMvc.perform(get("/assessments").with(jwt()))
                     .andExpect(status().isOk())

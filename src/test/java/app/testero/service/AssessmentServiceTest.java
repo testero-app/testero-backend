@@ -22,6 +22,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,8 +32,10 @@ import java.util.UUID;
 
 import static app.testero.fixture.PythonCertificationFixture.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,13 +77,13 @@ class AssessmentServiceTest {
         @DisplayName("returns NOT_STARTED when no submissions exist")
         void notStarted() {
             AssessmentSnapshot s = buildAssessmentSnapshot();
-            when(snapshotRepository.findSnapshotsByClassId(CLASS_ID))
-                    .thenReturn(List.of(s));
+            when(snapshotRepository.findSnapshotsByClassId(eq(CLASS_ID), any()))
+                    .thenReturn(new PageImpl<>(List.of(s)));
             when(submissionRepository.findByUserIdAndAssessmentSnapshotIdIn(
                     STUDENT_ID, List.of(SNAPSHOT_ID)))
                     .thenReturn(List.of());
 
-            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID);
+            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID, 0, 20);
 
             assertThat(response.assessments()).hasSize(1);
             var item = response.assessments().get(0);
@@ -103,13 +107,13 @@ class AssessmentServiceTest {
             sub.setStatus(SubmissionStatus.IN_PROGRESS);
             sub.setStartedAt(LocalDateTime.now());
 
-            when(snapshotRepository.findSnapshotsByClassId(CLASS_ID))
-                    .thenReturn(List.of(s));
+            when(snapshotRepository.findSnapshotsByClassId(eq(CLASS_ID), any()))
+                    .thenReturn(new PageImpl<>(List.of(s)));
             when(submissionRepository.findByUserIdAndAssessmentSnapshotIdIn(
                     STUDENT_ID, List.of(SNAPSHOT_ID)))
                     .thenReturn(List.of(sub));
 
-            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID);
+            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID, 0, 20);
 
             var item = response.assessments().get(0);
             assertThat(item.status()).isEqualTo("IN_PROGRESS");
@@ -128,13 +132,13 @@ class AssessmentServiceTest {
             sub.setSubmittedAt(LocalDateTime.now());
             sub.setScore(82.0);
 
-            when(snapshotRepository.findSnapshotsByClassId(CLASS_ID))
-                    .thenReturn(List.of(s));
+            when(snapshotRepository.findSnapshotsByClassId(eq(CLASS_ID), any()))
+                    .thenReturn(new PageImpl<>(List.of(s)));
             when(submissionRepository.findByUserIdAndAssessmentSnapshotIdIn(
                     STUDENT_ID, List.of(SNAPSHOT_ID)))
                     .thenReturn(List.of(sub));
 
-            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID);
+            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID, 0, 20);
 
             var item = response.assessments().get(0);
             assertThat(item.status()).isEqualTo("COMPLETED");
@@ -144,10 +148,10 @@ class AssessmentServiceTest {
         @Test
         @DisplayName("returns empty list when no snapshots exist")
         void emptyList() {
-            when(snapshotRepository.findSnapshotsByClassId(CLASS_ID))
-                    .thenReturn(List.of());
+            when(snapshotRepository.findSnapshotsByClassId(eq(CLASS_ID), any()))
+                    .thenReturn(new PageImpl<>(List.of()));
 
-            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID);
+            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID, 0, 20);
 
             assertThat(response.assessments()).isEmpty();
         }

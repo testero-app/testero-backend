@@ -4,6 +4,7 @@ import app.testero.dto.AnswerInput;
 import app.testero.dto.SaveAnswerRequest;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
+import app.testero.dto.PaginationMetadata;
 import app.testero.dto.SubmissionHistoryResponse;
 import app.testero.dto.SubmissionHistoryResponse.SubmissionSummary;
 import app.testero.dto.SubmissionReviewResponse;
@@ -30,6 +31,8 @@ import app.testero.repository.UserAnswerRepository;
 import app.testero.repository.UserAnswerSelectedOptionRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -331,14 +334,19 @@ public class SubmissionService {
     }
 
     @Transactional(readOnly = true)
-    public SubmissionHistoryResponse getSubmissionHistory(UUID userId) {
-        List<Submission> submissions = submissionRepository
+    public SubmissionHistoryResponse getSubmissionHistory(UUID userId, int page, int size) {
+        Page<Submission> submissionPage = submissionRepository
                 .findByUserIdAndStatusInOrderBySubmittedAtDesc(
                         userId,
-                        List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED));
+                        List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED),
+                        PageRequest.of(page, size));
+
+        List<Submission> submissions = submissionPage.getContent();
 
         if (submissions.isEmpty()) {
-            return new SubmissionHistoryResponse(List.of());
+            PaginationMetadata pagination = new PaginationMetadata(
+                    0, 0, page, size);
+            return new SubmissionHistoryResponse(List.of(), pagination);
         }
 
         // Batch-fetch snapshot titles
@@ -404,7 +412,13 @@ public class SubmissionService {
                 })
                 .toList();
 
-        return new SubmissionHistoryResponse(summaries);
+        PaginationMetadata pagination = new PaginationMetadata(
+                submissionPage.getTotalElements(),
+                submissionPage.getTotalPages(),
+                submissionPage.getNumber(),
+                submissionPage.getSize());
+
+        return new SubmissionHistoryResponse(summaries, pagination);
     }
 
     @Transactional(readOnly = true)

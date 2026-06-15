@@ -5,6 +5,8 @@ import app.testero.entity.submission.SubmissionStatus;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
@@ -16,6 +18,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
     List<Submission> findByUserIdAndStatusInOrderBySubmittedAtDesc(
             UUID userId, List<SubmissionStatus> statuses);
+
+    Page<Submission> findByUserIdAndStatusInOrderBySubmittedAtDesc(
+            UUID userId, List<SubmissionStatus> statuses, Pageable pageable);
 
     List<Submission> findByStatus(SubmissionStatus status);
 

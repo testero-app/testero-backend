@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -33,9 +34,11 @@ public class SubmissionController {
 
     @GetMapping("/mine")
     public ResponseEntity<SubmissionHistoryResponse> getMySubmissions(
-            @AuthenticationPrincipal UserPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(
-                submissionService.getSubmissionHistory(principal.userId()));
+                submissionService.getSubmissionHistory(principal.userId(), page, size));
     }
 
     @PutMapping("/{submissionId}/answers/{questionSnapshotId}")

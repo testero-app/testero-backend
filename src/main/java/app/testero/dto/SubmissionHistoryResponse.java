@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public record SubmissionHistoryResponse(
-        List<SubmissionSummary> submissions
+        List<SubmissionSummary> submissions,
+        PaginationMetadata pagination
 ) {
     public record SubmissionSummary(
             String id,

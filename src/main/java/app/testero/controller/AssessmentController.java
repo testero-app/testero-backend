@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -45,11 +46,14 @@ public class AssessmentController {
 
     @GetMapping
     public ResponseEntity<AssessmentListResponse> getAvailableAssessments(
-            @AuthenticationPrincipal UserPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         StudentProfile profile = studentProfileRepository.findByUserId(principal.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("Student profile not found"));
         UUID classId = profile.getClassId();
-        return ResponseEntity.ok(assessmentService.getAvailableAssessments(classId, principal.userId()));
+        return ResponseEntity.ok(
+                assessmentService.getAvailableAssessments(classId, principal.userId(), page, size));
     }
 
     @GetMapping("/{snapshotId}/config")
