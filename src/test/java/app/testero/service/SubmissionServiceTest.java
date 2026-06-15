@@ -4,13 +4,16 @@ import app.testero.dto.AnswerInput;
 import app.testero.dto.SaveAnswerRequest;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
+import app.testero.dto.SubmissionFeedbackResponse.SubjectScore;
 import app.testero.dto.SubmissionHistoryResponse;
 import app.testero.dto.SubmissionHistoryResponse.SubmissionSummary;
 import app.testero.dto.SubmissionStartResponse;
 import app.testero.dto.SubmissionSubmitRequest;
+import app.testero.entity.assessment.Subject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
+import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.SubmissionStatus;
 import app.testero.entity.submission.UserAnswer;
@@ -20,6 +23,8 @@ import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.OptionSnapshotRepository;
 import app.testero.repository.QuestionSnapshotRepository;
+import app.testero.repository.QuestionSnapshotSubjectRepository;
+import app.testero.repository.SubjectRepository;
 import app.testero.repository.SubmissionRepository;
 import app.testero.repository.UserAnswerRepository;
 import app.testero.repository.UserAnswerSelectedOptionRepository;
@@ -59,6 +64,8 @@ class SubmissionServiceTest {
     @Mock OptionSnapshotRepository optionSnapshotRepository;
     @Mock AssessmentSnapshotRepository assessmentSnapshotRepository;
     @Mock QuestionSnapshotRepository questionSnapshotRepository;
+    @Mock QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
+    @Mock SubjectRepository subjectRepository;
     @Mock ApplicationEventPublisher eventPublisher;
 
     ScoringService scoringService;
@@ -81,12 +88,18 @@ class SubmissionServiceTest {
     @BeforeEach
     void setUp() {
         defaultSnapshot = buildAssessmentSnapshot();
+        // Default stubs for new dependencies — return empty lists when not explicitly stubbed
+        lenient().when(questionSnapshotRepository.findByIdIn(anyList())).thenReturn(List.of());
+        lenient().when(questionSnapshotSubjectRepository.findByQuestionSnapshotIdIn(anyList())).thenReturn(List.of());
         scoringService = new ScoringService(
                 submissionRepository, userAnswerRepository,
-                optionSnapshotRepository, assessmentSnapshotRepository);
+                optionSnapshotRepository, assessmentSnapshotRepository,
+                questionSnapshotRepository, questionSnapshotSubjectRepository,
+                subjectRepository);
         submissionService = new SubmissionService(
                 submissionRepository, userAnswerRepository, userAnswerSelectedOptionRepository,
                 optionSnapshotRepository, assessmentSnapshotRepository, questionSnapshotRepository,
+                questionSnapshotSubjectRepository, subjectRepository,
                 scoringService, eventPublisher);
     }
 
@@ -129,6 +142,8 @@ class SubmissionServiceTest {
         lenient().when(userAnswerSelectedOptionRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
         when(assessmentSnapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(snapshot));
+        lenient().when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
+                .thenReturn(List.of());
     }
 
     // ── DTO builders ───────────────────────────────────────────────
@@ -916,6 +931,10 @@ class SubmissionServiceTest {
                     .thenReturn(List.of(mc));
             when(optionSnapshotRepository.findByQuestionSnapshotIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionSnapshotsFor(Q1_ID));
+            when(assessmentSnapshotRepository.findById(SNAPSHOT_ID))
+                    .thenReturn(Optional.of(defaultSnapshot));
+            when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
+                    .thenReturn(List.of());
 
             SubmissionFeedbackResponse response = submissionService.getSubmission(SUBMISSION_ID, STUDENT_ID);
 
@@ -950,6 +969,10 @@ class SubmissionServiceTest {
                     .thenReturn(List.of(mc, open));
             when(optionSnapshotRepository.findByQuestionSnapshotIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionSnapshotsFor(Q1_ID));
+            when(assessmentSnapshotRepository.findById(SNAPSHOT_ID))
+                    .thenReturn(Optional.of(defaultSnapshot));
+            when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
+                    .thenReturn(List.of());
 
             SubmissionFeedbackResponse response = submissionService.getSubmission(SUBMISSION_ID, STUDENT_ID);
 
@@ -1040,6 +1063,102 @@ class SubmissionServiceTest {
             a.setType("multiple");
             a.setIsCorrect(isCorrect);
             return a;
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // computeMaxScore — per-question points
+    // ════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("submitAnswers — per-question points in maxScore")
+    class SubmitAnswers_PerQuestionPoints {
+
+        @Test
+        @DisplayName("computeMaxScore sums per-question points")
+        void computeMaxScoreSumsPerQuestionPoints() {
+            // Q1 has points=2.00, Q2 has points=null (fallback to ptsCorrect=1.00)
+            QuestionSnapshot qs1 = new QuestionSnapshot();
+            qs1.setId(Q1_ID);
+            qs1.setAssessmentSnapshotId(SNAPSHOT_ID);
+            qs1.setType("multiple");
+            qs1.setText("Q1");
+            qs1.setPosition(1);
+            qs1.setPoints(new BigDecimal("2.00"));
+
+            QuestionSnapshot qs2 = new QuestionSnapshot();
+            qs2.setId(Q2_ID);
+            qs2.setAssessmentSnapshotId(SNAPSHOT_ID);
+            qs2.setType("multiple");
+            qs2.setText("Q2");
+            qs2.setPosition(2);
+            qs2.setPoints(null); // fallback
+
+            stubSubmitFlow();
+            when(questionSnapshotRepository.findByIdIn(anyList())).thenReturn(List.of(qs1, qs2));
+            when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
+                    .thenReturn(List.of(qs1, qs2));
+            when(optionSnapshotRepository.findByQuestionSnapshotIdInAndCorrectTrue(anyList()))
+                    .thenReturn(correctOptionSnapshotsFor(Q1_ID, Q2_ID));
+
+            SubmissionFeedbackResponse response = submit(
+                    mcAnswer(Q1_ID, Q1_OPT_C.toString()),
+                    mcAnswer(Q2_ID, Q2_OPT_D.toString()));
+
+            // maxScore = 2.00 (Q1) + 1.00 (Q2 fallback) = 3.00
+            assertThat(response.maxScore()).isCloseTo(3.0, within(0.001));
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // submitAnswers — subject scores
+    // ════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("submitAnswers — subject scores")
+    class SubmitAnswers_SubjectScores {
+
+        private static final UUID SUBJECT_A_ID = UUID.fromString("ab000000-0000-0000-0000-000000000001");
+
+        @Test
+        @DisplayName("submitAnswers includes subjectScores in response")
+        void includesSubjectScores() {
+            stubSubmitFlow();
+
+            QuestionSnapshot qs = new QuestionSnapshot();
+            qs.setId(Q1_ID);
+            qs.setAssessmentSnapshotId(SNAPSHOT_ID);
+            qs.setType("multiple");
+            qs.setText("Q1");
+            qs.setPosition(1);
+            qs.setPoints(null);
+            when(questionSnapshotRepository.findByIdIn(anyList())).thenReturn(List.of(qs));
+
+            when(optionSnapshotRepository.findByQuestionSnapshotIdInAndCorrectTrue(anyList()))
+                    .thenReturn(correctOptionSnapshotsFor(Q1_ID));
+
+            // Set up subject links
+            QuestionSnapshotSubject qss = new QuestionSnapshotSubject();
+            qss.setQuestionSnapshotId(Q1_ID);
+            qss.setSubjectId(SUBJECT_A_ID);
+            qss.setWeight(new BigDecimal("1.00"));
+            when(questionSnapshotSubjectRepository.findByQuestionSnapshotIdIn(anyList()))
+                    .thenReturn(List.of(qss));
+
+            Subject subject = new Subject();
+            subject.setId(SUBJECT_A_ID);
+            subject.setLabel("Variables");
+            when(subjectRepository.findByIdIn(anyList())).thenReturn(List.of(subject));
+
+            SubmissionFeedbackResponse response = submit(
+                    mcAnswer(Q1_ID, Q1_OPT_C.toString()));
+
+            assertThat(response.subjectScores()).isNotNull();
+            assertThat(response.subjectScores()).hasSize(1);
+            SubjectScore sc = response.subjectScores().get(0);
+            assertThat(sc.label()).isEqualTo("Variables");
+            assertThat(sc.pointsEarned()).isCloseTo(1.0, within(0.001));
+            assertThat(sc.pointsAvailable()).isCloseTo(1.0, within(0.001));
         }
     }
 }

@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Getter;
@@ -37,6 +38,9 @@ public class Question {
 
     @Column(nullable = false)
     private int position;
+
+    @Column
+    private BigDecimal points;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
