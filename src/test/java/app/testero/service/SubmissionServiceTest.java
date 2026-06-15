@@ -2,6 +2,8 @@ package app.testero.service;
 
 import app.testero.dto.AnswerInput;
 import app.testero.dto.SaveAnswerRequest;
+import app.testero.dto.SavedAnswersResponse;
+import app.testero.dto.SavedAnswersResponse.SavedAnswer;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
 import app.testero.dto.SubmissionFeedbackResponse.SubjectScore;
@@ -255,6 +257,101 @@ class SubmissionServiceTest {
 
             assertThatThrownBy(() -> submissionService.startSubmission(unknownId, STUDENT_ID))
                     .isInstanceOf(ResourceNotFoundException.class);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // getSavedAnswers
+    // ════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("getSavedAnswers")
+    class GetSavedAnswersTests {
+
+        @Test
+        @DisplayName("returns saved answers with selected options")
+        void returnsSavedAnswers() {
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(startedSubmission()));
+
+            UserAnswer mc = new UserAnswer();
+            mc.setId(ANSWER_1_ID);
+            mc.setSubmissionId(SUBMISSION_ID);
+            mc.setQuestionSnapshotId(Q1_ID);
+            mc.setType("multiple");
+            mc.setText("");
+            mc.setMotivation("");
+
+            UserAnswer open = new UserAnswer();
+            open.setId(ANSWER_2_ID);
+            open.setSubmissionId(SUBMISSION_ID);
+            open.setQuestionSnapshotId(Q_OPEN_ID);
+            open.setType("open");
+            open.setText("my answer");
+            open.setMotivation("because...");
+
+            when(userAnswerRepository.findBySubmissionId(SUBMISSION_ID))
+                    .thenReturn(List.of(mc, open));
+
+            UserAnswerSelectedOption aso = new UserAnswerSelectedOption();
+            aso.setAnswerId(ANSWER_1_ID);
+            aso.setOptionSnapshotId(Q1_OPT_C);
+            when(userAnswerSelectedOptionRepository.findByAnswerIdIn(List.of(ANSWER_1_ID, ANSWER_2_ID)))
+                    .thenReturn(List.of(aso));
+
+            SavedAnswersResponse response = submissionService.getSavedAnswers(SUBMISSION_ID, STUDENT_ID);
+
+            assertThat(response.answers()).hasSize(2);
+
+            SavedAnswer mcResult = response.answers().get(0);
+            assertThat(mcResult.questionSnapshotId()).isEqualTo(Q1_ID.toString());
+            assertThat(mcResult.type()).isEqualTo("multiple");
+            assertThat(mcResult.selectedOptionIds()).containsExactly(Q1_OPT_C.toString());
+
+            SavedAnswer openResult = response.answers().get(1);
+            assertThat(openResult.questionSnapshotId()).isEqualTo(Q_OPEN_ID.toString());
+            assertThat(openResult.type()).isEqualTo("open");
+            assertThat(openResult.text()).isEqualTo("my answer");
+            assertThat(openResult.motivation()).isEqualTo("because...");
+            assertThat(openResult.selectedOptionIds()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("returns empty list when no answers saved")
+        void returnsEmptyList() {
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(startedSubmission()));
+            when(userAnswerRepository.findBySubmissionId(SUBMISSION_ID))
+                    .thenReturn(List.of());
+
+            SavedAnswersResponse response = submissionService.getSavedAnswers(SUBMISSION_ID, STUDENT_ID);
+
+            assertThat(response.answers()).isEmpty();
+            verifyNoInteractions(userAnswerSelectedOptionRepository);
+        }
+
+        @Test
+        @DisplayName("throws ResourceNotFoundException when submission not found")
+        void notFound() {
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> submissionService.getSavedAnswers(SUBMISSION_ID, STUDENT_ID))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("Submission not found");
+        }
+
+        @Test
+        @DisplayName("throws IllegalSubmissionStateException when not IN_PROGRESS")
+        void notInProgress() {
+            Submission completed = startedSubmission();
+            completed.setStatus(SubmissionStatus.SUBMITTED);
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(completed));
+
+            assertThatThrownBy(() -> submissionService.getSavedAnswers(SUBMISSION_ID, STUDENT_ID))
+                    .isInstanceOf(IllegalSubmissionStateException.class)
+                    .hasMessageContaining("Submission is not in progress");
         }
     }
 

@@ -3,6 +3,8 @@ package app.testero.controller;
 import app.testero.config.CorsProperties;
 import app.testero.config.JwtProperties;
 import app.testero.config.SecurityConfig;
+import app.testero.dto.SavedAnswersResponse;
+import app.testero.dto.SavedAnswersResponse.SavedAnswer;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
 import app.testero.exception.IllegalSubmissionStateException;
@@ -70,6 +72,73 @@ class SubmissionControllerTest {
                 List.of(new AnswerResult("q1", "multiple", true, List.of("opt-1"), 1.0)),
                 List.of()
         );
+    }
+
+    // ── GET /submissions/{id}/answers ──────────────────────────────
+
+    @Nested
+    @DisplayName("GET /submissions/{id}/answers")
+    class GetSavedAnswers {
+
+        @Test
+        @DisplayName("authenticated, in-progress → 200 with answers")
+        void success() throws Exception {
+            var response = new SavedAnswersResponse(List.of(
+                    new SavedAnswer("q1", "multiple", "", "", List.of("opt-1", "opt-2")),
+                    new SavedAnswer("q2", "open", "my text", "my motivation", List.of())
+            ));
+            when(submissionService.getSavedAnswers(SUBMISSION_ID, USER_ID))
+                    .thenReturn(response);
+
+            mockMvc.perform(get("/submissions/{id}/answers", SUBMISSION_ID).with(jwt()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.answers.length()").value(2))
+                    .andExpect(jsonPath("$.answers[0].question_snapshot_id").value("q1"))
+                    .andExpect(jsonPath("$.answers[0].selected_option_ids[0]").value("opt-1"))
+                    .andExpect(jsonPath("$.answers[1].type").value("open"))
+                    .andExpect(jsonPath("$.answers[1].text").value("my text"));
+        }
+
+        @Test
+        @DisplayName("no answers saved → 200 with empty list")
+        void emptyList() throws Exception {
+            when(submissionService.getSavedAnswers(SUBMISSION_ID, USER_ID))
+                    .thenReturn(new SavedAnswersResponse(List.of()));
+
+            mockMvc.perform(get("/submissions/{id}/answers", SUBMISSION_ID).with(jwt()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.answers").isArray())
+                    .andExpect(jsonPath("$.answers").isEmpty());
+        }
+
+        @Test
+        @DisplayName("submission not found → 404")
+        void notFound() throws Exception {
+            when(submissionService.getSavedAnswers(SUBMISSION_ID, USER_ID))
+                    .thenThrow(new ResourceNotFoundException("Submission not found"));
+
+            mockMvc.perform(get("/submissions/{id}/answers", SUBMISSION_ID).with(jwt()))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.detail").value("Submission not found"));
+        }
+
+        @Test
+        @DisplayName("submission not in progress → 409")
+        void notInProgress() throws Exception {
+            when(submissionService.getSavedAnswers(SUBMISSION_ID, USER_ID))
+                    .thenThrow(new IllegalSubmissionStateException("Submission is not in progress"));
+
+            mockMvc.perform(get("/submissions/{id}/answers", SUBMISSION_ID).with(jwt()))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.detail").value("Submission is not in progress"));
+        }
+
+        @Test
+        @DisplayName("no token → 403")
+        void unauthenticated() throws Exception {
+            mockMvc.perform(get("/submissions/{id}/answers", SUBMISSION_ID))
+                    .andExpect(status().isForbidden());
+        }
     }
 
     // ── PUT /submissions/{id} ─────────────────────────────────────
