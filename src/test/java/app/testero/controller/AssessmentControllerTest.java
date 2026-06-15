@@ -184,7 +184,7 @@ class AssessmentControllerTest {
         void success() throws Exception {
             var questions = List.of(
                     new QuestionDto("q1", "multiple", "What is 2+2?", null,
-                            List.of(new OptionDto("o1", "4", false), new OptionDto("o2", "5", false)), null)
+                            List.of(new OptionDto("o1", "4", false), new OptionDto("o2", "5", false)), null, List.of())
             );
             when(assessmentService.getAssessmentQuestions(ASSESSMENT_ID))
                     .thenReturn(new AssessmentQuestionsResponse(

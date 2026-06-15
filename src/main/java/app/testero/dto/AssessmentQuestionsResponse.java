@@ -16,7 +16,8 @@ public record AssessmentQuestionsResponse(
             String text,
             String code,
             List<OptionDto> options,
-            Double points
+            Double points,
+            List<SubjectDto> subjects
     ) {}
 
     public record OptionDto(
