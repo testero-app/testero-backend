@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ImportTestcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@SuppressWarnings({"rawtypes", "unchecked"})
 class StudentFlowIntegrationTest {
 
     @ServiceConnection
@@ -63,7 +64,6 @@ class StudentFlowIntegrationTest {
         token = (String) response.getBody().get("token");
         assertThat(token).isNotBlank();
 
-        @SuppressWarnings("unchecked")
         Map<String, Object> user = (Map<String, Object>) response.getBody().get("user");
         assertThat(user.get("name")).isEqualTo("Alice Rossi");
         assertThat(user.get("username")).isEqualTo("a.rossi");
@@ -82,7 +82,6 @@ class StudentFlowIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        @SuppressWarnings("unchecked")
         List<Map<String, Object>> assessments =
                 (List<Map<String, Object>>) response.getBody().get("assessments");
         assertThat(assessments).isNotEmpty();
@@ -103,7 +102,6 @@ class StudentFlowIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        @SuppressWarnings("unchecked")
         Map<String, Object> scoring =
                 (Map<String, Object>) response.getBody().get("scoring");
         assertThat(scoring.get("pointsPerCorrect")).isEqualTo(1.0);
@@ -122,13 +120,11 @@ class StudentFlowIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        @SuppressWarnings("unchecked")
         List<Map<String, Object>> q =
                 (List<Map<String, Object>>) response.getBody().get("questions");
         assertThat(q).isNotEmpty();
 
         for (Map<String, Object> question : q) {
-            @SuppressWarnings("unchecked")
             List<Map<String, Object>> options =
                     (List<Map<String, Object>>) question.get("options");
             if (options != null) {
@@ -168,7 +164,6 @@ class StudentFlowIntegrationTest {
         List<Map<String, Object>> answers = questions.stream()
                 .map(q -> {
                     String type = (String) q.get("type");
-                    @SuppressWarnings("unchecked")
                     List<Map<String, Object>> options =
                             (List<Map<String, Object>>) q.get("options");
 
@@ -198,7 +193,6 @@ class StudentFlowIntegrationTest {
         assertThat(response.getBody()).containsKey("id");
         assertThat(response.getBody()).containsKey("answers");
 
-        @SuppressWarnings("unchecked")
         List<Map<String, Object>> answerResults =
                 (List<Map<String, Object>>) response.getBody().get("answers");
         assertThat(answerResults).hasSameSizeAs(questions);
@@ -214,7 +208,6 @@ class StudentFlowIntegrationTest {
     @Test
     @Order(7)
     @DisplayName("GET /submissions/mine → 200, returns submission history")
-    @SuppressWarnings("unchecked")
     void getSubmissionHistory() {
         ResponseEntity<Map> response = rest.exchange(
                 "/submissions/mine", HttpMethod.GET,
