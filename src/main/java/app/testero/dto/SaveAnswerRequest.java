@@ -8,7 +8,8 @@ public record SaveAnswerRequest(
         @NotBlank String type,
         String text,
         String motivation,
-        @JsonProperty("selected_option_ids") List<String> selectedOptionIds
+        @JsonProperty("selected_option_ids") List<String> selectedOptionIds,
+        Boolean flagged
 ) {
     public SaveAnswerRequest {
         if (selectedOptionIds == null) {
