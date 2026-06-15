@@ -84,8 +84,8 @@ class SubmissionControllerTest {
         @DisplayName("authenticated, in-progress → 200 with answers")
         void success() throws Exception {
             var response = new SavedAnswersResponse(List.of(
-                    new SavedAnswer("q1", "multiple", "", "", List.of("opt-1", "opt-2")),
-                    new SavedAnswer("q2", "open", "my text", "my motivation", List.of())
+                    new SavedAnswer("q1", "multiple", "", "", List.of("opt-1", "opt-2"), true),
+                    new SavedAnswer("q2", "open", "my text", "my motivation", List.of(), false)
             ));
             when(submissionService.getSavedAnswers(SUBMISSION_ID, USER_ID))
                     .thenReturn(response);
@@ -95,8 +95,10 @@ class SubmissionControllerTest {
                     .andExpect(jsonPath("$.answers.length()").value(2))
                     .andExpect(jsonPath("$.answers[0].question_snapshot_id").value("q1"))
                     .andExpect(jsonPath("$.answers[0].selected_option_ids[0]").value("opt-1"))
+                    .andExpect(jsonPath("$.answers[0].flagged").value(true))
                     .andExpect(jsonPath("$.answers[1].type").value("open"))
-                    .andExpect(jsonPath("$.answers[1].text").value("my text"));
+                    .andExpect(jsonPath("$.answers[1].text").value("my text"))
+                    .andExpect(jsonPath("$.answers[1].flagged").value(false));
         }
 
         @Test

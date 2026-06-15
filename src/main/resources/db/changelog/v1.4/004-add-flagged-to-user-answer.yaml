@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.4-004-add-flagged-to-user-answer
+      author: testero
+      comment: >
+        Add flagged boolean to user_answer for question bookmark/flag
+        ("da rivedere") support during assessment.
+      changes:
+        - addColumn:
+            tableName: user_answer
+            columns:
+              - column:
+                  name: flagged
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropColumn:
+            tableName: user_answer
+            columnName: flagged
