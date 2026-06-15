@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0](https://github.com/testero-app/testero-backend/compare/v1.14.0...v1.15.0) (2026-06-15)
+
+
+### Features
+
+* add max_score to submission DTOs and support email login ([#139](https://github.com/testero-app/testero-backend/issues/139)) ([c5ebf2d](https://github.com/testero-app/testero-backend/commit/c5ebf2d688ecfd73923bbc32a7d0f3889b2aaad2)), closes [#110](https://github.com/testero-app/testero-backend/issues/110) [#117](https://github.com/testero-app/testero-backend/issues/117)
+* add Swagger/OpenAPI documentation for REST endpoints ([#137](https://github.com/testero-app/testero-backend/issues/137)) ([e4f669e](https://github.com/testero-app/testero-backend/commit/e4f669eaeb6452ced0b37465aee77d24e3e1ba6d)), closes [#98](https://github.com/testero-app/testero-backend/issues/98)
+
 ## [1.14.0](https://github.com/testero-app/testero-backend/compare/v1.13.0...v1.14.0) (2026-06-15)
 
 
