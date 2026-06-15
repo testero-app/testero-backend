@@ -7,6 +7,7 @@ import app.testero.entity.user.StudentProfile;
 import app.testero.repository.AppUserRepository;
 import app.testero.repository.StudentProfileRepository;
 import app.testero.security.JwtService;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,15 +32,16 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        AppUser user = appUserRepository.findByUsername(request.username())
+        String identifier = request.username();
+        AppUser user = findByIdentifier(identifier)
                 .orElseThrow(() -> {
-                    log.warn("Login failed: unknown username={}", request.username());
+                    log.warn("Login failed: unknown identifier={}", identifier);
                     return new InvalidCredentialsException();
                 });
 
         if (user.getPasswordHash() == null ||
                 !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            log.warn("Login failed: wrong password for username={}", request.username());
+            log.warn("Login failed: wrong password for identifier={}", identifier);
             throw new InvalidCredentialsException();
         }
 
@@ -62,6 +64,13 @@ public class AuthService {
 
         log.info("Login successful: username={}", user.getUsername());
         return new LoginResponse(token, userInfo);
+    }
+
+    private Optional<AppUser> findByIdentifier(String identifier) {
+        if (identifier.contains("@")) {
+            return appUserRepository.findByEmail(identifier);
+        }
+        return appUserRepository.findByUsername(identifier);
     }
 
     public static class InvalidCredentialsException extends RuntimeException {

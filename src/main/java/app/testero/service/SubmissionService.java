@@ -246,6 +246,7 @@ public class SubmissionService {
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt().toString(),
                 submission.getScore(),
+                computeMaxScore(snapshot),
                 computePassed(submission.getScore(), snapshot),
                 snapshot != null && snapshot.getPassingScore() != null
                         ? snapshot.getPassingScore().doubleValue() : null,
@@ -321,6 +322,7 @@ public class SubmissionService {
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null,
                 submission.getScore(),
+                computeMaxScore(feedbackSnapshot),
                 computePassed(submission.getScore(), feedbackSnapshot),
                 feedbackSnapshot != null && feedbackSnapshot.getPassingScore() != null
                         ? feedbackSnapshot.getPassingScore().doubleValue() : null,
@@ -392,6 +394,7 @@ public class SubmissionService {
                                     ? s.getSubmittedAt().toString()
                                     : null,
                             s.getScore(),
+                            computeMaxScore(snapshot),
                             computePassed(s.getScore(), snapshot),
                             mcAnswers.size(),
                             correct,
@@ -494,6 +497,13 @@ public class SubmissionService {
                 submission.getScore(),
                 reviewQuestions
         );
+    }
+
+    private static Double computeMaxScore(AssessmentSnapshot snapshot) {
+        if (snapshot == null) {
+            return null;
+        }
+        return snapshot.getQuestionsPerAssessment() * snapshot.getPtsCorrect().doubleValue();
     }
 
     private static Boolean computePassed(Double score, AssessmentSnapshot snapshot) {

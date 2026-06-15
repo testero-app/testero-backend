@@ -37,3 +37,5 @@ databaseChangeLog:
       file: db/changelog/v1.3/004-add-explanation-field.yaml
   - include:
       file: db/changelog/v1.3/005-add-passing-score.yaml
+  - include:
+      file: db/changelog/v1.3/006-add-unique-email.yaml

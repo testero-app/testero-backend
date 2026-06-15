@@ -10,6 +10,7 @@ public record SubmissionFeedbackResponse(
         @JsonProperty("started_at") String startedAt,
         @JsonProperty("submitted_at") String submittedAt,
         Double score,
+        @JsonProperty("max_score") Double maxScore,
         Boolean passed,
         @JsonProperty("passing_score") Double passingScore,
         List<AnswerResult> answers
