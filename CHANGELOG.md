@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0](https://github.com/testero-app/testero-backend/compare/v1.13.0...v1.14.0) (2026-06-15)
+
+
+### Features
+
+* add user profile and change password endpoints ([#135](https://github.com/testero-app/testero-backend/issues/135)) ([e566a50](https://github.com/testero-app/testero-backend/commit/e566a506188b6803514b81ea59d9f8569234ae4c)), closes [#113](https://github.com/testero-app/testero-backend/issues/113) [#114](https://github.com/testero-app/testero-backend/issues/114)
+
 ## [1.13.0](https://github.com/testero-app/testero-backend/compare/v1.12.1...v1.13.0) (2026-06-14)
 
 
