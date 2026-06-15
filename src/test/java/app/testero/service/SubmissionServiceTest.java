@@ -34,6 +34,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageImpl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -46,6 +47,7 @@ import static app.testero.fixture.PythonCertificationFixture.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -974,12 +976,13 @@ class SubmissionServiceTest {
         void returnsEmptyListWhenNoSubmissions() {
             when(submissionRepository
                     .findByUserIdAndStatusInOrderBySubmittedAtDesc(
-                            STUDENT_ID,
-                            List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED)))
-                    .thenReturn(List.of());
+                            eq(STUDENT_ID),
+                            eq(List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED)),
+                            any()))
+                    .thenReturn(new PageImpl<>(List.of()));
 
             SubmissionHistoryResponse response =
-                    submissionService.getSubmissionHistory(STUDENT_ID);
+                    submissionService.getSubmissionHistory(STUDENT_ID, 0, 20);
 
             assertThat(response.submissions()).isEmpty();
         }
@@ -994,9 +997,10 @@ class SubmissionServiceTest {
 
             when(submissionRepository
                     .findByUserIdAndStatusInOrderBySubmittedAtDesc(
-                            STUDENT_ID,
-                            List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED)))
-                    .thenReturn(List.of(sub));
+                            eq(STUDENT_ID),
+                            eq(List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED)),
+                            any()))
+                    .thenReturn(new PageImpl<>(List.of(sub)));
             when(assessmentSnapshotRepository.findAllById(List.of(SNAPSHOT_ID)))
                     .thenReturn(List.of(defaultSnapshot));
 
@@ -1011,7 +1015,7 @@ class SubmissionServiceTest {
                             correct1, correct2, wrong1, unanswered1));
 
             SubmissionHistoryResponse response =
-                    submissionService.getSubmissionHistory(STUDENT_ID);
+                    submissionService.getSubmissionHistory(STUDENT_ID, 0, 20);
 
             assertThat(response.submissions()).hasSize(1);
             SubmissionSummary summary = response.submissions().get(0);
