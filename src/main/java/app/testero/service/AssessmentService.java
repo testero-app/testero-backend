@@ -5,6 +5,7 @@ import app.testero.dto.AssessmentListResponse;
 import app.testero.dto.AssessmentQuestionsResponse;
 import app.testero.dto.AssessmentQuestionsResponse.OptionDto;
 import app.testero.dto.AssessmentQuestionsResponse.QuestionDto;
+import app.testero.dto.PaginationMetadata;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
@@ -15,6 +16,8 @@ import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.OptionSnapshotRepository;
 import app.testero.repository.QuestionSnapshotRepository;
 import app.testero.repository.SubmissionRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -45,8 +48,11 @@ public class AssessmentService {
         this.questionPrepService = questionPrepService;
     }
 
-    public AssessmentListResponse getAvailableAssessments(UUID classId, UUID userId) {
-        List<AssessmentSnapshot> snapshots = snapshotRepository.findSnapshotsByClassId(classId);
+    public AssessmentListResponse getAvailableAssessments(UUID classId, UUID userId,
+                                                           int page, int size) {
+        Page<AssessmentSnapshot> snapshotPage = snapshotRepository
+                .findSnapshotsByClassId(classId, PageRequest.of(page, size));
+        List<AssessmentSnapshot> snapshots = snapshotPage.getContent();
 
         List<UUID> snapshotIds = snapshots.stream().map(AssessmentSnapshot::getId).toList();
         Map<UUID, Submission> latestSubmissionBySnapshot = snapshotIds.isEmpty()
@@ -87,7 +93,13 @@ public class AssessmentService {
                 })
                 .toList();
 
-        return new AssessmentListResponse(items);
+        PaginationMetadata pagination = new PaginationMetadata(
+                snapshotPage.getTotalElements(),
+                snapshotPage.getTotalPages(),
+                snapshotPage.getNumber(),
+                snapshotPage.getSize());
+
+        return new AssessmentListResponse(items, pagination);
     }
 
     /**

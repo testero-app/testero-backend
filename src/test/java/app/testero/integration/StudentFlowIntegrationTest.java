@@ -86,6 +86,13 @@ class StudentFlowIntegrationTest {
                 (List<Map<String, Object>>) response.getBody().get("assessments");
         assertThat(assessments).isNotEmpty();
 
+        Map<String, Object> pagination =
+                (Map<String, Object>) response.getBody().get("pagination");
+        assertThat(pagination).containsKey("total_elements");
+        assertThat(pagination).containsKey("total_pages");
+        assertThat(pagination).containsKey("page");
+        assertThat(pagination).containsKey("size");
+
         assessmentId = (String) assessments.get(0).get("id");
         assertThat(assessmentId).isNotBlank();
     }
@@ -225,6 +232,11 @@ class StudentFlowIntegrationTest {
                 .containsKey("correct_count");
         assertThat(submissions.get(0))
                 .containsKey("wrong_count");
+
+        Map<String, Object> pagination =
+                (Map<String, Object>) response.getBody().get("pagination");
+        assertThat(pagination).containsKey("total_elements");
+        assertThat(pagination).containsKey("total_pages");
     }
 
     // ── 8. Verify security ─────────────────────────────────────────
