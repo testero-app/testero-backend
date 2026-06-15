@@ -4,6 +4,8 @@ import app.testero.dto.AssessmentConfigResponse;
 import app.testero.dto.AssessmentListResponse;
 import app.testero.dto.AssessmentQuestionsResponse;
 import app.testero.dto.AssessmentQuestionsResponse.QuestionDto;
+import app.testero.entity.assessment.AssessmentSubject;
+import app.testero.entity.assessment.Subject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
@@ -27,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +59,22 @@ class AssessmentServiceTest {
     // ── Helpers ────────────────────────────────────────────────────
 
     private static final UUID CLASS_ID = UUID.fromString("bb000000-0000-0000-0000-000000000099");
+    private static final UUID SUBJECT_A_ID = UUID.fromString("ab000000-0000-0000-0000-000000000001");
+    private static final UUID SUBJECT_B_ID = UUID.fromString("ab000000-0000-0000-0000-000000000002");
+
+    private Subject buildSubject(UUID id, String label) {
+        Subject s = new Subject();
+        s.setId(id);
+        s.setLabel(label);
+        return s;
+    }
+
+    private AssessmentSubject buildAssessmentSubjectLink(UUID assessmentId, UUID subjectId) {
+        AssessmentSubject as = new AssessmentSubject();
+        as.setAssessmentId(assessmentId);
+        as.setSubjectId(subjectId);
+        return as;
+    }
 
     private QuestionSnapshot buildQuestionSnapshot(UUID id, String type, int position) {
         QuestionSnapshot q = new QuestionSnapshot();
@@ -150,6 +169,34 @@ class AssessmentServiceTest {
         }
 
         @Test
+        @DisplayName("includes subjects for each assessment")
+        void includesSubjects() {
+            AssessmentSnapshot s = buildAssessmentSnapshot();
+            when(snapshotRepository.findSnapshotsByClassId(eq(CLASS_ID), any()))
+                    .thenReturn(new PageImpl<>(List.of(s)));
+            when(submissionRepository.findByUserIdAndAssessmentSnapshotIdIn(
+                    STUDENT_ID, List.of(SNAPSHOT_ID)))
+                    .thenReturn(List.of());
+
+            // Stub subject relationships
+            when(assessmentSubjectRepository.findByAssessmentIdIn(List.of(TEST_ID)))
+                    .thenReturn(List.of(
+                            buildAssessmentSubjectLink(TEST_ID, SUBJECT_A_ID),
+                            buildAssessmentSubjectLink(TEST_ID, SUBJECT_B_ID)));
+            when(subjectRepository.findByIdIn(anyList())).thenReturn(List.of(
+                    buildSubject(SUBJECT_A_ID, "Variables"),
+                    buildSubject(SUBJECT_B_ID, "Loops")));
+
+            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID, 0, 20);
+
+            assertThat(response.assessments()).hasSize(1);
+            var item = response.assessments().get(0);
+            assertThat(item.subjects()).hasSize(2);
+            assertThat(item.subjects()).extracting("label")
+                    .containsExactlyInAnyOrder("Variables", "Loops");
+        }
+
+        @Test
         @DisplayName("returns empty list when no snapshots exist")
         void emptyList() {
             when(snapshotRepository.findSnapshotsByClassId(eq(CLASS_ID), any()))
@@ -182,6 +229,26 @@ class AssessmentServiceTest {
             assertThat(response.questionsPerAssessment()).isEqualTo(QUESTIONS_PER_ASSESSMENT);
             assertThat(response.scoring().pointsPerCorrect()).isEqualTo(PTS_CORRECT.doubleValue());
             assertThat(response.scoring().pointsPerWrong()).isEqualTo(PTS_WRONG.doubleValue());
+        }
+
+        @Test
+        @DisplayName("includes subjects in config response")
+        void includesSubjectsInConfig() {
+            AssessmentSnapshot s = buildAssessmentSnapshot();
+            when(snapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(s));
+
+            when(assessmentSubjectRepository.findByAssessmentId(TEST_ID))
+                    .thenReturn(List.of(
+                            buildAssessmentSubjectLink(TEST_ID, SUBJECT_A_ID)));
+            when(subjectRepository.findByIdIn(anyList())).thenReturn(List.of(
+                    buildSubject(SUBJECT_A_ID, "Variables")));
+
+            AssessmentConfigResponse response =
+                    assessmentService.getAssessmentConfig(SNAPSHOT_ID.toString());
+
+            assertThat(response.subjects()).isNotEmpty();
+            assertThat(response.subjects()).hasSize(1);
+            assertThat(response.subjects().get(0).label()).isEqualTo("Variables");
         }
 
         @Test
@@ -253,6 +320,31 @@ class AssessmentServiceTest {
             assertThatThrownBy(() ->
                     assessmentService.getAssessmentQuestions(unknownId.toString()))
                     .isInstanceOf(ResourceNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("includes points in QuestionDto")
+        void includesPointsInQuestionDto() {
+            AssessmentSnapshot s = buildAssessmentSnapshot();
+            QuestionSnapshot q = buildQuestionSnapshot(Q1_ID, "multiple", 1);
+            q.setPoints(new BigDecimal("2.50"));
+
+            OptionSnapshot opt = buildOpt(Q1_OPT_A, Q1_ID, "Opt A", 1);
+
+            when(snapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(s));
+            when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
+                    .thenReturn(List.of(q));
+            when(optionSnapshotRepository.findByQuestionSnapshotIdInOrderByPosition(List.of(Q1_ID)))
+                    .thenReturn(List.of(opt));
+            when(questionPrepService.prepare(anyList(), anyInt()))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            AssessmentQuestionsResponse response =
+                    assessmentService.getAssessmentQuestions(SNAPSHOT_ID.toString());
+
+            assertThat(response.questions()).hasSize(1);
+            QuestionDto dto = response.questions().get(0);
+            assertThat(dto.points()).isEqualTo(2.5);
         }
 
         @Test
