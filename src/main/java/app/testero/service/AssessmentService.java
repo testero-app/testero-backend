@@ -12,6 +12,7 @@ import app.testero.entity.assessment.Subject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
+import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.SubmissionStatus;
 import app.testero.exception.ResourceNotFoundException;
@@ -19,6 +20,7 @@ import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.AssessmentSubjectRepository;
 import app.testero.repository.OptionSnapshotRepository;
 import app.testero.repository.QuestionSnapshotRepository;
+import app.testero.repository.QuestionSnapshotSubjectRepository;
 import app.testero.repository.SubjectRepository;
 import app.testero.repository.SubmissionRepository;
 import org.springframework.data.domain.Page;
@@ -41,6 +43,7 @@ public class AssessmentService {
     private final SubmissionRepository submissionRepository;
     private final QuestionPrepService questionPrepService;
     private final AssessmentSubjectRepository assessmentSubjectRepository;
+    private final QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
     private final SubjectRepository subjectRepository;
 
     public AssessmentService(AssessmentSnapshotRepository snapshotRepository,
@@ -49,6 +52,7 @@ public class AssessmentService {
                              SubmissionRepository submissionRepository,
                              QuestionPrepService questionPrepService,
                              AssessmentSubjectRepository assessmentSubjectRepository,
+                             QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository,
                              SubjectRepository subjectRepository) {
         this.snapshotRepository = snapshotRepository;
         this.questionSnapshotRepository = questionSnapshotRepository;
@@ -56,6 +60,7 @@ public class AssessmentService {
         this.submissionRepository = submissionRepository;
         this.questionPrepService = questionPrepService;
         this.assessmentSubjectRepository = assessmentSubjectRepository;
+        this.questionSnapshotSubjectRepository = questionSnapshotSubjectRepository;
         this.subjectRepository = subjectRepository;
     }
 
@@ -183,6 +188,9 @@ public class AssessmentService {
         Map<UUID, List<OptionSnapshot>> optionsByQuestion = allOptions.stream()
                 .collect(Collectors.groupingBy(OptionSnapshot::getQuestionSnapshotId));
 
+        // Batch-fetch subjects for all questions
+        Map<UUID, List<SubjectDto>> subjectsByQuestion = fetchSubjectsByQuestionIds(questionIds);
+
         List<QuestionDto> questionDtos = questions.stream()
                 .map(q -> {
                     List<OptionSnapshot> opts = optionsByQuestion
@@ -196,7 +204,8 @@ public class AssessmentService {
                             q.getText(),
                             q.getCode(),
                             "multiple".equals(q.getType()) ? optionDtos : null,
-                            q.getPoints() != null ? q.getPoints().doubleValue() : null
+                            q.getPoints() != null ? q.getPoints().doubleValue() : null,
+                            subjectsByQuestion.getOrDefault(q.getId(), List.of())
                     );
                 })
                 .toList();
@@ -234,6 +243,33 @@ public class AssessmentService {
                 .map(l -> new SubjectDto(l.getSubjectId().toString(),
                         labels.getOrDefault(l.getSubjectId(), "Unknown")))
                 .toList();
+    }
+
+    private Map<UUID, List<SubjectDto>> fetchSubjectsByQuestionIds(List<UUID> questionIds) {
+        if (questionIds.isEmpty()) {
+            return Map.of();
+        }
+        List<QuestionSnapshotSubject> links = questionSnapshotSubjectRepository
+                .findByQuestionSnapshotIdIn(questionIds);
+        if (links.isEmpty()) {
+            return Map.of();
+        }
+        List<UUID> subjectIds = links.stream()
+                .map(QuestionSnapshotSubject::getSubjectId)
+                .distinct()
+                .toList();
+        Map<UUID, String> labels = subjectRepository.findByIdIn(subjectIds).stream()
+                .collect(Collectors.toMap(Subject::getId, Subject::getLabel));
+
+        return links.stream()
+                .collect(Collectors.groupingBy(
+                        QuestionSnapshotSubject::getQuestionSnapshotId,
+                        Collectors.mapping(
+                                l -> new SubjectDto(l.getSubjectId().toString(),
+                                        labels.getOrDefault(l.getSubjectId(), "Unknown")),
+                                Collectors.toList()
+                        )
+                ));
     }
 
     private Map<UUID, List<SubjectDto>> fetchSubjectsByAssessmentIds(List<UUID> assessmentIds) {
