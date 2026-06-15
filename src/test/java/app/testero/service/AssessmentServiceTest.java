@@ -11,8 +11,10 @@ import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.SubmissionStatus;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentSnapshotRepository;
+import app.testero.repository.AssessmentSubjectRepository;
 import app.testero.repository.OptionSnapshotRepository;
 import app.testero.repository.QuestionSnapshotRepository;
+import app.testero.repository.SubjectRepository;
 import app.testero.repository.SubmissionRepository;
 
 import org.junit.jupiter.api.DisplayName;
@@ -46,6 +48,8 @@ class AssessmentServiceTest {
     @Mock OptionSnapshotRepository optionSnapshotRepository;
     @Mock SubmissionRepository submissionRepository;
     @Mock QuestionPrepService questionPrepService;
+    @Mock AssessmentSubjectRepository assessmentSubjectRepository;
+    @Mock SubjectRepository subjectRepository;
 
     @InjectMocks AssessmentService assessmentService;
 

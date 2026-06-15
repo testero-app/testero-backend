@@ -9,6 +9,7 @@ public record SubmissionReviewResponse(
         @JsonProperty("started_at") String startedAt,
         @JsonProperty("submitted_at") String submittedAt,
         Double score,
+        @JsonProperty("max_score") Double maxScore,
         List<ReviewQuestion> questions
 ) {
     public record ReviewQuestion(
@@ -22,7 +23,10 @@ public record SubmissionReviewResponse(
             @JsonProperty("selected_option_ids") List<String> selectedOptionIds,
             @JsonProperty("answer_text") String answerText,
             String motivation,
-            List<ReviewOption> options
+            List<ReviewOption> options,
+            Double points,
+            @JsonProperty("points_awarded") Double pointsAwarded,
+            List<SubjectDto> subjects
     ) {}
 
     public record ReviewOption(

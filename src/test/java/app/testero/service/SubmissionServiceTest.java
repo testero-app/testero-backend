@@ -20,6 +20,8 @@ import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.OptionSnapshotRepository;
 import app.testero.repository.QuestionSnapshotRepository;
+import app.testero.repository.QuestionSnapshotSubjectRepository;
+import app.testero.repository.SubjectRepository;
 import app.testero.repository.SubmissionRepository;
 import app.testero.repository.UserAnswerRepository;
 import app.testero.repository.UserAnswerSelectedOptionRepository;
@@ -59,6 +61,8 @@ class SubmissionServiceTest {
     @Mock OptionSnapshotRepository optionSnapshotRepository;
     @Mock AssessmentSnapshotRepository assessmentSnapshotRepository;
     @Mock QuestionSnapshotRepository questionSnapshotRepository;
+    @Mock QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
+    @Mock SubjectRepository subjectRepository;
     @Mock ApplicationEventPublisher eventPublisher;
 
     ScoringService scoringService;
@@ -81,12 +85,18 @@ class SubmissionServiceTest {
     @BeforeEach
     void setUp() {
         defaultSnapshot = buildAssessmentSnapshot();
+        // Default stubs for new dependencies — return empty lists when not explicitly stubbed
+        lenient().when(questionSnapshotRepository.findByIdIn(anyList())).thenReturn(List.of());
+        lenient().when(questionSnapshotSubjectRepository.findByQuestionSnapshotIdIn(anyList())).thenReturn(List.of());
         scoringService = new ScoringService(
                 submissionRepository, userAnswerRepository,
-                optionSnapshotRepository, assessmentSnapshotRepository);
+                optionSnapshotRepository, assessmentSnapshotRepository,
+                questionSnapshotRepository, questionSnapshotSubjectRepository,
+                subjectRepository);
         submissionService = new SubmissionService(
                 submissionRepository, userAnswerRepository, userAnswerSelectedOptionRepository,
                 optionSnapshotRepository, assessmentSnapshotRepository, questionSnapshotRepository,
+                questionSnapshotSubjectRepository, subjectRepository,
                 scoringService, eventPublisher);
     }
 
@@ -129,6 +139,8 @@ class SubmissionServiceTest {
         lenient().when(userAnswerSelectedOptionRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
         when(assessmentSnapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(snapshot));
+        lenient().when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
+                .thenReturn(List.of());
     }
 
     // ── DTO builders ───────────────────────────────────────────────
@@ -916,6 +928,10 @@ class SubmissionServiceTest {
                     .thenReturn(List.of(mc));
             when(optionSnapshotRepository.findByQuestionSnapshotIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionSnapshotsFor(Q1_ID));
+            when(assessmentSnapshotRepository.findById(SNAPSHOT_ID))
+                    .thenReturn(Optional.of(defaultSnapshot));
+            when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
+                    .thenReturn(List.of());
 
             SubmissionFeedbackResponse response = submissionService.getSubmission(SUBMISSION_ID, STUDENT_ID);
 
@@ -950,6 +966,10 @@ class SubmissionServiceTest {
                     .thenReturn(List.of(mc, open));
             when(optionSnapshotRepository.findByQuestionSnapshotIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionSnapshotsFor(Q1_ID));
+            when(assessmentSnapshotRepository.findById(SNAPSHOT_ID))
+                    .thenReturn(Optional.of(defaultSnapshot));
+            when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
+                    .thenReturn(List.of());
 
             SubmissionFeedbackResponse response = submissionService.getSubmission(SUBMISSION_ID, STUDENT_ID);
 

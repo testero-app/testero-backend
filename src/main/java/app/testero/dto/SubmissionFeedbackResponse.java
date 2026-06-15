@@ -13,12 +13,21 @@ public record SubmissionFeedbackResponse(
         @JsonProperty("max_score") Double maxScore,
         Boolean passed,
         @JsonProperty("passing_score") Double passingScore,
-        List<AnswerResult> answers
+        List<AnswerResult> answers,
+        @JsonProperty("subject_scores") List<SubjectScore> subjectScores
 ) {
     public record AnswerResult(
             @JsonProperty("question_snapshot_id") String questionSnapshotId,
             String type,
             @JsonProperty("is_correct") Boolean isCorrect,
-            @JsonProperty("correct_option_snapshot_ids") List<String> correctOptionSnapshotIds
+            @JsonProperty("correct_option_snapshot_ids") List<String> correctOptionSnapshotIds,
+            @JsonProperty("points_awarded") Double pointsAwarded
+    ) {}
+
+    public record SubjectScore(
+            @JsonProperty("subject_id") String subjectId,
+            String label,
+            @JsonProperty("points_earned") double pointsEarned,
+            @JsonProperty("points_available") double pointsAvailable
     ) {}
 }

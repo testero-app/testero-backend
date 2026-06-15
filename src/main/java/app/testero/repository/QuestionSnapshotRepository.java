@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface QuestionSnapshotRepository extends JpaRepository<QuestionSnapshot, UUID> {
 
     List<QuestionSnapshot> findByAssessmentSnapshotIdOrderByPosition(UUID assessmentSnapshotId);
+
+    List<QuestionSnapshot> findByIdIn(List<UUID> ids);
 }

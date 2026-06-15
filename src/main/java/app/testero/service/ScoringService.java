@@ -1,14 +1,21 @@
 package app.testero.service;
 
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
+import app.testero.dto.SubmissionFeedbackResponse.SubjectScore;
+import app.testero.entity.assessment.Subject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
+import app.testero.entity.snapshot.QuestionSnapshot;
+import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.UserAnswer;
 import app.testero.entity.submission.UserAnswerSelectedOption;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.OptionSnapshotRepository;
+import app.testero.repository.QuestionSnapshotRepository;
+import app.testero.repository.QuestionSnapshotSubjectRepository;
+import app.testero.repository.SubjectRepository;
 import app.testero.repository.SubmissionRepository;
 import app.testero.repository.UserAnswerRepository;
 import org.springframework.stereotype.Service;
@@ -20,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ScoringService {
@@ -28,26 +36,46 @@ public class ScoringService {
     private final UserAnswerRepository userAnswerRepository;
     private final OptionSnapshotRepository optionSnapshotRepository;
     private final AssessmentSnapshotRepository assessmentSnapshotRepository;
+    private final QuestionSnapshotRepository questionSnapshotRepository;
+    private final QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
+    private final SubjectRepository subjectRepository;
 
     public ScoringService(SubmissionRepository submissionRepository,
                           UserAnswerRepository userAnswerRepository,
                           OptionSnapshotRepository optionSnapshotRepository,
-                          AssessmentSnapshotRepository assessmentSnapshotRepository) {
+                          AssessmentSnapshotRepository assessmentSnapshotRepository,
+                          QuestionSnapshotRepository questionSnapshotRepository,
+                          QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository,
+                          SubjectRepository subjectRepository) {
         this.submissionRepository = submissionRepository;
         this.userAnswerRepository = userAnswerRepository;
         this.optionSnapshotRepository = optionSnapshotRepository;
         this.assessmentSnapshotRepository = assessmentSnapshotRepository;
+        this.questionSnapshotRepository = questionSnapshotRepository;
+        this.questionSnapshotSubjectRepository = questionSnapshotSubjectRepository;
+        this.subjectRepository = subjectRepository;
     }
 
-    public List<AnswerResult> scoreSubmission(Submission submission,
-                                               List<UserAnswer> answers,
-                                               List<UserAnswerSelectedOption> selectedOptions) {
+    public record ScoringResult(List<AnswerResult> answerResults, List<SubjectScore> subjectScores) {}
+
+    public ScoringResult scoreSubmission(Submission submission,
+                                          List<UserAnswer> answers,
+                                          List<UserAnswerSelectedOption> selectedOptions) {
         UUID snapshotId = submission.getAssessmentSnapshotId();
 
         AssessmentSnapshot snapshot = assessmentSnapshotRepository.findById(snapshotId)
                 .orElseThrow(() -> new ResourceNotFoundException("Assessment snapshot not found"));
         double ptsCorrect = snapshot.getPtsCorrect().doubleValue();
         double ptsWrong = snapshot.getPtsWrong().doubleValue();
+
+        // Batch-fetch QuestionSnapshot for per-question points
+        List<UUID> allQuestionSnapshotIds = answers.stream()
+                .map(UserAnswer::getQuestionSnapshotId)
+                .toList();
+        Map<UUID, QuestionSnapshot> qsMap = allQuestionSnapshotIds.isEmpty()
+                ? Map.of()
+                : questionSnapshotRepository.findByIdIn(allQuestionSnapshotIds).stream()
+                        .collect(Collectors.toMap(QuestionSnapshot::getId, qs -> qs));
 
         List<UUID> mcQuestionSnapshotIds = answers.stream()
                 .filter(a -> "multiple".equals(a.getType()))
@@ -75,6 +103,10 @@ public class ScoringService {
 
         for (UserAnswer answer : answers) {
             if ("multiple".equals(answer.getType())) {
+                QuestionSnapshot qs = qsMap.get(answer.getQuestionSnapshotId());
+                double questionPts = (qs != null && qs.getPoints() != null)
+                        ? qs.getPoints().doubleValue() : ptsCorrect;
+
                 Set<UUID> correctIds = correctMap.getOrDefault(
                         answer.getQuestionSnapshotId(), Set.of());
                 Set<UUID> selectedIds = selectedByAnswer.getOrDefault(
@@ -85,7 +117,7 @@ public class ScoringService {
                     answer.setPointsAwarded(0.0);
                 } else {
                     boolean isCorrect = selectedIds.equals(correctIds);
-                    double points = isCorrect ? ptsCorrect : ptsWrong;
+                    double points = isCorrect ? questionPts : ptsWrong;
                     answer.setIsCorrect(isCorrect);
                     answer.setPointsAwarded(points);
                     totalScore += points;
@@ -97,14 +129,16 @@ public class ScoringService {
                         answer.getQuestionSnapshotId().toString(),
                         "multiple",
                         answer.getIsCorrect(),
-                        correctIds.stream().map(UUID::toString).toList()
+                        correctIds.stream().map(UUID::toString).toList(),
+                        answer.getPointsAwarded()
                 ));
             } else {
                 answerResults.add(new AnswerResult(
                         answer.getQuestionSnapshotId().toString(),
                         "open",
                         null,
-                        List.of()
+                        List.of(),
+                        null
                 ));
             }
         }
@@ -112,6 +146,90 @@ public class ScoringService {
         submission.setScore(totalScore);
         submissionRepository.save(submission);
 
-        return answerResults;
+        // Compute subject scores
+        List<SubjectScore> subjectScores = computeSubjectScores(answers, snapshotId, qsMap, ptsCorrect);
+
+        return new ScoringResult(answerResults, subjectScores);
+    }
+
+    /**
+     * Compute subject scores for a set of answers.
+     * Public so that SubmissionService can call it for read paths (e.g. getSubmission).
+     */
+    public List<SubjectScore> computeSubjectScores(List<UserAnswer> answers, UUID snapshotId) {
+        List<UUID> questionSnapshotIds = answers.stream()
+                .map(UserAnswer::getQuestionSnapshotId)
+                .toList();
+        AssessmentSnapshot snapshot = assessmentSnapshotRepository.findById(snapshotId)
+                .orElse(null);
+        double ptsCorrect = snapshot != null ? snapshot.getPtsCorrect().doubleValue() : 0.0;
+
+        Map<UUID, QuestionSnapshot> qsMap = questionSnapshotIds.isEmpty()
+                ? Map.of()
+                : questionSnapshotRepository.findByIdIn(questionSnapshotIds).stream()
+                        .collect(Collectors.toMap(QuestionSnapshot::getId, qs -> qs));
+
+        return computeSubjectScores(answers, snapshotId, qsMap, ptsCorrect);
+    }
+
+    private List<SubjectScore> computeSubjectScores(List<UserAnswer> answers, UUID snapshotId,
+                                                     Map<UUID, QuestionSnapshot> qsMap,
+                                                     double defaultPtsCorrect) {
+        List<UUID> questionSnapshotIds = answers.stream()
+                .map(UserAnswer::getQuestionSnapshotId)
+                .toList();
+
+        if (questionSnapshotIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<QuestionSnapshotSubject> qsSubjects =
+                questionSnapshotSubjectRepository.findByQuestionSnapshotIdIn(questionSnapshotIds);
+
+        if (qsSubjects.isEmpty()) {
+            return List.of();
+        }
+
+        // Collect unique subject IDs and fetch labels
+        List<UUID> subjectIds = qsSubjects.stream()
+                .map(QuestionSnapshotSubject::getSubjectId)
+                .distinct()
+                .toList();
+        Map<UUID, String> subjectLabels = subjectRepository.findByIdIn(subjectIds).stream()
+                .collect(Collectors.toMap(Subject::getId, Subject::getLabel));
+
+        // Build answer lookup: questionSnapshotId -> UserAnswer
+        Map<UUID, UserAnswer> answerByQuestion = answers.stream()
+                .collect(Collectors.toMap(UserAnswer::getQuestionSnapshotId, a -> a, (a, b) -> a));
+
+        // Accumulate per-subject scores
+        Map<UUID, double[]> subjectAccum = new HashMap<>(); // [pointsEarned, pointsAvailable]
+
+        for (QuestionSnapshotSubject qss : qsSubjects) {
+            UUID qsId = qss.getQuestionSnapshotId();
+            UUID subjectId = qss.getSubjectId();
+            double weight = qss.getWeight().doubleValue();
+
+            QuestionSnapshot qs = qsMap.get(qsId);
+            double questionMaxPts = (qs != null && qs.getPoints() != null)
+                    ? qs.getPoints().doubleValue() : defaultPtsCorrect;
+
+            UserAnswer answer = answerByQuestion.get(qsId);
+            double pointsAwarded = (answer != null && answer.getPointsAwarded() != null)
+                    ? answer.getPointsAwarded() : 0.0;
+
+            double[] accum = subjectAccum.computeIfAbsent(subjectId, k -> new double[]{0.0, 0.0});
+            accum[0] += pointsAwarded * weight;
+            accum[1] += questionMaxPts * weight;
+        }
+
+        return subjectAccum.entrySet().stream()
+                .map(e -> new SubjectScore(
+                        e.getKey().toString(),
+                        subjectLabels.getOrDefault(e.getKey(), "Unknown"),
+                        e.getValue()[0],
+                        e.getValue()[1]
+                ))
+                .toList();
     }
 }

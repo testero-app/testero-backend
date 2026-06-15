@@ -1,5 +1,7 @@
 package app.testero.dto;
 
+import java.util.List;
+
 public record AssessmentConfigResponse(
         String assessmentId,
         String title,
@@ -7,7 +9,8 @@ public record AssessmentConfigResponse(
         int timerMinutes,
         int totalPool,
         int questionsPerAssessment,
-        ScoringRules scoring
+        ScoringRules scoring,
+        List<SubjectDto> subjects
 ) {
     public record ScoringRules(
             double pointsPerCorrect,
