@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0](https://github.com/testero-app/testero-backend/compare/v1.15.0...v1.16.0) (2026-06-15)
+
+
+### Features
+
+* add pagination to assessment list and submission history ([#142](https://github.com/testero-app/testero-backend/issues/142)) ([df782b1](https://github.com/testero-app/testero-backend/commit/df782b10b6de6f57db9e935dd48b59b95697cc07)), closes [#119](https://github.com/testero-app/testero-backend/issues/119)
+* add question-subject many-to-many relationship with weight ([#141](https://github.com/testero-app/testero-backend/issues/141)) ([0b9d2a6](https://github.com/testero-app/testero-backend/commit/0b9d2a61349185843c4a80eb3b95c90b81d65d79)), closes [#106](https://github.com/testero-app/testero-backend/issues/106)
+
+
+### Bug Fixes
+
+* prevent duplicate key violation on submit after incremental save ([#145](https://github.com/testero-app/testero-backend/issues/145)) ([22e1526](https://github.com/testero-app/testero-backend/commit/22e1526fdc4392007cc1bd84100383b8f3346a36))
+
 ## [1.15.0](https://github.com/testero-app/testero-backend/compare/v1.14.0...v1.15.0) (2026-06-15)
 
 
