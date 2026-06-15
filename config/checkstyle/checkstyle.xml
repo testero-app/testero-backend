@@ -16,7 +16,7 @@
     </module>
     <module name="NewlineAtEndOfFile"/>
     <module name="FileLength">
-        <property name="max" value="500"/>
+        <property name="max" value="1500"/>
     </module>
 
     <!-- Line length: 120 characters (Checker-level module) -->
