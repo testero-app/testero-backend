@@ -7,6 +7,7 @@ import app.testero.dto.SubmissionReviewResponse;
 import app.testero.dto.SubmissionSubmitRequest;
 import app.testero.security.UserPrincipal;
 import app.testero.service.SubmissionService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,6 +22,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/submissions")
+@Tag(name = "Submissions")
 public class SubmissionController {
 
     private final SubmissionService submissionService;

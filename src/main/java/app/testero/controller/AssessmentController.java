@@ -11,6 +11,7 @@ import app.testero.security.UserPrincipal;
 import app.testero.service.AssessmentService;
 import app.testero.service.SnapshotService;
 import app.testero.service.SubmissionService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +25,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/assessments")
+@Tag(name = "Assessments")
 public class AssessmentController {
 
     private final AssessmentService assessmentService;
