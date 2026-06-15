@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0](https://github.com/testero-app/testero-backend/compare/v1.17.0...v1.18.0) (2026-06-15)
+
+
+### Features
+
+* add question flag/bookmark support during assessment ([#149](https://github.com/testero-app/testero-backend/issues/149)) ([f74df61](https://github.com/testero-app/testero-backend/commit/f74df6120d210e8da5c0a0515aaaf82604f0fca0)), closes [#111](https://github.com/testero-app/testero-backend/issues/111)
+
 ## [1.17.0](https://github.com/testero-app/testero-backend/compare/v1.16.0...v1.17.0) (2026-06-15)
 
 
