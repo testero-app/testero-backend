@@ -23,7 +23,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
 @Import(SecurityConfig.class)
@@ -53,6 +55,7 @@ class AuthControllerTest {
                                     {"username": "mario", "password": "secret123"}
                                     """))
                     .andExpect(status().isOk())
+                    .andExpect(header().exists("X-Request-Id"))
                     .andExpect(jsonPath("$.token").value("jwt.token.here"))
                     .andExpect(jsonPath("$.user.id").value("user-id-1"))
                     .andExpect(jsonPath("$.user.name").value("Mario Rossi"))

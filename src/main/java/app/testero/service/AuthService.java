@@ -7,9 +7,11 @@ import app.testero.entity.user.StudentProfile;
 import app.testero.repository.AppUserRepository;
 import app.testero.repository.StudentProfileRepository;
 import app.testero.security.JwtService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class AuthService {
 
@@ -30,10 +32,14 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest request) {
         AppUser user = appUserRepository.findByUsername(request.username())
-                .orElseThrow(() -> new InvalidCredentialsException());
+                .orElseThrow(() -> {
+                    log.warn("Login failed: unknown username={}", request.username());
+                    return new InvalidCredentialsException();
+                });
 
         if (user.getPasswordHash() == null ||
                 !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            log.warn("Login failed: wrong password for username={}", request.username());
             throw new InvalidCredentialsException();
         }
 
@@ -54,6 +60,7 @@ public class AuthService {
                 className
         );
 
+        log.info("Login successful: username={}", user.getUsername());
         return new LoginResponse(token, userInfo);
     }
 
