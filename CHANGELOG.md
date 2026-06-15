@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0](https://github.com/testero-app/testero-backend/compare/v1.16.0...v1.17.0) (2026-06-15)
+
+
+### Features
+
+* add endpoint to retrieve saved answers for session resume ([#148](https://github.com/testero-app/testero-backend/issues/148)) ([25d57dc](https://github.com/testero-app/testero-backend/commit/25d57dc3551032a65b5ae75a6f04adcc5a4d0216)), closes [#112](https://github.com/testero-app/testero-backend/issues/112)
+* add per-question points, subjects in DTOs, and subject scoring breakdown ([#146](https://github.com/testero-app/testero-backend/issues/146)) ([b101864](https://github.com/testero-app/testero-backend/commit/b101864fe58186dda7cf4f07953af99b69b0b7b1))
+
 ## [1.16.0](https://github.com/testero-app/testero-backend/compare/v1.15.0...v1.16.0) (2026-06-15)
 
 
