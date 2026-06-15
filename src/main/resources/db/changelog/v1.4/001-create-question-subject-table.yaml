@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.4-001-create-question-subject-table
+      author: testero
+      comment: >
+        Many-to-many relationship between questions and subjects with a weight
+        column so a single question can span multiple topics.
+      changes:
+        - createTable:
+            tableName: question_subject
+            columns:
+              - column:
+                  name: question_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subject_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: weight
+                  type: decimal(5,2)
+                  defaultValueNumeric: 1.00
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addPrimaryKey:
+            tableName: question_subject
+            columnNames: question_id, subject_id
+            constraintName: pk_question_subject
+        - addForeignKeyConstraint:
+            baseTableName: question_subject
+            baseColumnNames: question_id
+            referencedTableName: question
+            referencedColumnNames: id
+            constraintName: fk_question_subject_question_id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: question_subject
+            baseColumnNames: subject_id
+            referencedTableName: subject
+            referencedColumnNames: id
+            constraintName: fk_question_subject_subject_id
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_question_subject_updated_at
+              BEFORE UPDATE ON question_subject
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+      rollback:
+        - dropTable:
+            tableName: question_subject

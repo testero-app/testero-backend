@@ -39,3 +39,7 @@ databaseChangeLog:
       file: db/changelog/v1.3/005-add-passing-score.yaml
   - include:
       file: db/changelog/v1.3/006-add-unique-email.yaml
+  - include:
+      file: db/changelog/v1.4/001-create-question-subject-table.yaml
+  - include:
+      file: db/changelog/v1.4/002-create-question-snapshot-subject-table.yaml
