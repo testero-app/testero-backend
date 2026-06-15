@@ -190,12 +190,12 @@ public class SubmissionService {
                 .collect(Collectors.toMap(UserAnswer::getQuestionSnapshotId, a -> a));
 
         List<UserAnswer> answers = new ArrayList<>();
+        List<UUID> existingAnswerIds = new ArrayList<>();
         for (AnswerInput input : request.answers()) {
             UUID qsId = UUID.fromString(input.questionId());
             UserAnswer answer = existingByQuestion.getOrDefault(qsId, new UserAnswer());
             if (answer.getId() != null) {
-                userAnswerSelectedOptionRepository.deleteAll(
-                        userAnswerSelectedOptionRepository.findByAnswerIdIn(List.of(answer.getId())));
+                existingAnswerIds.add(answer.getId());
             } else {
                 answer.setSubmissionId(submission.getId());
                 answer.setQuestionSnapshotId(qsId);
@@ -204,6 +204,10 @@ public class SubmissionService {
             answer.setText(input.text() != null ? input.text() : "");
             answer.setMotivation(input.motivation() != null ? input.motivation() : "");
             answers.add(answer);
+        }
+        if (!existingAnswerIds.isEmpty()) {
+            userAnswerSelectedOptionRepository.deleteByAnswerIdIn(existingAnswerIds);
+            userAnswerSelectedOptionRepository.flush();
         }
         answers = userAnswerRepository.saveAll(answers);
 
