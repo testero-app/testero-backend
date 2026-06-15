@@ -480,8 +480,6 @@ class SubmissionServiceTest {
             stubSubmitFlow();
             when(userAnswerRepository.findBySubmissionId(SUBMISSION_ID))
                     .thenReturn(List.of(existingAnswer));
-            when(userAnswerSelectedOptionRepository.findByAnswerIdIn(List.of(ANSWER_1_ID)))
-                    .thenReturn(List.of());
             when(optionSnapshotRepository.findByQuestionSnapshotIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionSnapshotsFor(Q1_ID));
 

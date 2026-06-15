@@ -10,4 +10,6 @@ public interface UserAnswerSelectedOptionRepository extends JpaRepository<UserAn
     List<UserAnswerSelectedOption> findByAnswerIdIn(List<UUID> answerIds);
 
     void deleteByAnswerId(UUID answerId);
+
+    void deleteByAnswerIdIn(List<UUID> answerIds);
 }
