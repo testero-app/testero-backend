@@ -9,6 +9,7 @@ import app.testero.entity.assessment.Subject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
+import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.SubmissionStatus;
 import app.testero.exception.ResourceNotFoundException;
@@ -16,6 +17,7 @@ import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.AssessmentSubjectRepository;
 import app.testero.repository.OptionSnapshotRepository;
 import app.testero.repository.QuestionSnapshotRepository;
+import app.testero.repository.QuestionSnapshotSubjectRepository;
 import app.testero.repository.SubjectRepository;
 import app.testero.repository.SubmissionRepository;
 
@@ -52,6 +54,7 @@ class AssessmentServiceTest {
     @Mock SubmissionRepository submissionRepository;
     @Mock QuestionPrepService questionPrepService;
     @Mock AssessmentSubjectRepository assessmentSubjectRepository;
+    @Mock QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
     @Mock SubjectRepository subjectRepository;
 
     @InjectMocks AssessmentService assessmentService;
@@ -345,6 +348,38 @@ class AssessmentServiceTest {
             assertThat(response.questions()).hasSize(1);
             QuestionDto dto = response.questions().get(0);
             assertThat(dto.points()).isEqualTo(2.5);
+        }
+
+        @Test
+        @DisplayName("includes subjects per question")
+        void includesSubjectsPerQuestion() {
+            AssessmentSnapshot s = buildAssessmentSnapshot();
+            QuestionSnapshot q = buildQuestionSnapshot(Q1_ID, "multiple", 1);
+            OptionSnapshot opt = buildOpt(Q1_OPT_A, Q1_ID, "Opt A", 1);
+
+            when(snapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(s));
+            when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
+                    .thenReturn(List.of(q));
+            when(optionSnapshotRepository.findByQuestionSnapshotIdInOrderByPosition(List.of(Q1_ID)))
+                    .thenReturn(List.of(opt));
+            when(questionPrepService.prepare(anyList(), anyInt()))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            QuestionSnapshotSubject qss = new QuestionSnapshotSubject();
+            qss.setQuestionSnapshotId(Q1_ID);
+            qss.setSubjectId(SUBJECT_A_ID);
+            when(questionSnapshotSubjectRepository.findByQuestionSnapshotIdIn(List.of(Q1_ID)))
+                    .thenReturn(List.of(qss));
+            when(subjectRepository.findByIdIn(List.of(SUBJECT_A_ID)))
+                    .thenReturn(List.of(buildSubject(SUBJECT_A_ID, "Variables")));
+
+            AssessmentQuestionsResponse response =
+                    assessmentService.getAssessmentQuestions(SNAPSHOT_ID.toString());
+
+            assertThat(response.questions()).hasSize(1);
+            QuestionDto dto = response.questions().get(0);
+            assertThat(dto.subjects()).hasSize(1);
+            assertThat(dto.subjects().get(0).label()).isEqualTo("Variables");
         }
 
         @Test
