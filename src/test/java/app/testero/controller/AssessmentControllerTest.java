@@ -88,7 +88,7 @@ class AssessmentControllerTest {
                     .thenReturn(Optional.of(buildProfile()));
             when(assessmentService.getAvailableAssessments(CLASS_ID, USER_ID, 0, 20))
                     .thenReturn(new AssessmentListResponse(List.of(
-                            new AssessmentListItem(ASSESSMENT_ID, "Test 1", "2026-06-15", 45, 5, "INTERMEDIATE", "NOT_STARTED", null)
+                            new AssessmentListItem(ASSESSMENT_ID, "Test 1", "2026-06-15", 45, 5, "INTERMEDIATE", "NOT_STARTED", null, List.of())
                     ), new PaginationMetadata(1, 1, 0, 20)));
 
             mockMvc.perform(get("/assessments").with(jwt()))
@@ -128,7 +128,8 @@ class AssessmentControllerTest {
             when(assessmentService.getAssessmentConfig(ASSESSMENT_ID))
                     .thenReturn(new AssessmentConfigResponse(
                             ASSESSMENT_ID, "Test 1", "2026-06-15", 45, 10, 5,
-                            new AssessmentConfigResponse.ScoringRules(1.0, -0.25)
+                            new AssessmentConfigResponse.ScoringRules(1.0, -0.25),
+                            List.of()
                     ));
 
             mockMvc.perform(get("/assessments/{id}/config", ASSESSMENT_ID).with(jwt()))
@@ -183,7 +184,7 @@ class AssessmentControllerTest {
         void success() throws Exception {
             var questions = List.of(
                     new QuestionDto("q1", "multiple", "What is 2+2?", null,
-                            List.of(new OptionDto("o1", "4", false), new OptionDto("o2", "5", false)))
+                            List.of(new OptionDto("o1", "4", false), new OptionDto("o2", "5", false)), null)
             );
             when(assessmentService.getAssessmentQuestions(ASSESSMENT_ID))
                     .thenReturn(new AssessmentQuestionsResponse(

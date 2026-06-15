@@ -67,7 +67,8 @@ class SubmissionControllerTest {
                 16.0,
                 true,
                 3.0,
-                List.of(new AnswerResult("q1", "multiple", true, List.of("opt-1")))
+                List.of(new AnswerResult("q1", "multiple", true, List.of("opt-1"), 1.0)),
+                List.of()
         );
     }
 

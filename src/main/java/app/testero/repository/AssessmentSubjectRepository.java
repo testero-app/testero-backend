@@ -11,4 +11,6 @@ public interface AssessmentSubjectRepository extends JpaRepository<AssessmentSub
     List<AssessmentSubject> findByAssessmentId(UUID assessmentId);
 
     List<AssessmentSubject> findBySubjectId(UUID subjectId);
+
+    List<AssessmentSubject> findByAssessmentIdIn(List<UUID> assessmentIds);
 }

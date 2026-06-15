@@ -43,3 +43,5 @@ databaseChangeLog:
       file: db/changelog/v1.4/001-create-question-subject-table.yaml
   - include:
       file: db/changelog/v1.4/002-create-question-snapshot-subject-table.yaml
+  - include:
+      file: db/changelog/v1.4/003-add-points-to-question.yaml

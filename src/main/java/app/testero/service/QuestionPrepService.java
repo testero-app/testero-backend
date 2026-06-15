@@ -33,7 +33,7 @@ public class QuestionPrepService {
 
         List<QuestionDto> result = new ArrayList<>(mc.size() + open.size());
         for (QuestionDto q : mc) {
-            result.add(new QuestionDto(q.id(), q.type(), q.text(), q.code(), shuffleOptions(q.options())));
+            result.add(new QuestionDto(q.id(), q.type(), q.text(), q.code(), shuffleOptions(q.options()), q.points()));
         }
         for (QuestionDto q : open) {
             result.add(q);

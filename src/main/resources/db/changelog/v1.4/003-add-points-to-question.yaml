@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.4-003-add-points-to-question
+      author: testero
+      comment: >
+        Add per-question points weight to question and question_snapshot.
+        Nullable: when null the assessment-level pts_correct applies.
+      changes:
+        - addColumn:
+            tableName: question
+            columns:
+              - column:
+                  name: points
+                  type: decimal(5,2)
+        - addColumn:
+            tableName: question_snapshot
+            columns:
+              - column:
+                  name: points
+                  type: decimal(5,2)
+      rollback:
+        - dropColumn:
+            tableName: question
+            columnName: points
+        - dropColumn:
+            tableName: question_snapshot
+            columnName: points

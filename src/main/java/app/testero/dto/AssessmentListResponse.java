@@ -13,6 +13,7 @@ public record AssessmentListResponse(List<AssessmentListItem> assessments,
             int questionsPerAssessment,
             String difficulty,
             String status,
-            Double score
+            Double score,
+            List<SubjectDto> subjects
     ) {}
 }

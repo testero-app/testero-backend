@@ -2,8 +2,10 @@ package app.testero.service;
 
 import app.testero.dto.AnswerInput;
 import app.testero.dto.SaveAnswerRequest;
+import app.testero.dto.SubjectDto;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
+import app.testero.dto.SubmissionFeedbackResponse.SubjectScore;
 import app.testero.dto.PaginationMetadata;
 import app.testero.dto.SubmissionHistoryResponse;
 import app.testero.dto.SubmissionHistoryResponse.SubmissionSummary;
@@ -12,9 +14,11 @@ import app.testero.dto.SubmissionReviewResponse.ReviewOption;
 import app.testero.dto.SubmissionReviewResponse.ReviewQuestion;
 import app.testero.dto.SubmissionStartResponse;
 import app.testero.dto.SubmissionSubmitRequest;
+import app.testero.entity.assessment.Subject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
+import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.SubmissionStatus;
 import app.testero.entity.submission.UserAnswer;
@@ -26,9 +30,12 @@ import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.OptionSnapshotRepository;
 import app.testero.repository.QuestionSnapshotRepository;
+import app.testero.repository.QuestionSnapshotSubjectRepository;
+import app.testero.repository.SubjectRepository;
 import app.testero.repository.SubmissionRepository;
 import app.testero.repository.UserAnswerRepository;
 import app.testero.repository.UserAnswerSelectedOptionRepository;
+import app.testero.service.ScoringService.ScoringResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -56,6 +63,8 @@ public class SubmissionService {
     private final OptionSnapshotRepository optionSnapshotRepository;
     private final AssessmentSnapshotRepository assessmentSnapshotRepository;
     private final QuestionSnapshotRepository questionSnapshotRepository;
+    private final QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
+    private final SubjectRepository subjectRepository;
     private final ScoringService scoringService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -65,6 +74,8 @@ public class SubmissionService {
                              OptionSnapshotRepository optionSnapshotRepository,
                              AssessmentSnapshotRepository assessmentSnapshotRepository,
                              QuestionSnapshotRepository questionSnapshotRepository,
+                             QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository,
+                             SubjectRepository subjectRepository,
                              ScoringService scoringService,
                              ApplicationEventPublisher eventPublisher) {
         this.submissionRepository = submissionRepository;
@@ -73,6 +84,8 @@ public class SubmissionService {
         this.optionSnapshotRepository = optionSnapshotRepository;
         this.assessmentSnapshotRepository = assessmentSnapshotRepository;
         this.questionSnapshotRepository = questionSnapshotRepository;
+        this.questionSnapshotSubjectRepository = questionSnapshotSubjectRepository;
+        this.subjectRepository = subjectRepository;
         this.scoringService = scoringService;
         this.eventPublisher = eventPublisher;
     }
@@ -234,7 +247,7 @@ public class SubmissionService {
         }
 
         // 5. Score and save
-        List<AnswerResult> answerResults = scoringService.scoreSubmission(submission, answers, selectedOptions);
+        ScoringResult scoringResult = scoringService.scoreSubmission(submission, answers, selectedOptions);
 
         log.info("Submission submitted: submissionId={}, userId={}, score={}",
                 submission.getId(), userId, submission.getScore());
@@ -246,6 +259,10 @@ public class SubmissionService {
                 .findById(submission.getAssessmentSnapshotId())
                 .orElse(null);
 
+        // Fetch question snapshots for accurate maxScore
+        List<QuestionSnapshot> questionSnapshots = questionSnapshotRepository
+                .findByAssessmentSnapshotIdOrderByPosition(submission.getAssessmentSnapshotId());
+
         return new SubmissionFeedbackResponse(
                 submission.getId().toString(),
                 submission.getUserId().toString(),
@@ -253,11 +270,12 @@ public class SubmissionService {
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt().toString(),
                 submission.getScore(),
-                computeMaxScore(snapshot),
+                computeMaxScore(snapshot, questionSnapshots),
                 computePassed(submission.getScore(), snapshot),
                 snapshot != null && snapshot.getPassingScore() != null
                         ? snapshot.getPassingScore().doubleValue() : null,
-                answerResults
+                scoringResult.answerResults(),
+                scoringResult.subjectScores()
         );
     }
 
@@ -314,13 +332,22 @@ public class SubmissionService {
                         a.getQuestionSnapshotId().toString(),
                         a.getType(),
                         a.getIsCorrect(),
-                        correctMap.getOrDefault(a.getQuestionSnapshotId(), List.of())
+                        correctMap.getOrDefault(a.getQuestionSnapshotId(), List.of()),
+                        a.getPointsAwarded()
                 ))
                 .toList();
 
         AssessmentSnapshot feedbackSnapshot = assessmentSnapshotRepository
                 .findById(submission.getAssessmentSnapshotId())
                 .orElse(null);
+
+        // Fetch question snapshots for accurate maxScore
+        List<QuestionSnapshot> questionSnapshots = questionSnapshotRepository
+                .findByAssessmentSnapshotIdOrderByPosition(submission.getAssessmentSnapshotId());
+
+        // Compute subject scores via ScoringService
+        List<SubjectScore> subjectScores = scoringService.computeSubjectScores(
+                answers, submission.getAssessmentSnapshotId());
 
         return new SubmissionFeedbackResponse(
                 submission.getId().toString(),
@@ -329,11 +356,12 @@ public class SubmissionService {
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null,
                 submission.getScore(),
-                computeMaxScore(feedbackSnapshot),
+                computeMaxScore(feedbackSnapshot, questionSnapshots),
                 computePassed(submission.getScore(), feedbackSnapshot),
                 feedbackSnapshot != null && feedbackSnapshot.getPassingScore() != null
                         ? feedbackSnapshot.getPassingScore().doubleValue() : null,
-                answerResults
+                answerResults,
+                subjectScores
         );
     }
 
@@ -406,7 +434,7 @@ public class SubmissionService {
                                     ? s.getSubmittedAt().toString()
                                     : null,
                             s.getScore(),
-                            computeMaxScore(snapshot),
+                            computeMaxScore(snapshot, null),
                             computePassed(s.getScore(), snapshot),
                             mcAnswers.size(),
                             correct,
@@ -467,6 +495,23 @@ public class SubmissionService {
         Map<UUID, List<UserAnswerSelectedOption>> selectedByAnswer = selectedOptions.stream()
                 .collect(Collectors.groupingBy(UserAnswerSelectedOption::getAnswerId));
 
+        // Fetch subjects for each question snapshot
+        List<QuestionSnapshotSubject> qsSubjects = questionIds.isEmpty()
+                ? List.of()
+                : questionSnapshotSubjectRepository.findByQuestionSnapshotIdIn(questionIds);
+        Map<UUID, List<QuestionSnapshotSubject>> subjectsByQuestion = qsSubjects.stream()
+                .collect(Collectors.groupingBy(QuestionSnapshotSubject::getQuestionSnapshotId));
+
+        // Fetch subject labels
+        List<UUID> subjectIds = qsSubjects.stream()
+                .map(QuestionSnapshotSubject::getSubjectId)
+                .distinct()
+                .toList();
+        Map<UUID, String> subjectLabels = subjectIds.isEmpty()
+                ? Map.of()
+                : subjectRepository.findByIdIn(subjectIds).stream()
+                        .collect(Collectors.toMap(Subject::getId, Subject::getLabel));
+
         // Assemble review questions
         List<ReviewQuestion> reviewQuestions = questions.stream()
                 .map(q -> {
@@ -491,6 +536,18 @@ public class SubmissionService {
                             ))
                             .toList();
 
+                    Double questionPoints = q.getPoints() != null
+                            ? q.getPoints().doubleValue() : null;
+                    Double pointsAwarded = answer != null ? answer.getPointsAwarded() : null;
+
+                    List<SubjectDto> questionSubjects = subjectsByQuestion
+                            .getOrDefault(q.getId(), List.of()).stream()
+                            .map(qs -> new SubjectDto(
+                                    qs.getSubjectId().toString(),
+                                    subjectLabels.getOrDefault(qs.getSubjectId(), "Unknown")
+                            ))
+                            .toList();
+
                     return new ReviewQuestion(
                             q.getId().toString(),
                             q.getType(),
@@ -502,7 +559,10 @@ public class SubmissionService {
                             selectedOptionIds,
                             answer != null ? answer.getText() : null,
                             answer != null ? answer.getMotivation() : null,
-                            reviewOptions
+                            reviewOptions,
+                            questionPoints,
+                            pointsAwarded,
+                            questionSubjects
                     );
                 })
                 .toList();
@@ -513,14 +573,30 @@ public class SubmissionService {
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null,
                 submission.getScore(),
+                computeMaxScore(snapshot, questions),
                 reviewQuestions
         );
     }
 
-    private static Double computeMaxScore(AssessmentSnapshot snapshot) {
+    /**
+     * Compute max score. If questionSnapshots are provided, sum per-question points
+     * (falling back to ptsCorrect for questions without custom points).
+     * If questionSnapshots are null, use the legacy approximation.
+     */
+    private static Double computeMaxScore(AssessmentSnapshot snapshot,
+                                           List<QuestionSnapshot> questionSnapshots) {
         if (snapshot == null) {
             return null;
         }
+        if (questionSnapshots != null && !questionSnapshots.isEmpty()) {
+            double ptsCorrect = snapshot.getPtsCorrect().doubleValue();
+            double total = 0.0;
+            for (QuestionSnapshot qs : questionSnapshots) {
+                total += (qs.getPoints() != null) ? qs.getPoints().doubleValue() : ptsCorrect;
+            }
+            return total;
+        }
+        // Fallback: legacy approximation for list views
         return snapshot.getQuestionsPerAssessment() * snapshot.getPtsCorrect().doubleValue();
     }
 

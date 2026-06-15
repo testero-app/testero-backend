@@ -20,7 +20,7 @@ class QuestionPrepServiceTest {
     // ── Helpers ────────────────────────────────────────────────────
 
     private static QuestionDto mc(String id, List<OptionDto> options) {
-        return new QuestionDto(id, "multiple", "Text " + id, null, options);
+        return new QuestionDto(id, "multiple", "Text " + id, null, options, null);
     }
 
     private static QuestionDto mc(String id) {
@@ -32,7 +32,7 @@ class QuestionPrepServiceTest {
     }
 
     private static QuestionDto open(String id) {
-        return new QuestionDto(id, "open", "Text " + id, null, null);
+        return new QuestionDto(id, "open", "Text " + id, null, null, null);
     }
 
     // ── Pool selection ─────────────────────────────────────────────
