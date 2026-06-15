@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.4-002-create-question-snapshot-subject-table
+      author: testero
+      comment: >
+        Immutable snapshot of question-subject relationships, copied when an
+        assessment snapshot is published.
+      changes:
+        - createTable:
+            tableName: question_snapshot_subject
+            columns:
+              - column:
+                  name: question_snapshot_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subject_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: weight
+                  type: decimal(5,2)
+                  defaultValueNumeric: 1.00
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addPrimaryKey:
+            tableName: question_snapshot_subject
+            columnNames: question_snapshot_id, subject_id
+            constraintName: pk_question_snapshot_subject
+        - addForeignKeyConstraint:
+            baseTableName: question_snapshot_subject
+            baseColumnNames: question_snapshot_id
+            referencedTableName: question_snapshot
+            referencedColumnNames: id
+            constraintName: fk_qss_question_snapshot_id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: question_snapshot_subject
+            baseColumnNames: subject_id
+            referencedTableName: subject
+            referencedColumnNames: id
+            constraintName: fk_qss_subject_id
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_question_snapshot_subject_updated_at
+              BEFORE UPDATE ON question_snapshot_subject
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+      rollback:
+        - dropTable:
+            tableName: question_snapshot_subject
