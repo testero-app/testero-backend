@@ -160,6 +160,7 @@ public class SubmissionService {
             answer.setType(request.type());
             answer.setText(request.text() != null ? request.text() : "");
             answer.setMotivation(request.motivation() != null ? request.motivation() : "");
+            answer.setFlagged(Boolean.TRUE.equals(request.flagged()));
             // Clear old selected options
             userAnswerSelectedOptionRepository.deleteByAnswerId(answer.getId());
         } else {
@@ -169,6 +170,7 @@ public class SubmissionService {
             answer.setType(request.type());
             answer.setText(request.text() != null ? request.text() : "");
             answer.setMotivation(request.motivation() != null ? request.motivation() : "");
+            answer.setFlagged(Boolean.TRUE.equals(request.flagged()));
         }
         answer = userAnswerRepository.save(answer);
 
@@ -336,7 +338,8 @@ public class SubmissionService {
                         a.getMotivation(),
                         selectedByAnswer.getOrDefault(a.getId(), List.of()).stream()
                                 .map(o -> o.getOptionSnapshotId().toString())
-                                .toList()
+                                .toList(),
+                        a.isFlagged()
                 ))
                 .toList();
 

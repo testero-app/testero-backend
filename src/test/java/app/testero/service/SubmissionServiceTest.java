@@ -281,6 +281,7 @@ class SubmissionServiceTest {
             mc.setType("multiple");
             mc.setText("");
             mc.setMotivation("");
+            mc.setFlagged(true);
 
             UserAnswer open = new UserAnswer();
             open.setId(ANSWER_2_ID);
@@ -307,6 +308,7 @@ class SubmissionServiceTest {
             assertThat(mcResult.questionSnapshotId()).isEqualTo(Q1_ID.toString());
             assertThat(mcResult.type()).isEqualTo("multiple");
             assertThat(mcResult.selectedOptionIds()).containsExactly(Q1_OPT_C.toString());
+            assertThat(mcResult.flagged()).isTrue();
 
             SavedAnswer openResult = response.answers().get(1);
             assertThat(openResult.questionSnapshotId()).isEqualTo(Q_OPEN_ID.toString());
@@ -314,6 +316,7 @@ class SubmissionServiceTest {
             assertThat(openResult.text()).isEqualTo("my answer");
             assertThat(openResult.motivation()).isEqualTo("because...");
             assertThat(openResult.selectedOptionIds()).isEmpty();
+            assertThat(openResult.flagged()).isFalse();
         }
 
         @Test
@@ -389,7 +392,7 @@ class SubmissionServiceTest {
             });
 
             SaveAnswerRequest request = new SaveAnswerRequest(
-                    "multiple", null, null, List.of(Q1_OPT_C.toString()));
+                    "multiple", null, null, List.of(Q1_OPT_C.toString()), null);
 
             submissionService.saveAnswer(SUBMISSION_ID, Q1_ID, STUDENT_ID, request);
 
@@ -414,7 +417,7 @@ class SubmissionServiceTest {
             when(userAnswerRepository.save(any(UserAnswer.class))).thenAnswer(inv -> inv.getArgument(0));
 
             SaveAnswerRequest request = new SaveAnswerRequest(
-                    "multiple", null, null, List.of(Q1_OPT_A.toString()));
+                    "multiple", null, null, List.of(Q1_OPT_A.toString()), null);
 
             submissionService.saveAnswer(SUBMISSION_ID, Q1_ID, STUDENT_ID, request);
 
@@ -431,7 +434,7 @@ class SubmissionServiceTest {
             when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
                     .thenReturn(Optional.of(completed));
 
-            SaveAnswerRequest request = new SaveAnswerRequest("multiple", null, null, List.of());
+            SaveAnswerRequest request = new SaveAnswerRequest("multiple", null, null, List.of(), null);
 
             assertThatThrownBy(() -> submissionService.saveAnswer(SUBMISSION_ID, Q1_ID, STUDENT_ID, request))
                     .isInstanceOf(IllegalSubmissionStateException.class);
@@ -448,7 +451,7 @@ class SubmissionServiceTest {
             when(questionSnapshotRepository.findById(Q1_ID))
                     .thenReturn(Optional.of(wrongSnapshot));
 
-            SaveAnswerRequest request = new SaveAnswerRequest("multiple", null, null, List.of());
+            SaveAnswerRequest request = new SaveAnswerRequest("multiple", null, null, List.of(), null);
 
             assertThatThrownBy(() -> submissionService.saveAnswer(SUBMISSION_ID, Q1_ID, STUDENT_ID, request))
                     .isInstanceOf(ResourceNotFoundException.class);
@@ -469,12 +472,62 @@ class SubmissionServiceTest {
                 return a;
             });
 
-            SaveAnswerRequest request = new SaveAnswerRequest("multiple", "", "", List.of());
+            SaveAnswerRequest request = new SaveAnswerRequest("multiple", "", "", List.of(), null);
 
             submissionService.saveAnswer(SUBMISSION_ID, Q1_ID, STUDENT_ID, request);
 
             verify(userAnswerRepository).save(any(UserAnswer.class));
             verify(userAnswerSelectedOptionRepository, never()).saveAll(anyList());
+        }
+
+        @Test
+        @DisplayName("persists flagged=true when flag is set")
+        void persistsFlaggedTrue() {
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(startedSubmission()));
+            when(questionSnapshotRepository.findById(Q1_ID))
+                    .thenReturn(Optional.of(buildQuestionSnapshot()));
+            when(userAnswerRepository.findBySubmissionIdAndQuestionSnapshotId(SUBMISSION_ID, Q1_ID))
+                    .thenReturn(Optional.empty());
+            when(userAnswerRepository.save(any(UserAnswer.class))).thenAnswer(inv -> {
+                UserAnswer a = inv.getArgument(0);
+                a.setId(ANSWER_1_ID);
+                return a;
+            });
+
+            SaveAnswerRequest request = new SaveAnswerRequest(
+                    "multiple", "", "", List.of(), true);
+
+            submissionService.saveAnswer(SUBMISSION_ID, Q1_ID, STUDENT_ID, request);
+
+            ArgumentCaptor<UserAnswer> captor = ArgumentCaptor.forClass(UserAnswer.class);
+            verify(userAnswerRepository).save(captor.capture());
+            assertThat(captor.getValue().isFlagged()).isTrue();
+        }
+
+        @Test
+        @DisplayName("flagged defaults to false when null")
+        void flaggedDefaultsFalse() {
+            when(submissionRepository.findByIdAndUserId(SUBMISSION_ID, STUDENT_ID))
+                    .thenReturn(Optional.of(startedSubmission()));
+            when(questionSnapshotRepository.findById(Q1_ID))
+                    .thenReturn(Optional.of(buildQuestionSnapshot()));
+            when(userAnswerRepository.findBySubmissionIdAndQuestionSnapshotId(SUBMISSION_ID, Q1_ID))
+                    .thenReturn(Optional.empty());
+            when(userAnswerRepository.save(any(UserAnswer.class))).thenAnswer(inv -> {
+                UserAnswer a = inv.getArgument(0);
+                a.setId(ANSWER_1_ID);
+                return a;
+            });
+
+            SaveAnswerRequest request = new SaveAnswerRequest(
+                    "multiple", "", "", List.of(), null);
+
+            submissionService.saveAnswer(SUBMISSION_ID, Q1_ID, STUDENT_ID, request);
+
+            ArgumentCaptor<UserAnswer> captor = ArgumentCaptor.forClass(UserAnswer.class);
+            verify(userAnswerRepository).save(captor.capture());
+            assertThat(captor.getValue().isFlagged()).isFalse();
         }
     }
 

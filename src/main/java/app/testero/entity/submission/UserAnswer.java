@@ -38,6 +38,9 @@ public class UserAnswer {
     @Column(columnDefinition = "text")
     private String motivation;
 
+    @Column(nullable = false)
+    private boolean flagged;
+
     @Column(name = "is_correct")
     private Boolean isCorrect;
 
