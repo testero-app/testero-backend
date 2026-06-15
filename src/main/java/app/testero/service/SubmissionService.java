@@ -2,6 +2,8 @@ package app.testero.service;
 
 import app.testero.dto.AnswerInput;
 import app.testero.dto.SaveAnswerRequest;
+import app.testero.dto.SavedAnswersResponse;
+import app.testero.dto.SavedAnswersResponse.SavedAnswer;
 import app.testero.dto.SubjectDto;
 import app.testero.dto.SubmissionFeedbackResponse;
 import app.testero.dto.SubmissionFeedbackResponse.AnswerResult;
@@ -304,6 +306,41 @@ public class SubmissionService {
             submission.setScore(0.0);
             submissionRepository.save(submission);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public SavedAnswersResponse getSavedAnswers(UUID submissionId, UUID userId) {
+        Submission submission = submissionRepository.findByIdAndUserId(submissionId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Submission not found"));
+
+        if (submission.getStatus() != SubmissionStatus.IN_PROGRESS) {
+            throw new IllegalSubmissionStateException("Submission is not in progress");
+        }
+
+        List<UserAnswer> answers = userAnswerRepository.findBySubmissionId(submissionId);
+
+        if (answers.isEmpty()) {
+            return new SavedAnswersResponse(List.of());
+        }
+
+        List<UUID> answerIds = answers.stream().map(UserAnswer::getId).toList();
+        Map<UUID, List<UserAnswerSelectedOption>> selectedByAnswer =
+                userAnswerSelectedOptionRepository.findByAnswerIdIn(answerIds).stream()
+                        .collect(Collectors.groupingBy(UserAnswerSelectedOption::getAnswerId));
+
+        List<SavedAnswer> savedAnswers = answers.stream()
+                .map(a -> new SavedAnswer(
+                        a.getQuestionSnapshotId().toString(),
+                        a.getType(),
+                        a.getText(),
+                        a.getMotivation(),
+                        selectedByAnswer.getOrDefault(a.getId(), List.of()).stream()
+                                .map(o -> o.getOptionSnapshotId().toString())
+                                .toList()
+                ))
+                .toList();
+
+        return new SavedAnswersResponse(savedAnswers);
     }
 
     public SubmissionFeedbackResponse getSubmission(UUID submissionId, UUID userId) {
