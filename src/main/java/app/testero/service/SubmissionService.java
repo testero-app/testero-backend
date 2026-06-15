@@ -28,6 +28,7 @@ import app.testero.repository.QuestionSnapshotRepository;
 import app.testero.repository.SubmissionRepository;
 import app.testero.repository.UserAnswerRepository;
 import app.testero.repository.UserAnswerSelectedOptionRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class SubmissionService {
 
@@ -95,6 +97,9 @@ public class SubmissionService {
         submission.setStatus(SubmissionStatus.IN_PROGRESS);
         submission.setStartedAt(LocalDateTime.now());
         submission = submissionRepository.save(submission);
+
+        log.info("Submission started: submissionId={}, userId={}, snapshotId={}",
+                submission.getId(), userId, assessmentSnapshotId);
 
         // Schedule auto-close at startedAt + timerMinutes + 1s grace
         eventPublisher.publishEvent(new SubmissionStartedEvent(
@@ -224,6 +229,9 @@ public class SubmissionService {
         // 5. Score and save
         List<AnswerResult> answerResults = scoringService.scoreSubmission(submission, answers, selectedOptions);
 
+        log.info("Submission submitted: submissionId={}, userId={}, score={}",
+                submission.getId(), userId, submission.getScore());
+
         // 6. Notify scheduler to cancel auto-close
         eventPublisher.publishEvent(new SubmissionCompletedEvent(submission.getId()));
 
@@ -251,6 +259,9 @@ public class SubmissionService {
         if (submission == null || submission.getStatus() != SubmissionStatus.IN_PROGRESS) {
             return;
         }
+
+        log.warn("Auto-closing submission: submissionId={}, userId={}",
+                submissionId, submission.getUserId());
 
         submission.setStatus(SubmissionStatus.AUTO_CLOSED);
         submission.setSubmittedAt(LocalDateTime.now());
