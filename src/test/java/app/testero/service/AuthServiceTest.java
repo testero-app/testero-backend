@@ -38,6 +38,7 @@ class AuthServiceTest {
 
     private static final UUID USER_ID = UUID.fromString("aa000000-0000-0000-0000-000000000001");
     private static final String USERNAME = "mario.rossi";
+    private static final String EMAIL = "mario@test.com";
     private static final String PASSWORD = "secret123";
     private static final String HASH = "$2a$10$hashedpassword";
     private static final String TOKEN = "jwt.token.here";
@@ -47,6 +48,7 @@ class AuthServiceTest {
         user.setId(USER_ID);
         user.setName("Mario Rossi");
         user.setUsername(USERNAME);
+        user.setEmail(EMAIL);
         user.setPasswordHash(HASH);
         return user;
     }
@@ -135,6 +137,38 @@ class AuthServiceTest {
             authService.login(new LoginRequest(USERNAME, PASSWORD));
 
             verify(jwtService).generateToken(USER_ID, USERNAME);
+        }
+    }
+
+    // ── Login via email ─────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("login — email")
+    class LoginViaEmail {
+
+        @Test
+        @DisplayName("succeeds with email instead of username")
+        void emailSuccess() {
+            AppUser user = buildUser();
+            when(appUserRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches(PASSWORD, HASH)).thenReturn(true);
+            when(jwtService.generateToken(USER_ID, USERNAME)).thenReturn(TOKEN);
+            when(studentProfileRepository.findByUserId(USER_ID))
+                    .thenReturn(Optional.empty());
+
+            LoginResponse response = authService.login(new LoginRequest(EMAIL, PASSWORD));
+
+            assertThat(response.token()).isEqualTo(TOKEN);
+            assertThat(response.user().username()).isEqualTo(USERNAME);
+        }
+
+        @Test
+        @DisplayName("throws InvalidCredentialsException when email not found")
+        void emailNotFound() {
+            when(appUserRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> authService.login(new LoginRequest("unknown@test.com", PASSWORD)))
+                    .isInstanceOf(AuthService.InvalidCredentialsException.class);
         }
     }
 
