@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0](https://github.com/testero-app/testero-backend/compare/v1.18.0...v1.19.0) (2026-06-15)
+
+
+### Features
+
+* expose subject tags per question in assessment questions endpoint ([#151](https://github.com/testero-app/testero-backend/issues/151)) ([8046e8e](https://github.com/testero-app/testero-backend/commit/8046e8ee30c692accaf7fc61ad6f6939c6c4b1fc))
+
 ## [1.18.0](https://github.com/testero-app/testero-backend/compare/v1.17.0...v1.18.0) (2026-06-15)
 
 
