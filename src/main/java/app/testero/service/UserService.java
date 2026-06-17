@@ -101,7 +101,7 @@ public class UserService {
                 .orElse("");
     }
 
-    private void validatePasswordStrength(String password) {
+    public void validatePasswordStrength(String password) {
         if (password.length() < MIN_PASSWORD_LENGTH) {
             throw new InvalidPasswordException(
                     "Password must be at least 8 characters with 1 uppercase letter and 1 number");

@@ -47,3 +47,7 @@ databaseChangeLog:
       file: db/changelog/v1.4/003-add-points-to-question.yaml
   - include:
       file: db/changelog/v1.4/004-add-flagged-to-user-answer.yaml
+  - include:
+      file: db/changelog/v1.5/001-add-password-policy-columns.yaml
+  - include:
+      file: db/changelog/v1.5/002-seed-prod-roles.yaml
