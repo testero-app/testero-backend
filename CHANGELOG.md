@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.0](https://github.com/testero-app/testero-backend/compare/v1.19.0...v1.20.0) (2026-06-17)
+
+
+### Features
+
+* add first-access set-password flow and prod role seed ([#153](https://github.com/testero-app/testero-backend/issues/153)) ([b44a49d](https://github.com/testero-app/testero-backend/commit/b44a49d838d59f3ffa30497b3c2b3b07765585ae))
+
 ## [1.19.0](https://github.com/testero-app/testero-backend/compare/v1.18.0...v1.19.0) (2026-06-15)
 
 
