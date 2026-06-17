@@ -31,6 +31,12 @@ public class AppUser {
 
     private String email;
 
+    @Column(name = "must_change_password", nullable = false)
+    private boolean mustChangePassword;
+
+    @Column(name = "password_expires_at")
+    private LocalDateTime passwordExpiresAt;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 

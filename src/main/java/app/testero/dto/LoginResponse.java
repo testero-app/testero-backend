@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record LoginResponse(
         String token,
-        UserInfo user
+        UserInfo user,
+        @JsonProperty("must_change_password") boolean mustChangePassword,
+        @JsonProperty("password_expired") boolean passwordExpired
 ) {
     public record UserInfo(
             String id,
