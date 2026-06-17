@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.5-002-seed-prod-roles
+      author: testero
+      context: prod
+      comment: >
+        Ensure core roles exist in production. Idempotent via ON CONFLICT.
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO app_role (id, name, created_at, updated_at)
+              VALUES
+                (gen_random_uuid(), 'TEACHER', now(), now()),
+                (gen_random_uuid(), 'STUDENT', now(), now()),
+                (gen_random_uuid(), 'ADMIN', now(), now())
+              ON CONFLICT (name) DO NOTHING;
+      rollback:
+        - sql:
+            sql: |
+              DELETE FROM app_role WHERE name IN ('TEACHER', 'STUDENT', 'ADMIN');

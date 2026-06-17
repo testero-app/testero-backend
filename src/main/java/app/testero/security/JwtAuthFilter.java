@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -33,6 +34,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String token = header.substring(7);
             try {
                 UserPrincipal principal = jwtService.parseToken(token);
+
+                if (principal.isLimited()) {
+                    String uri = request.getRequestURI();
+                    if (!uri.endsWith("/auth/set-password")) {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                        response.getWriter().write("{\"detail\":\"Password change required\"}");
+                        return;
+                    }
+                }
+
                 var auth = new UsernamePasswordAuthenticationToken(principal, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (JwtService.JwtAuthenticationException e) {

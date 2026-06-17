@@ -16,6 +16,8 @@ import java.util.UUID;
 @Service
 public class JwtService {
 
+    private static final long LIMITED_TOKEN_EXPIRE_MILLIS = 15 * 60_000L; // 15 minutes
+
     private final SecretKey key;
     private final long expireMillis;
 
@@ -35,6 +37,18 @@ public class JwtService {
                 .compact();
     }
 
+    public String generateLimitedToken(UUID userId, String username) {
+        Date now = new Date();
+        return Jwts.builder()
+                .subject(userId.toString())
+                .claim("username", username)
+                .claim("purpose", "set-password")
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + LIMITED_TOKEN_EXPIRE_MILLIS))
+                .signWith(key)
+                .compact();
+    }
+
     public UserPrincipal parseToken(String token) {
         try {
             Claims claims = Jwts.parser()
@@ -43,9 +57,11 @@ public class JwtService {
                     .parseSignedClaims(token)
                     .getPayload();
 
+            String purpose = claims.get("purpose", String.class);
             return new UserPrincipal(
                     UUID.fromString(claims.getSubject()),
-                    claims.get("username", String.class)
+                    claims.get("username", String.class),
+                    purpose
             );
         } catch (ExpiredJwtException e) {
             throw new JwtAuthenticationException("Token expired");
