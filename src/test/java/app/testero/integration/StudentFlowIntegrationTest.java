@@ -239,10 +239,81 @@ class StudentFlowIntegrationTest {
         assertThat(pagination).containsKey("total_pages");
     }
 
-    // ── 8. Verify security ─────────────────────────────────────────
+    // ── 8. Submit after incremental save ──────────────────────────
 
     @Test
     @Order(8)
+    @DisplayName("Incremental save then submit → 200, no duplicate key violation")
+    void submitAfterIncrementalSave() {
+        // Start a new submission (retake)
+        ResponseEntity<Map> startResponse = rest.exchange(
+                "/assessments/{id}/start", HttpMethod.POST,
+                withAuth(null), Map.class, assessmentId);
+
+        assertThat(startResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        String retakeSubmissionId = (String) startResponse.getBody().get("submission_id");
+
+        // Pick the first multiple-choice question for incremental save
+        Map<String, Object> firstQuestion = questions.stream()
+                .filter(q -> "multiple".equals(q.get("type")))
+                .findFirst()
+                .orElseThrow();
+
+        String questionSnapshotId = (String) firstQuestion.get("id");
+        List<Map<String, Object>> options =
+                (List<Map<String, Object>>) firstQuestion.get("options");
+        String firstOptionId = (String) options.get(0).get("id");
+
+        // Save answer incrementally
+        Map<String, Object> saveBody = Map.of(
+                "type", "multiple",
+                "selected_option_ids", List.of(firstOptionId));
+
+        ResponseEntity<Void> saveResponse = rest.exchange(
+                "/submissions/{sid}/answers/{qid}", HttpMethod.PUT,
+                withAuth(saveBody), Void.class,
+                retakeSubmissionId, questionSnapshotId);
+
+        assertThat(saveResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        // Now submit the full assessment with the same answer
+        List<Map<String, Object>> answers = questions.stream()
+                .map(q -> {
+                    String type = (String) q.get("type");
+                    List<Map<String, Object>> opts =
+                            (List<Map<String, Object>>) q.get("options");
+
+                    if ("multiple".equals(type) && opts != null && !opts.isEmpty()) {
+                        return Map.<String, Object>of(
+                                "question_id", q.get("id"),
+                                "type", "multiple",
+                                "selected_option_ids", List.of(opts.get(0).get("id")));
+                    } else {
+                        return Map.<String, Object>of(
+                                "question_id", q.get("id"),
+                                "type", "open",
+                                "text", "Integration test answer");
+                    }
+                })
+                .toList();
+
+        ResponseEntity<Map> submitResponse = rest.exchange(
+                "/submissions/{id}", HttpMethod.PUT,
+                withAuth(Map.of("answers", answers)), Map.class, retakeSubmissionId);
+
+        // Must not fail with 500 (duplicate key) — this was the original bug
+        assertThat(submitResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(submitResponse.getBody()).containsKey("answers");
+
+        List<Map<String, Object>> answerResults =
+                (List<Map<String, Object>>) submitResponse.getBody().get("answers");
+        assertThat(answerResults).hasSameSizeAs(questions);
+    }
+
+    // ── 9. Verify security ─────────────────────────────────────────
+
+    @Test
+    @Order(9)
     @DisplayName("GET /assessments without token → 403")
     void unauthorizedAccess() {
         ResponseEntity<Map> response = rest.getForEntity(
