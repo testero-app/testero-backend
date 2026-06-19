@@ -1,23 +1,29 @@
 package app.testero.service;
 
 import app.testero.dto.ChangePasswordRequest;
+import app.testero.dto.NotificationPreferenceDto;
 import app.testero.dto.UserProfileResponse;
 import app.testero.entity.user.AppRole;
 import app.testero.entity.user.AppUser;
 import app.testero.entity.user.AppUserRole;
+import app.testero.entity.user.NotificationPreference;
+import app.testero.entity.user.NotificationType;
 import app.testero.entity.user.StudentProfile;
 import app.testero.exception.InvalidPasswordException;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AppRoleRepository;
 import app.testero.repository.AppUserRepository;
 import app.testero.repository.AppUserRoleRepository;
+import app.testero.repository.NotificationPreferenceRepository;
 import app.testero.repository.StudentProfileRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -26,21 +32,30 @@ public class UserService {
 
     private static final int MIN_PASSWORD_LENGTH = 8;
 
+    private static final Map<NotificationType, Boolean> DEFAULT_PREFS = Map.of(
+            NotificationType.EXAM_RESULT, true,
+            NotificationType.DEADLINE_REMINDER, true,
+            NotificationType.PRODUCT_NEWS, false
+    );
+
     private final AppUserRepository appUserRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final AppUserRoleRepository appUserRoleRepository;
     private final AppRoleRepository appRoleRepository;
+    private final NotificationPreferenceRepository notificationPreferenceRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserService(AppUserRepository appUserRepository,
                        StudentProfileRepository studentProfileRepository,
                        AppUserRoleRepository appUserRoleRepository,
                        AppRoleRepository appRoleRepository,
+                       NotificationPreferenceRepository notificationPreferenceRepository,
                        PasswordEncoder passwordEncoder) {
         this.appUserRepository = appUserRepository;
         this.studentProfileRepository = studentProfileRepository;
         this.appUserRoleRepository = appUserRoleRepository;
         this.appRoleRepository = appRoleRepository;
+        this.notificationPreferenceRepository = notificationPreferenceRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -89,6 +104,37 @@ public class UserService {
         appUserRepository.save(user);
 
         log.info("Password changed for userId={}", userId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<NotificationPreferenceDto> getNotificationPreferences(UUID userId) {
+        List<NotificationPreference> saved = notificationPreferenceRepository.findByUserId(userId);
+        Map<NotificationType, Boolean> merged = new EnumMap<>(DEFAULT_PREFS);
+        for (NotificationPreference pref : saved) {
+            merged.put(pref.getType(), pref.isEnabled());
+        }
+        return merged.entrySet().stream()
+                .map(e -> new NotificationPreferenceDto(e.getKey().name(), e.getValue()))
+                .toList();
+    }
+
+    @Transactional
+    public List<NotificationPreferenceDto> updateNotificationPreferences(UUID userId,
+                                                                         List<NotificationPreferenceDto> updates) {
+        for (NotificationPreferenceDto dto : updates) {
+            NotificationType type = NotificationType.valueOf(dto.type());
+            NotificationPreference pref = notificationPreferenceRepository
+                    .findByUserIdAndType(userId, type)
+                    .orElseGet(() -> {
+                        NotificationPreference p = new NotificationPreference();
+                        p.setUserId(userId);
+                        p.setType(type);
+                        return p;
+                    });
+            pref.setEnabled(dto.enabled());
+            notificationPreferenceRepository.save(pref);
+        }
+        return getNotificationPreferences(userId);
     }
 
     private String resolveRole(UUID userId) {

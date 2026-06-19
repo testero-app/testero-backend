@@ -4,6 +4,7 @@ import app.testero.config.CorsProperties;
 import app.testero.config.JwtProperties;
 import app.testero.config.SecurityConfig;
 import app.testero.dto.ChangePasswordRequest;
+import app.testero.dto.NotificationPreferenceDto;
 import app.testero.dto.UserProfileResponse;
 import app.testero.exception.InvalidPasswordException;
 import app.testero.security.JwtService;
@@ -156,6 +157,95 @@ class UserControllerTest {
                                       "current_password": "OldPass1!",
                                       "new_password": "NewPass1!",
                                       "confirm_password": "NewPass1!"
+                                    }
+                                    """))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /users/me/notifications")
+    class GetNotifications {
+
+        @Test
+        @DisplayName("authenticated → 200 with default preferences")
+        void success() throws Exception {
+            when(userService.getNotificationPreferences(USER_ID))
+                    .thenReturn(List.of(
+                            new NotificationPreferenceDto("EXAM_RESULT", true),
+                            new NotificationPreferenceDto("DEADLINE_REMINDER", true),
+                            new NotificationPreferenceDto("PRODUCT_NEWS", false)
+                    ));
+
+            mockMvc.perform(get("/users/me/notifications").with(jwt()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(3))
+                    .andExpect(jsonPath("$[0].type").value("EXAM_RESULT"))
+                    .andExpect(jsonPath("$[0].enabled").value(true))
+                    .andExpect(jsonPath("$[2].type").value("PRODUCT_NEWS"))
+                    .andExpect(jsonPath("$[2].enabled").value(false));
+        }
+
+        @Test
+        @DisplayName("no token → 403")
+        void unauthorized() throws Exception {
+            mockMvc.perform(get("/users/me/notifications"))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Nested
+    @DisplayName("PUT /users/me/notifications")
+    class UpdateNotifications {
+
+        @Test
+        @DisplayName("valid request → 200 with updated preferences")
+        void success() throws Exception {
+            when(userService.updateNotificationPreferences(eq(USER_ID), any()))
+                    .thenReturn(List.of(
+                            new NotificationPreferenceDto("EXAM_RESULT", false),
+                            new NotificationPreferenceDto("DEADLINE_REMINDER", true),
+                            new NotificationPreferenceDto("PRODUCT_NEWS", true)
+                    ));
+
+            mockMvc.perform(put("/users/me/notifications")
+                            .with(jwt())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "preferences": [
+                                        { "type": "EXAM_RESULT", "enabled": false },
+                                        { "type": "PRODUCT_NEWS", "enabled": true }
+                                      ]
+                                    }
+                                    """))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(3))
+                    .andExpect(jsonPath("$[0].enabled").value(false));
+        }
+
+        @Test
+        @DisplayName("empty preferences → 400")
+        void emptyPreferences() throws Exception {
+            mockMvc.perform(put("/users/me/notifications")
+                            .with(jwt())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    { "preferences": [] }
+                                    """))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("no token → 403")
+        void unauthorized() throws Exception {
+            mockMvc.perform(put("/users/me/notifications")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "preferences": [
+                                        { "type": "EXAM_RESULT", "enabled": false }
+                                      ]
                                     }
                                     """))
                     .andExpect(status().isForbidden());
