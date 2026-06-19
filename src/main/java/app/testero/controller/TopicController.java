@@ -1,10 +1,13 @@
 package app.testero.controller;
 
+import app.testero.dto.TopicChaptersResponse;
 import app.testero.dto.TopicListResponse;
 import app.testero.service.TopicService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,5 +25,10 @@ public class TopicController {
     @GetMapping
     public ResponseEntity<TopicListResponse> getTopics() {
         return ResponseEntity.ok(topicService.getTopics());
+    }
+
+    @GetMapping("/{topicId}/chapters")
+    public ResponseEntity<TopicChaptersResponse> getTopicChapters(@PathVariable UUID topicId) {
+        return ResponseEntity.ok(topicService.getTopicChapters(topicId));
     }
 }
