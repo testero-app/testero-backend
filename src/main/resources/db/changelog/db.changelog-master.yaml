@@ -59,3 +59,5 @@ databaseChangeLog:
       file: db/changelog/v1.6/003-create-topic-tables.yaml
   - include:
       file: db/changelog/v1.6/004-add-difficulty-to-question.yaml
+  - include:
+      file: db/changelog/v1.6/005-make-snapshot-assessment-id-nullable.yaml
