@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.21.0](https://github.com/testero-app/testero-backend/compare/v1.20.0...v1.21.0) (2026-06-19)
+
+
+### Features
+
+* add type field (CERTIFICATION/TRAINING) to assessments ([#172](https://github.com/testero-app/testero-backend/issues/172)) ([6d98c99](https://github.com/testero-app/testero-backend/commit/6d98c9952519d439d58ee2d383da42311c106d99)), closes [#167](https://github.com/testero-app/testero-backend/issues/167)
+
 ## [1.20.0](https://github.com/testero-app/testero-backend/compare/v1.19.0...v1.20.0) (2026-06-17)
 
 
