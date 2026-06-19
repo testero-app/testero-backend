@@ -1,0 +1,50 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.6-002
+      author: testero
+      comment: "Create notification_preference table for user notification settings"
+      changes:
+        - createTable:
+            tableName: notification_preference
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: now()
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: now()
+        - addUniqueConstraint:
+            tableName: notification_preference
+            columnNames: user_id, type
+            constraintName: uq_notification_preference_user_type
+        - addForeignKeyConstraint:
+            baseTableName: notification_preference
+            baseColumnNames: user_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_notification_preference_user
