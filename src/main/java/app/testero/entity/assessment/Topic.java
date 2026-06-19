@@ -2,11 +2,10 @@ package app.testero.entity.assessment;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Getter;
@@ -14,39 +13,30 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "question")
+@Table(name = "topic")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Question {
+public class Topic {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "test_id", nullable = false)
-    private UUID assessmentId;
-
-    @Column(nullable = false)
-    private String type;
-
-    @Column(nullable = false, columnDefinition = "text")
-    private String text;
+    @Column(nullable = false, length = 200)
+    private String title;
 
     @Column(columnDefinition = "text")
-    private String code;
+    private String description;
 
-    @Column(columnDefinition = "text")
-    private String explanation;
-
-    @Column(nullable = false)
-    private int position;
+    @Column(length = 4)
+    private String abbreviation;
 
     @Column
-    private BigDecimal points;
+    private int position;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private Difficulty difficulty;
+    @Column(nullable = false)
+    private boolean enabled = true;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;

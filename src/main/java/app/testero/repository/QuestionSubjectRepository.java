@@ -11,4 +11,6 @@ public interface QuestionSubjectRepository extends JpaRepository<QuestionSubject
     List<QuestionSubject> findByQuestionId(UUID questionId);
 
     List<QuestionSubject> findByQuestionIdIn(List<UUID> questionIds);
+
+    List<QuestionSubject> findBySubjectIdIn(List<UUID> subjectIds);
 }

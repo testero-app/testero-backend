@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.6-004
+      author: testero
+      comment: "Add difficulty column to question table for per-question level tagging"
+      changes:
+        - addColumn:
+            tableName: question
+            columns:
+              - column:
+                  name: difficulty
+                  type: VARCHAR(20)

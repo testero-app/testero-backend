@@ -53,3 +53,7 @@ databaseChangeLog:
       file: db/changelog/v1.5/002-seed-prod-roles.yaml
   - include:
       file: db/changelog/v1.6/001-add-type-to-assessment.yaml
+  - include:
+      file: db/changelog/v1.6/003-create-topic-tables.yaml
+  - include:
+      file: db/changelog/v1.6/004-add-difficulty-to-question.yaml
