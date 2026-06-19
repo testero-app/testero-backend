@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.6-005
+      author: testero
+      comment: "Make assessment_id nullable on assessment_snapshot to support training sessions without a parent assessment"
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: assessment_snapshot
+            constraintName: fk_assessment_snapshot_assessment_id
+        - dropNotNullConstraint:
+            tableName: assessment_snapshot
+            columnName: assessment_id
+            columnDataType: uuid
+        - dropUniqueConstraint:
+            tableName: assessment_snapshot
+            constraintName: uq_assessment_snapshot_hash
+        - addUniqueConstraint:
+            tableName: assessment_snapshot
+            columnNames: assessment_id, content_hash
+            constraintName: uq_assessment_snapshot_hash
+        - addForeignKeyConstraint:
+            baseTableName: assessment_snapshot
+            baseColumnNames: assessment_id
+            referencedTableName: test
+            referencedColumnNames: id
+            constraintName: fk_assessment_snapshot_assessment_id
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: assessment_snapshot
+            constraintName: fk_assessment_snapshot_assessment_id
+        - dropUniqueConstraint:
+            tableName: assessment_snapshot
+            constraintName: uq_assessment_snapshot_hash
+        - addNotNullConstraint:
+            tableName: assessment_snapshot
+            columnName: assessment_id
+            columnDataType: uuid
+        - addUniqueConstraint:
+            tableName: assessment_snapshot
+            columnNames: assessment_id, content_hash
+            constraintName: uq_assessment_snapshot_hash
+        - addForeignKeyConstraint:
+            baseTableName: assessment_snapshot
+            baseColumnNames: assessment_id
+            referencedTableName: test
+            referencedColumnNames: id
+            constraintName: fk_assessment_snapshot_assessment_id

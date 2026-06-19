@@ -78,9 +78,11 @@ public class TopicService {
         Set<UUID> allQuestionIds = allQs.stream()
                 .map(QuestionSubject::getQuestionId)
                 .collect(Collectors.toSet());
-        Map<UUID, Difficulty> questionDifficultyMap = questionRepository.findAllById(allQuestionIds)
-                .stream()
-                .collect(Collectors.toMap(Question::getId, q -> q.getDifficulty() != null ? q.getDifficulty() : Difficulty.BEGINNER));
+        Map<UUID, Difficulty> questionDifficultyMap = questionRepository
+                .findAllById(allQuestionIds).stream()
+                .collect(Collectors.toMap(Question::getId,
+                        q -> q.getDifficulty() != null
+                                ? q.getDifficulty() : Difficulty.BEGINNER));
 
         // Group question-subject links by subject
         Map<UUID, List<QuestionSubject>> qsBySubject = allQs.stream()
@@ -100,16 +102,21 @@ public class TopicService {
             List<ChapterItem> chapters = new ArrayList<>();
             for (TopicSubject link : links) {
                 Subject subject = subjectMap.get(link.getSubjectId());
-                if (subject == null) continue;
+                if (subject == null) {
+                    continue;
+                }
 
                 List<QuestionSubject> qs = qsBySubject.getOrDefault(link.getSubjectId(), List.of());
-                int base = 0, inter = 0, adv = 0;
+                int base = 0;
+                int inter = 0;
+                int adv = 0;
                 for (QuestionSubject q : qs) {
                     Difficulty d = questionDifficultyMap.getOrDefault(q.getQuestionId(), Difficulty.BEGINNER);
                     switch (d) {
                         case BEGINNER -> base++;
                         case INTERMEDIATE -> inter++;
                         case ADVANCED, EXPERT -> adv++;
+                        default -> base++;
                     }
                 }
                 totalQuestions += base + inter + adv;
@@ -162,20 +169,27 @@ public class TopicService {
         Map<UUID, List<QuestionSubject>> qsBySubject = allQs.stream()
                 .collect(Collectors.groupingBy(QuestionSubject::getSubjectId));
 
-        int totalBase = 0, totalInter = 0, totalAdv = 0;
+        int totalBase = 0;
+        int totalInter = 0;
+        int totalAdv = 0;
         List<ChapterItem> chapters = new ArrayList<>();
         for (TopicSubject link : links) {
             Subject subject = subjectMap.get(link.getSubjectId());
-            if (subject == null) continue;
+            if (subject == null) {
+                continue;
+            }
 
             List<QuestionSubject> qs = qsBySubject.getOrDefault(link.getSubjectId(), List.of());
-            int base = 0, inter = 0, adv = 0;
+            int base = 0;
+            int inter = 0;
+            int adv = 0;
             for (QuestionSubject q : qs) {
                 Difficulty d = diffMap.getOrDefault(q.getQuestionId(), Difficulty.BEGINNER);
                 switch (d) {
                     case BEGINNER -> base++;
                     case INTERMEDIATE -> inter++;
                     case ADVANCED, EXPERT -> adv++;
+                    default -> base++;
                 }
             }
             totalBase += base;
