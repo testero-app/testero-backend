@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.6-001
+      author: testero
+      comment: "Add type column (CERTIFICATION/TRAINING) to test and assessment_snapshot tables"
+      changes:
+        - addColumn:
+            tableName: test
+            columns:
+              - column:
+                  name: type
+                  type: VARCHAR(20)
+                  defaultValue: CERTIFICATION
+                  constraints:
+                    nullable: false
+        - addColumn:
+            tableName: assessment_snapshot
+            columns:
+              - column:
+                  name: type
+                  type: VARCHAR(20)
+                  defaultValue: CERTIFICATION
+                  constraints:
+                    nullable: false
