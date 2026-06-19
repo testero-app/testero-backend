@@ -110,6 +110,7 @@ public class SnapshotService {
         snapshot.setPtsCorrect(assessment.getPtsCorrect());
         snapshot.setPtsWrong(assessment.getPtsWrong());
         snapshot.setDifficulty(assessment.getDifficulty());
+        snapshot.setType(assessment.getType());
         snapshot.setPassingScore(assessment.getPassingScore());
         snapshot.setPublishedAt(LocalDateTime.now());
         snapshot = snapshotRepository.save(snapshot);

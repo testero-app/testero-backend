@@ -1,5 +1,6 @@
 package app.testero.entity.snapshot;
 
+import app.testero.entity.assessment.AssessmentType;
 import app.testero.entity.assessment.Difficulty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -54,6 +55,10 @@ public class AssessmentSnapshot {
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private Difficulty difficulty;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private AssessmentType type = AssessmentType.CERTIFICATION;
 
     @Column(name = "passing_score")
     private BigDecimal passingScore;

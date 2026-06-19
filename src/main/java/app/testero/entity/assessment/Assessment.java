@@ -49,6 +49,10 @@ public class Assessment {
     @Column(length = 20)
     private Difficulty difficulty;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private AssessmentType type = AssessmentType.CERTIFICATION;
+
     @Column(name = "passing_score")
     private BigDecimal passingScore;
 

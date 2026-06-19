@@ -446,6 +446,8 @@ public class SubmissionService {
                             .get(s.getAssessmentSnapshotId());
                     String title = snapshot != null
                             ? snapshot.getTitle() : "Unknown";
+                    String type = snapshot != null && snapshot.getType() != null
+                            ? snapshot.getType().name() : "CERTIFICATION";
 
                     List<UserAnswer> answers = answersBySubmission
                             .getOrDefault(s.getId(), List.of());
@@ -467,6 +469,7 @@ public class SubmissionService {
                             s.getId().toString(),
                             s.getAssessmentSnapshotId().toString(),
                             title,
+                            type,
                             s.getStartedAt() != null
                                     ? s.getStartedAt().toString()
                                     : null,

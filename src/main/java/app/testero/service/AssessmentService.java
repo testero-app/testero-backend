@@ -114,6 +114,7 @@ public class AssessmentService {
                             s.getTimerMinutes(),
                             s.getQuestionsPerAssessment(),
                             s.getDifficulty() != null ? s.getDifficulty().name() : null,
+                            s.getType() != null ? s.getType().name() : "CERTIFICATION",
                             status,
                             score,
                             subjects

@@ -11,6 +11,7 @@ public record SubmissionHistoryResponse(
             String id,
             @JsonProperty("assessment_snapshot_id") String assessmentSnapshotId,
             @JsonProperty("assessment_title") String assessmentTitle,
+            String type,
             @JsonProperty("started_at") String startedAt,
             @JsonProperty("submitted_at") String submittedAt,
             Double score,

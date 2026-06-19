@@ -12,6 +12,7 @@ public record AssessmentListResponse(List<AssessmentListItem> assessments,
             int timerMinutes,
             int questionsPerAssessment,
             String difficulty,
+            String type,
             String status,
             Double score,
             List<SubjectDto> subjects
