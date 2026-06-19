@@ -1,9 +1,12 @@
 package app.testero.service;
 
+import app.testero.dto.TopicChaptersResponse;
+import app.testero.dto.TopicChaptersResponse.AvailableQuestions;
 import app.testero.dto.TopicListResponse;
 import app.testero.dto.TopicListResponse.ChapterItem;
 import app.testero.dto.TopicListResponse.QuestionCounts;
 import app.testero.dto.TopicListResponse.TopicItem;
+import app.testero.exception.ResourceNotFoundException;
 import app.testero.entity.assessment.Difficulty;
 import app.testero.entity.assessment.Topic;
 import app.testero.entity.assessment.TopicSubject;
@@ -130,5 +133,64 @@ public class TopicService {
         }).toList();
 
         return new TopicListResponse(items);
+    }
+
+    @Transactional(readOnly = true)
+    public TopicChaptersResponse getTopicChapters(UUID topicId) {
+        Topic topic = topicRepository.findById(topicId)
+                .filter(Topic::isEnabled)
+                .orElseThrow(() -> new ResourceNotFoundException("Topic not found"));
+
+        List<TopicSubject> links = topicSubjectRepository.findByTopicIdOrderByPositionAsc(topicId);
+        Set<UUID> subjectIds = links.stream()
+                .map(TopicSubject::getSubjectId)
+                .collect(Collectors.toSet());
+
+        Map<UUID, Subject> subjectMap = subjectRepository.findAllById(subjectIds)
+                .stream()
+                .collect(Collectors.toMap(Subject::getId, s -> s));
+
+        List<QuestionSubject> allQs = questionSubjectRepository.findBySubjectIdIn(new ArrayList<>(subjectIds));
+        Set<UUID> questionIds = allQs.stream()
+                .map(QuestionSubject::getQuestionId)
+                .collect(Collectors.toSet());
+        Map<UUID, Difficulty> diffMap = questionRepository.findAllById(questionIds)
+                .stream()
+                .collect(Collectors.toMap(Question::getId,
+                        q -> q.getDifficulty() != null ? q.getDifficulty() : Difficulty.BEGINNER));
+
+        Map<UUID, List<QuestionSubject>> qsBySubject = allQs.stream()
+                .collect(Collectors.groupingBy(QuestionSubject::getSubjectId));
+
+        int totalBase = 0, totalInter = 0, totalAdv = 0;
+        List<ChapterItem> chapters = new ArrayList<>();
+        for (TopicSubject link : links) {
+            Subject subject = subjectMap.get(link.getSubjectId());
+            if (subject == null) continue;
+
+            List<QuestionSubject> qs = qsBySubject.getOrDefault(link.getSubjectId(), List.of());
+            int base = 0, inter = 0, adv = 0;
+            for (QuestionSubject q : qs) {
+                Difficulty d = diffMap.getOrDefault(q.getQuestionId(), Difficulty.BEGINNER);
+                switch (d) {
+                    case BEGINNER -> base++;
+                    case INTERMEDIATE -> inter++;
+                    case ADVANCED, EXPERT -> adv++;
+                }
+            }
+            totalBase += base;
+            totalInter += inter;
+            totalAdv += adv;
+            chapters.add(new ChapterItem(subject.getId().toString(), subject.getLabel(),
+                    new QuestionCounts(base, inter, adv)));
+        }
+
+        return new TopicChaptersResponse(
+                topic.getId().toString(),
+                topic.getTitle(),
+                chapters,
+                new AvailableQuestions(totalBase, totalInter, totalAdv,
+                        totalBase + totalInter + totalAdv)
+        );
     }
 }
