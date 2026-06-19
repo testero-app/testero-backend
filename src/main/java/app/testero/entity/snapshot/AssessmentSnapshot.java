@@ -28,7 +28,7 @@ public class AssessmentSnapshot {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "assessment_id", nullable = false)
+    @Column(name = "assessment_id")
     private UUID assessmentId;
 
     @Column(name = "content_hash", nullable = false, length = 64)
