@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.0](https://github.com/testero-app/testero-backend/compare/v1.21.0...v1.22.0) (2026-06-19)
+
+
+### Features
+
+* add GET /api/topics/{id}/chapters endpoint ([#177](https://github.com/testero-app/testero-backend/issues/177)) ([e711d72](https://github.com/testero-app/testero-backend/commit/e711d720687861da9104b97f934d199a138e42ea)), closes [#170](https://github.com/testero-app/testero-backend/issues/170)
+* add notification preferences CRUD endpoints ([#174](https://github.com/testero-app/testero-backend/issues/174)) ([053e37b](https://github.com/testero-app/testero-backend/commit/053e37b2c9e53bd503b594bbe3248545929e45a0)), closes [#168](https://github.com/testero-app/testero-backend/issues/168)
+* add POST /api/training/start for dynamic training sessions ([#178](https://github.com/testero-app/testero-backend/issues/178)) ([b402fba](https://github.com/testero-app/testero-backend/commit/b402fba8454b9237462abce568450ccabce65ac8))
+* add Topic entity and GET /api/topics endpoint ([#175](https://github.com/testero-app/testero-backend/issues/175)) ([0edd57e](https://github.com/testero-app/testero-backend/commit/0edd57e3cee270bf81a8b45e4386cd902b861b60)), closes [#169](https://github.com/testero-app/testero-backend/issues/169)
+
 ## [1.21.0](https://github.com/testero-app/testero-backend/compare/v1.20.0...v1.21.0) (2026-06-19)
 
 
