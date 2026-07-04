@@ -1,5 +1,5 @@
 -- Demo test — Programming Basics (5 questions)
--- Creates the assessment draft (questions + options).
+-- Creates the test draft (questions + options).
 -- Snapshot publishing and class assignment happen in 60_demo_test_snapshot.sql
 -- (after the v1.2 migration creates the snapshot tables).
 DO $$
@@ -20,7 +20,7 @@ BEGIN
 
   -- Test (draft)
   v_test_id := gen_random_uuid();
-  INSERT INTO test (id, title, date, timer_minutes, total_pool, questions_per_test, pts_correct, pts_wrong)
+  INSERT INTO test (id, title, date, timer_minutes, questions_per_test, total_pool, pts_correct, pts_wrong)
   VALUES (v_test_id, 'Programming Basics — Demo', '2026-12-31', 30, 5, 5, 1.00, -0.25);
 
   INSERT INTO test_subject (test_id, subject_id) VALUES (v_test_id, v_subject_id);

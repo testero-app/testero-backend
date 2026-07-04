@@ -1,13 +1,13 @@
 package app.testero.service;
 
-import app.testero.entity.assessment.Assessment;
+import app.testero.entity.assessment.AssessmentTemplate;
 import app.testero.entity.assessment.Option;
 import app.testero.entity.assessment.Question;
 import app.testero.entity.assessment.QuestionSubject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
-import app.testero.repository.AssessmentRepository;
+import app.testero.repository.AssessmentTemplateRepository;
 import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.OptionRepository;
 import app.testero.repository.OptionSnapshotRepository;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class SnapshotServiceTest {
 
-    @Mock AssessmentRepository assessmentRepository;
+    @Mock AssessmentTemplateRepository assessmentRepository;
     @Mock QuestionRepository questionRepository;
     @Mock OptionRepository optionRepository;
     @Mock QuestionSubjectRepository questionSubjectRepository;
@@ -163,7 +163,7 @@ class SnapshotServiceTest {
         @Test
         @DisplayName("hash changes when subject association is added")
         void hashChangesWithSubject() {
-            Assessment assessment = buildAssessment();
+            AssessmentTemplate assessment = buildAssessment();
             Question q1 = buildQuestion(Q1_ID, 1);
             List<Question> questions = List.of(q1);
             Map<UUID, List<Option>> options = Map.of();
@@ -181,7 +181,7 @@ class SnapshotServiceTest {
         @Test
         @DisplayName("hash changes when weight changes")
         void hashChangesWithWeight() {
-            Assessment assessment = buildAssessment();
+            AssessmentTemplate assessment = buildAssessment();
             Question q1 = buildQuestion(Q1_ID, 1);
             List<Question> questions = List.of(q1);
             Map<UUID, List<Option>> options = Map.of();
@@ -200,7 +200,7 @@ class SnapshotServiceTest {
         @Test
         @DisplayName("hash is deterministic regardless of subject order")
         void hashDeterministicOrder() {
-            Assessment assessment = buildAssessment();
+            AssessmentTemplate assessment = buildAssessment();
             Question q1 = buildQuestion(Q1_ID, 1);
             List<Question> questions = List.of(q1);
             Map<UUID, List<Option>> options = Map.of();

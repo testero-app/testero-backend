@@ -1,6 +1,7 @@
 package app.testero.entity.assessment;
 
 public enum AssessmentType {
-    CERTIFICATION,
-    TRAINING
+    CERT_SIMULATION,
+    TRAINING,
+    EXAM
 }

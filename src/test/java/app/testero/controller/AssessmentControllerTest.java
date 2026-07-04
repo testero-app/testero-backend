@@ -88,7 +88,7 @@ class AssessmentControllerTest {
                     .thenReturn(Optional.of(buildProfile()));
             when(assessmentService.getAvailableAssessments(CLASS_ID, USER_ID, 0, 20))
                     .thenReturn(new AssessmentListResponse(List.of(
-                            new AssessmentListItem(ASSESSMENT_ID, "Test 1", "2026-06-15", 45, 5, "INTERMEDIATE", "CERTIFICATION", "NOT_STARTED", null, List.of())
+                            new AssessmentListItem(ASSESSMENT_ID, "Test 1", "2026-06-15", 45, 5, "INTERMEDIATE", "CERT_SIMULATION", "NOT_STARTED", null, List.of())
                     ), new PaginationMetadata(1, 1, 0, 20)));
 
             mockMvc.perform(get("/assessments").with(jwt()))
@@ -127,8 +127,9 @@ class AssessmentControllerTest {
         void success() throws Exception {
             when(assessmentService.getAssessmentConfig(ASSESSMENT_ID))
                     .thenReturn(new AssessmentConfigResponse(
-                            ASSESSMENT_ID, "Test 1", "2026-06-15", 45, 10, 5,
-                            new AssessmentConfigResponse.ScoringRules(1.0, -0.25),
+                            ASSESSMENT_ID, "Test 1", "2026-06-15", 45, 5,
+                            new AssessmentConfigResponse.ScoringRules(1.0, -0.25, 0.0),
+                            true, true, null,
                             List.of()
                     ));
 

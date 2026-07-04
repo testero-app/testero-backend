@@ -1,6 +1,6 @@
 package app.testero.service;
 
-import app.testero.entity.assessment.Assessment;
+import app.testero.entity.assessment.AssessmentTemplate;
 import app.testero.entity.assessment.Option;
 import app.testero.entity.assessment.Question;
 import app.testero.entity.assessment.QuestionSubject;
@@ -9,7 +9,7 @@ import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.exception.ResourceNotFoundException;
-import app.testero.repository.AssessmentRepository;
+import app.testero.repository.AssessmentTemplateRepository;
 import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.OptionRepository;
 import app.testero.repository.OptionSnapshotRepository;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 @Service
 public class SnapshotService {
 
-    private final AssessmentRepository assessmentRepository;
+    private final AssessmentTemplateRepository assessmentTemplateRepository;
     private final QuestionRepository questionRepository;
     private final OptionRepository optionRepository;
     private final QuestionSubjectRepository questionSubjectRepository;
@@ -44,7 +44,7 @@ public class SnapshotService {
     private final OptionSnapshotRepository optionSnapshotRepository;
     private final QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
 
-    public SnapshotService(AssessmentRepository assessmentRepository,
+    public SnapshotService(AssessmentTemplateRepository assessmentTemplateRepository,
                            QuestionRepository questionRepository,
                            OptionRepository optionRepository,
                            QuestionSubjectRepository questionSubjectRepository,
@@ -52,7 +52,7 @@ public class SnapshotService {
                            QuestionSnapshotRepository questionSnapshotRepository,
                            OptionSnapshotRepository optionSnapshotRepository,
                            QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository) {
-        this.assessmentRepository = assessmentRepository;
+        this.assessmentTemplateRepository = assessmentTemplateRepository;
         this.questionRepository = questionRepository;
         this.optionRepository = optionRepository;
         this.questionSubjectRepository = questionSubjectRepository;
@@ -64,7 +64,7 @@ public class SnapshotService {
 
     @Transactional
     public AssessmentSnapshot publishSnapshot(UUID assessmentId) {
-        Assessment assessment = assessmentRepository.findById(assessmentId)
+        AssessmentTemplate assessment = assessmentTemplateRepository.findById(assessmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Assessment not found"));
 
         List<Question> questions = questionRepository
@@ -154,7 +154,7 @@ public class SnapshotService {
         return snapshot;
     }
 
-    static String computeContentHash(Assessment assessment,
+    static String computeContentHash(AssessmentTemplate assessment,
                                      List<Question> questions,
                                      Map<UUID, List<Option>> optionsByQuestion,
                                      Map<UUID, List<QuestionSubject>> subjectsByQuestion) {

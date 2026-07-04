@@ -58,7 +58,7 @@ public class AssessmentSnapshot {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private AssessmentType type = AssessmentType.CERTIFICATION;
+    private AssessmentType type = AssessmentType.CERT_SIMULATION;
 
     @Column(name = "passing_score")
     private BigDecimal passingScore;
