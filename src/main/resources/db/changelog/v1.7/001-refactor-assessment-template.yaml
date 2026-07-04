@@ -1,0 +1,100 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-001
+      author: testero
+      comment: >
+        Rename test → assessment_template, test_subject → assessment_subject.
+        Rename FK columns test_id → assessment_template_id.
+        Rename questions_per_test → questions_per_assessment.
+        Drop total_pool (redundant). Migrate CERTIFICATION → CERT_SIMULATION.
+        Add new columns: start_time, pts_unanswered, max_attempts,
+        shuffle_questions, shuffle_options, assessment_description.
+      changes:
+        # ── Table renames ──────────────────────────────────────────
+        - renameTable:
+            oldTableName: test
+            newTableName: assessment_template
+
+        - renameTable:
+            oldTableName: test_subject
+            newTableName: assessment_subject
+
+        # ── Column renames ─────────────────────────────────────────
+        - renameColumn:
+            tableName: question
+            oldColumnName: test_id
+            newColumnName: assessment_template_id
+            columnDataType: uuid
+
+        - renameColumn:
+            tableName: assessment_subject
+            oldColumnName: test_id
+            newColumnName: assessment_template_id
+            columnDataType: uuid
+
+        - renameColumn:
+            tableName: assessment_template
+            oldColumnName: questions_per_test
+            newColumnName: questions_per_assessment
+            columnDataType: int
+
+        # ── Drop redundant column ─────────────────────────────────
+        - dropColumn:
+            tableName: assessment_template
+            columnName: total_pool
+
+        # ── Migrate enum values ───────────────────────────────────
+        - sql:
+            sql: >
+              UPDATE assessment_template
+              SET type = 'CERT_SIMULATION'
+              WHERE type = 'CERTIFICATION';
+
+        - sql:
+            sql: >
+              UPDATE assessment_snapshot
+              SET type = 'CERT_SIMULATION'
+              WHERE type = 'CERTIFICATION';
+
+        # ── New columns on assessment_template ────────────────────
+        - addColumn:
+            tableName: assessment_template
+            columns:
+              - column:
+                  name: start_time
+                  type: TIME
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: pts_unanswered
+                  type: DECIMAL
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: max_attempts
+                  type: INT
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: shuffle_questions
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: shuffle_options
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: assessment_description
+                  type: TEXT
+                  constraints:
+                    nullable: true

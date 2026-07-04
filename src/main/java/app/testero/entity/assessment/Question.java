@@ -23,7 +23,7 @@ public class Question {
     @Id
     private UUID id;
 
-    @Column(name = "test_id", nullable = false)
+    @Column(name = "assessment_template_id", nullable = false)
     private UUID assessmentId;
 
     @Column(nullable = false)

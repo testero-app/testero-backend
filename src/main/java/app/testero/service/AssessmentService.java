@@ -166,11 +166,14 @@ public class AssessmentService {
                 snapshot.getPublishedAt().toLocalDate().toString(),
                 snapshot.getTimerMinutes(),
                 snapshot.getQuestionsPerAssessment(),
-                snapshot.getQuestionsPerAssessment(),
                 new AssessmentConfigResponse.ScoringRules(
                         snapshot.getPtsCorrect().doubleValue(),
-                        snapshot.getPtsWrong().doubleValue()
+                        snapshot.getPtsWrong().doubleValue(),
+                        0.0
                 ),
+                true,
+                true,
+                null,
                 subjects
         );
     }

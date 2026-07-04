@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "test_subject")
+@Table(name = "assessment_subject")
 @IdClass(AssessmentSubjectId.class)
 @Getter
 @Setter
@@ -20,7 +20,7 @@ import lombok.Setter;
 public class AssessmentSubject {
 
     @Id
-    @Column(name = "test_id")
+    @Column(name = "assessment_template_id")
     private UUID assessmentId;
 
     @Id
