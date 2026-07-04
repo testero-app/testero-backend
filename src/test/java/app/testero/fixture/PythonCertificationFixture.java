@@ -1,6 +1,6 @@
 package app.testero.fixture;
 
-import app.testero.entity.assessment.Assessment;
+import app.testero.entity.assessment.AssessmentTemplate;
 import app.testero.entity.assessment.Difficulty;
 import app.testero.entity.assessment.Option;
 import app.testero.entity.snapshot.AssessmentSnapshot;
@@ -29,7 +29,6 @@ public final class PythonCertificationFixture {
     public static final String TITLE = "Grading Test Fixture";
     public static final LocalDate DATE = LocalDate.of(2026, 6, 15);
     public static final int TIMER_MINUTES = 45;
-    public static final int TOTAL_POOL = 5;
     public static final int QUESTIONS_PER_ASSESSMENT = 5;
     public static final BigDecimal PTS_CORRECT = new BigDecimal("1.00");
     public static final BigDecimal PTS_WRONG = new BigDecimal("-0.25");
@@ -82,19 +81,18 @@ public final class PythonCertificationFixture {
 
     // ── Factory methods ────────────────────────────────────────────
 
-    /** Build the assessment entity with default scoring (1.00 / -0.25). */
-    public static Assessment buildAssessment() {
+    /** Build the assessment template entity with default scoring (1.00 / -0.25). */
+    public static AssessmentTemplate buildAssessment() {
         return buildAssessment(PTS_CORRECT, PTS_WRONG);
     }
 
-    /** Build the assessment entity with custom scoring. */
-    public static Assessment buildAssessment(BigDecimal ptsCorrect, BigDecimal ptsWrong) {
-        Assessment assessment = new Assessment();
+    /** Build the assessment template entity with custom scoring. */
+    public static AssessmentTemplate buildAssessment(BigDecimal ptsCorrect, BigDecimal ptsWrong) {
+        AssessmentTemplate assessment = new AssessmentTemplate();
         assessment.setId(TEST_ID);
         assessment.setTitle(TITLE);
         assessment.setDate(DATE);
         assessment.setTimerMinutes(TIMER_MINUTES);
-        assessment.setTotalPool(TOTAL_POOL);
         assessment.setQuestionsPerAssessment(QUESTIONS_PER_ASSESSMENT);
         assessment.setPtsCorrect(ptsCorrect);
         assessment.setPtsWrong(ptsWrong);

@@ -7,13 +7,16 @@ public record AssessmentConfigResponse(
         String title,
         String date,
         int timerMinutes,
-        int totalPool,
         int questionsPerAssessment,
         ScoringRules scoring,
+        boolean shuffleQuestions,
+        boolean shuffleOptions,
+        Integer maxAttempts,
         List<SubjectDto> subjects
 ) {
     public record ScoringRules(
             double pointsPerCorrect,
-            double pointsPerWrong
+            double pointsPerWrong,
+            double pointsPerUnanswered
     ) {}
 }
