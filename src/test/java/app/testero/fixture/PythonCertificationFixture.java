@@ -9,6 +9,7 @@ import app.testero.entity.snapshot.OptionSnapshot;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -91,7 +92,7 @@ public final class PythonCertificationFixture {
         AssessmentTemplate assessment = new AssessmentTemplate();
         assessment.setId(TEST_ID);
         assessment.setTitle(TITLE);
-        assessment.setDate(DATE);
+        assessment.setAvailableFrom(LocalDateTime.of(DATE, LocalTime.MIDNIGHT));
         assessment.setTimerMinutes(TIMER_MINUTES);
         assessment.setQuestionsPerAssessment(QUESTIONS_PER_ASSESSMENT);
         assessment.setPtsCorrect(ptsCorrect);

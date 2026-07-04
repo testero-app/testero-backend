@@ -63,3 +63,5 @@ databaseChangeLog:
       file: db/changelog/v1.6/005-make-snapshot-assessment-id-nullable.yaml
   - include:
       file: db/changelog/v1.7/001-refactor-assessment-template.yaml
+  - include:
+      file: db/changelog/v1.7/002-replace-date-with-availability-window.yaml
