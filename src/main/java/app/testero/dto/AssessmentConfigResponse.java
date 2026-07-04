@@ -5,7 +5,8 @@ import java.util.List;
 public record AssessmentConfigResponse(
         String assessmentId,
         String title,
-        String date,
+        String availableFrom,
+        String availableUntil,
         int timerMinutes,
         int questionsPerAssessment,
         ScoringRules scoring,

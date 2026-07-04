@@ -7,9 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,8 +26,11 @@ public class AssessmentTemplate {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
-    private LocalDate date;
+    @Column(name = "available_from")
+    private LocalDateTime availableFrom;
+
+    @Column(name = "available_until")
+    private LocalDateTime availableUntil;
 
     @Column(name = "timer_minutes", nullable = false)
     private int timerMinutes;
@@ -53,9 +54,6 @@ public class AssessmentTemplate {
 
     @Column(name = "passing_score")
     private BigDecimal passingScore;
-
-    @Column(name = "start_time")
-    private LocalTime startTime;
 
     @Column(name = "pts_unanswered", nullable = false)
     private BigDecimal ptsUnanswered;
