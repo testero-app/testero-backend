@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.0](https://github.com/testero-app/testero-backend/compare/v1.22.0...v1.23.0) (2026-07-04)
+
+
+### Features
+
+* replace date + start_time with availability window ([#184](https://github.com/testero-app/testero-backend/issues/184)) ([66199ff](https://github.com/testero-app/testero-backend/commit/66199ff4edffcf916a1244fb066a7f69595f88ca))
+
 ## [1.22.0](https://github.com/testero-app/testero-backend/compare/v1.21.0...v1.22.0) (2026-06-19)
 
 
