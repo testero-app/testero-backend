@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-002
+      author: testero
+      comment: >
+        Replace date (DATE) + start_time (TIME) with available_from and
+        available_until (TIMESTAMP, nullable) to support availability windows.
+      changes:
+        - addColumn:
+            tableName: assessment_template
+            columns:
+              - column:
+                  name: available_from
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: available_until
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
+
+        - sql:
+            sql: >
+              UPDATE assessment_template
+              SET available_from = (date + COALESCE(start_time, TIME '00:00:00'))
+              WHERE date IS NOT NULL;
+
+        - dropColumn:
+            tableName: assessment_template
+            columnName: start_time
+
+        - dropColumn:
+            tableName: assessment_template
+            columnName: date

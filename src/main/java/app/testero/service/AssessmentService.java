@@ -110,7 +110,8 @@ public class AssessmentService {
                     return new AssessmentListResponse.AssessmentListItem(
                             s.getId().toString(),
                             s.getTitle(),
-                            s.getPublishedAt().toLocalDate().toString(),
+                            null,
+                            null,
                             s.getTimerMinutes(),
                             s.getQuestionsPerAssessment(),
                             s.getDifficulty() != null ? s.getDifficulty().name() : null,
@@ -163,7 +164,8 @@ public class AssessmentService {
         return new AssessmentConfigResponse(
                 snapshot.getId().toString(),
                 snapshot.getTitle(),
-                snapshot.getPublishedAt().toLocalDate().toString(),
+                null,
+                null,
                 snapshot.getTimerMinutes(),
                 snapshot.getQuestionsPerAssessment(),
                 new AssessmentConfigResponse.ScoringRules(
@@ -223,7 +225,8 @@ public class AssessmentService {
         return new AssessmentQuestionsResponse(
                 snapshot.getId().toString(),
                 snapshot.getTitle(),
-                snapshot.getPublishedAt().toLocalDate().toString(),
+                null,
+                null,
                 snapshot.getTimerMinutes(),
                 prepared.size(),
                 prepared
