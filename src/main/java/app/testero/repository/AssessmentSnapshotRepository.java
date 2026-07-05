@@ -19,15 +19,15 @@ public interface AssessmentSnapshotRepository extends JpaRepository<AssessmentSn
     @Query("SELECT s FROM AssessmentSnapshot s JOIN ClassAssessment ca "
             + "ON ca.assessmentSnapshotId = s.id "
             + "WHERE ca.classId = :classId "
-            + "AND ca.activatedAt IS NOT NULL "
-            + "AND ca.deactivatedAt IS NULL")
+            + "AND (ca.availableFrom IS NULL OR ca.availableFrom <= CURRENT_TIMESTAMP) "
+            + "AND (ca.availableUntil IS NULL OR ca.availableUntil >= CURRENT_TIMESTAMP)")
     List<AssessmentSnapshot> findSnapshotsByClassId(@Param("classId") UUID classId);
 
     @Query("SELECT s FROM AssessmentSnapshot s JOIN ClassAssessment ca "
             + "ON ca.assessmentSnapshotId = s.id "
             + "WHERE ca.classId = :classId "
-            + "AND ca.activatedAt IS NOT NULL "
-            + "AND ca.deactivatedAt IS NULL")
+            + "AND (ca.availableFrom IS NULL OR ca.availableFrom <= CURRENT_TIMESTAMP) "
+            + "AND (ca.availableUntil IS NULL OR ca.availableUntil >= CURRENT_TIMESTAMP)")
     Page<AssessmentSnapshot> findSnapshotsByClassId(@Param("classId") UUID classId,
                                                     Pageable pageable);
 }

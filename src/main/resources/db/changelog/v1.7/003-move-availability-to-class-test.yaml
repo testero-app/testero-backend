@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-003
+      author: testero
+      comment: >
+        Move availability window from assessment_template to class_test.
+        Replace activated_at/deactivated_at with available_from/available_until.
+      changes:
+        # ── Add new columns to class_test ──────────────────────────
+        - addColumn:
+            tableName: class_test
+            columns:
+              - column:
+                  name: available_from
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: available_until
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
+
+        # ── Migrate activated_at → available_from ──────────────────
+        - sql:
+            sql: >
+              UPDATE class_test
+              SET available_from = activated_at
+              WHERE activated_at IS NOT NULL;
+
+        # ── Migrate deactivated_at → available_until ───────────────
+        - sql:
+            sql: >
+              UPDATE class_test
+              SET available_until = deactivated_at
+              WHERE deactivated_at IS NOT NULL;
+
+        # ── Drop old columns from class_test ───────────────────────
+        - dropColumn:
+            tableName: class_test
+            columnName: activated_at
+
+        - dropColumn:
+            tableName: class_test
+            columnName: deactivated_at
+
+        # ── Drop availability from assessment_template ─────────────
+        - dropColumn:
+            tableName: assessment_template
+            columnName: available_from
+
+        - dropColumn:
+            tableName: assessment_template
+            columnName: available_until

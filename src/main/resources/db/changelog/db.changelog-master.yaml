@@ -65,3 +65,5 @@ databaseChangeLog:
       file: db/changelog/v1.7/001-refactor-assessment-template.yaml
   - include:
       file: db/changelog/v1.7/002-replace-date-with-availability-window.yaml
+  - include:
+      file: db/changelog/v1.7/003-move-availability-to-class-test.yaml

@@ -26,12 +26,6 @@ public class AssessmentTemplate {
     @Column(nullable = false)
     private String title;
 
-    @Column(name = "available_from")
-    private LocalDateTime availableFrom;
-
-    @Column(name = "available_until")
-    private LocalDateTime availableUntil;
-
     @Column(name = "timer_minutes", nullable = false)
     private int timerMinutes;
 
