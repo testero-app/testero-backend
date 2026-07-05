@@ -27,11 +27,11 @@ public class ClassAssessment {
     @Column(name = "assessment_snapshot_id")
     private UUID assessmentSnapshotId;
 
-    @Column(name = "activated_at")
-    private LocalDateTime activatedAt;
+    @Column(name = "available_from")
+    private LocalDateTime availableFrom;
 
-    @Column(name = "deactivated_at")
-    private LocalDateTime deactivatedAt;
+    @Column(name = "available_until")
+    private LocalDateTime availableUntil;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
