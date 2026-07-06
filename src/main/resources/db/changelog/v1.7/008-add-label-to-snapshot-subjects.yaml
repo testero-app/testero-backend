@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-008
+      author: testero
+      comment: >
+        Add label column to assessment_snapshot_subject and
+        question_snapshot_subject to freeze the subject name
+        at publish time.
+      changes:
+        - addColumn:
+            tableName: assessment_snapshot_subject
+            columns:
+              - column:
+                  name: label
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: true
+
+        - addColumn:
+            tableName: question_snapshot_subject
+            columns:
+              - column:
+                  name: label
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: true

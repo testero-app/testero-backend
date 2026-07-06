@@ -31,6 +31,9 @@ public class QuestionSnapshotSubject {
     @Column(name = "weight", nullable = false)
     private BigDecimal weight = new BigDecimal("1.00");
 
+    @Column
+    private String label;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
