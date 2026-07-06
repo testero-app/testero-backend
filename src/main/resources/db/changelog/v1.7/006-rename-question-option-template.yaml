@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-006
+      author: testero
+      comment: >
+        Rename question → question_template, option → option_template,
+        question_subject → question_template_subject. Rename FK columns
+        question_id → question_template_id in option_template and
+        question_template_subject.
+      changes:
+        - renameTable:
+            oldTableName: question
+            newTableName: question_template
+
+        - renameTable:
+            oldTableName: option
+            newTableName: option_template
+
+        - renameTable:
+            oldTableName: question_subject
+            newTableName: question_template_subject
+
+        - renameColumn:
+            tableName: option_template
+            oldColumnName: question_id
+            newColumnName: question_template_id
+            columnDataType: uuid
+
+        - renameColumn:
+            tableName: question_template_subject
+            oldColumnName: question_id
+            newColumnName: question_template_id
+            columnDataType: uuid

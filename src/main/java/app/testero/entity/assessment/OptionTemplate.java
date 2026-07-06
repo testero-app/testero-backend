@@ -3,9 +3,7 @@ package app.testero.entity.assessment;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Getter;
@@ -13,23 +11,29 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "question_subject")
-@IdClass(QuestionSubjectId.class)
+@Table(name = "option_template")
 @Getter
 @Setter
 @NoArgsConstructor
-public class QuestionSubject {
+public class OptionTemplate {
 
     @Id
-    @Column(name = "question_id")
-    private UUID questionId;
+    private UUID id;
 
-    @Id
-    @Column(name = "subject_id")
-    private UUID subjectId;
+    @Column(name = "question_template_id", nullable = false)
+    private UUID questionTemplateId;
 
-    @Column(name = "weight", nullable = false)
-    private BigDecimal weight = new BigDecimal("1.00");
+    @Column(nullable = false)
+    private String text;
+
+    @Column(name = "is_correct", nullable = false)
+    private boolean correct;
+
+    @Column(name = "is_fallback", nullable = false)
+    private boolean fallback;
+
+    @Column(nullable = false)
+    private int position;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;

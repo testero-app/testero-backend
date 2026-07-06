@@ -2,7 +2,7 @@ package app.testero.fixture;
 
 import app.testero.entity.assessment.AssessmentTemplate;
 import app.testero.entity.assessment.Difficulty;
-import app.testero.entity.assessment.Option;
+import app.testero.entity.assessment.OptionTemplate;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
 
@@ -124,7 +124,7 @@ public final class PythonCertificationFixture {
     }
 
     /** Correct options for Q1 through Q5 (one correct each). */
-    public static List<Option> allCorrectOptions() {
+    public static List<OptionTemplate> allCorrectOptions() {
         return List.of(
                 buildOption(Q1_OPT_C, Q1_ID, "Option Q1-3-correct", true, false, 3),
                 buildOption(Q2_OPT_D, Q2_ID, "Option Q2-4-correct", true, false, 4),
@@ -135,10 +135,10 @@ public final class PythonCertificationFixture {
     }
 
     /** Correct options for a specific subset of questions. */
-    public static List<Option> correctOptionsFor(UUID... questionIds) {
+    public static List<OptionTemplate> correctOptionsFor(UUID... questionIds) {
         List<UUID> ids = List.of(questionIds);
         return allCorrectOptions().stream()
-                .filter(opt -> ids.contains(opt.getQuestionId()))
+                .filter(opt -> ids.contains(opt.getQuestionTemplateId()))
                 .toList();
     }
 
@@ -161,12 +161,12 @@ public final class PythonCertificationFixture {
                 .toList();
     }
 
-    /** Build a single option entity. */
-    public static Option buildOption(UUID id, UUID questionId, String text,
-                                     boolean correct, boolean fallback, int position) {
-        Option opt = new Option();
+    /** Build a single option template entity. */
+    public static OptionTemplate buildOption(UUID id, UUID questionTemplateId, String text,
+                                             boolean correct, boolean fallback, int position) {
+        OptionTemplate opt = new OptionTemplate();
         opt.setId(id);
-        opt.setQuestionId(questionId);
+        opt.setQuestionTemplateId(questionTemplateId);
         opt.setText(text);
         opt.setCorrect(correct);
         opt.setFallback(fallback);
@@ -186,8 +186,8 @@ public final class PythonCertificationFixture {
         return opt;
     }
 
-    /** Build a fallback "Nessuna" option for Q1. */
-    public static Option buildFallbackOption(boolean correct) {
+    /** Build a fallback "Nessuna" option template for Q1. */
+    public static OptionTemplate buildFallbackOption(boolean correct) {
         return buildOption(Q1_OPT_FALLBACK, Q1_ID, "Option Q1-5-fallback",
                 correct, true, 5);
     }
