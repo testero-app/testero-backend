@@ -99,7 +99,8 @@ public class TrainingService {
         }
 
         // Find questions linked to the selected chapters
-        List<QuestionTemplateSubject> questionSubjects = questionTemplateSubjectRepository.findBySubjectIdIn(chapterIds);
+        List<QuestionTemplateSubject> questionSubjects = questionTemplateSubjectRepository
+                .findBySubjectIdIn(chapterIds);
         Set<UUID> candidateQuestionIds = questionSubjects.stream()
                 .map(QuestionTemplateSubject::getQuestionTemplateId)
                 .collect(Collectors.toSet());
@@ -128,9 +129,8 @@ public class TrainingService {
 
         // Create a training snapshot
         AssessmentSnapshot snapshot = new AssessmentSnapshot();
-        snapshot.setAssessmentId(null); // no parent assessment for training
+        snapshot.setAssessmentTemplateId(null); // no parent assessment for training
         snapshot.setContentHash(UUID.randomUUID().toString()); // unique hash per session
-        snapshot.setVersion(1);
         snapshot.setTitle("Allenamento — " + topic.getTitle());
         snapshot.setQuestionsPerAssessment(count);
         snapshot.setPtsCorrect(BigDecimal.ONE);

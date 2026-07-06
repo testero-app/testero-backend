@@ -98,9 +98,7 @@ class SnapshotServiceTest {
                     .thenReturn(subjects);
         }
 
-        when(snapshotRepository.findByAssessmentIdAndContentHash(eq(TEST_ID), anyString()))
-                .thenReturn(Optional.empty());
-        when(snapshotRepository.findTopByAssessmentIdOrderByVersionDesc(TEST_ID))
+        when(snapshotRepository.findByAssessmentTemplateIdAndContentHash(eq(TEST_ID), anyString()))
                 .thenReturn(Optional.empty());
 
         when(snapshotRepository.save(any(AssessmentSnapshot.class)))
@@ -240,7 +238,7 @@ class SnapshotServiceTest {
                     .thenReturn(Optional.of(buildAssessment()));
             when(questionTemplateRepository.findByAssessmentIdOrderByPosition(TEST_ID))
                     .thenReturn(List.of());
-            when(snapshotRepository.findByAssessmentIdAndContentHash(eq(TEST_ID), anyString()))
+            when(snapshotRepository.findByAssessmentTemplateIdAndContentHash(eq(TEST_ID), anyString()))
                     .thenReturn(Optional.of(existing));
 
             AssessmentSnapshot result = snapshotService.publishSnapshot(TEST_ID);
