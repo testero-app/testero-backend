@@ -1,9 +1,9 @@
 package app.testero.service;
 
 import app.testero.entity.assessment.AssessmentTemplate;
-import app.testero.entity.assessment.Option;
-import app.testero.entity.assessment.Question;
-import app.testero.entity.assessment.QuestionSubject;
+import app.testero.entity.assessment.OptionTemplate;
+import app.testero.entity.assessment.QuestionTemplate;
+import app.testero.entity.assessment.QuestionTemplateSubject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
@@ -11,11 +11,11 @@ import app.testero.repository.AssessmentSubjectRepository;
 import app.testero.repository.AssessmentTemplateRepository;
 import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.AssessmentSnapshotSubjectRepository;
-import app.testero.repository.OptionRepository;
+import app.testero.repository.OptionTemplateRepository;
 import app.testero.repository.OptionSnapshotRepository;
-import app.testero.repository.QuestionRepository;
+import app.testero.repository.QuestionTemplateRepository;
 import app.testero.repository.QuestionSnapshotRepository;
-import app.testero.repository.QuestionSubjectRepository;
+import app.testero.repository.QuestionTemplateSubjectRepository;
 import app.testero.repository.QuestionSnapshotSubjectRepository;
 
 import org.junit.jupiter.api.DisplayName;
@@ -44,9 +44,9 @@ class SnapshotServiceTest {
 
     @Mock AssessmentTemplateRepository assessmentRepository;
     @Mock AssessmentSubjectRepository assessmentSubjectRepository;
-    @Mock QuestionRepository questionRepository;
-    @Mock OptionRepository optionRepository;
-    @Mock QuestionSubjectRepository questionSubjectRepository;
+    @Mock QuestionTemplateRepository questionTemplateRepository;
+    @Mock OptionTemplateRepository optionTemplateRepository;
+    @Mock QuestionTemplateSubjectRepository questionTemplateSubjectRepository;
     @Mock AssessmentSnapshotRepository snapshotRepository;
     @Mock AssessmentSnapshotSubjectRepository assessmentSnapshotSubjectRepository;
     @Mock QuestionSnapshotRepository questionSnapshotRepository;
@@ -62,8 +62,8 @@ class SnapshotServiceTest {
     private static final UUID SUBJECT_OOP = UUID.fromString("ee000000-0000-0000-0000-000000000001");
     private static final UUID SUBJECT_FLOW = UUID.fromString("ee000000-0000-0000-0000-000000000002");
 
-    private static Question buildQuestion(UUID id, int position) {
-        Question q = new Question();
+    private static QuestionTemplate buildQuestion(UUID id, int position) {
+        QuestionTemplate q = new QuestionTemplate();
         q.setId(id);
         q.setAssessmentId(TEST_ID);
         q.setType("multiple");
@@ -72,29 +72,29 @@ class SnapshotServiceTest {
         return q;
     }
 
-    private static QuestionSubject buildQuestionSubject(UUID questionId, UUID subjectId,
+    private static QuestionTemplateSubject buildQuestionTemplateSubject(UUID questionId, UUID subjectId,
                                                         String weight) {
-        QuestionSubject qs = new QuestionSubject();
-        qs.setQuestionId(questionId);
+        QuestionTemplateSubject qs = new QuestionTemplateSubject();
+        qs.setQuestionTemplateId(questionId);
         qs.setSubjectId(subjectId);
         qs.setWeight(new BigDecimal(weight));
         return qs;
     }
 
-    private void stubPublishSnapshot(List<Question> questions, List<Option> options,
-                                     List<QuestionSubject> subjects) {
+    private void stubPublishSnapshot(List<QuestionTemplate> questions, List<OptionTemplate> options,
+                                     List<QuestionTemplateSubject> subjects) {
         when(assessmentRepository.findById(TEST_ID))
                 .thenReturn(Optional.of(buildAssessment()));
         when(assessmentSubjectRepository.findByAssessmentId(TEST_ID))
                 .thenReturn(List.of());
-        when(questionRepository.findByAssessmentIdOrderByPosition(TEST_ID))
+        when(questionTemplateRepository.findByAssessmentIdOrderByPosition(TEST_ID))
                 .thenReturn(questions);
 
-        List<UUID> qIds = questions.stream().map(Question::getId).toList();
+        List<UUID> qIds = questions.stream().map(QuestionTemplate::getId).toList();
         if (!qIds.isEmpty()) {
-            when(optionRepository.findByQuestionIdInOrderByPosition(qIds))
+            when(optionTemplateRepository.findByQuestionTemplateIdInOrderByPosition(qIds))
                     .thenReturn(options);
-            when(questionSubjectRepository.findByQuestionIdIn(qIds))
+            when(questionTemplateSubjectRepository.findByQuestionTemplateIdIn(qIds))
                     .thenReturn(subjects);
         }
 
@@ -123,14 +123,14 @@ class SnapshotServiceTest {
 
     @Nested
     @DisplayName("question-subject snapshot copy")
-    class QuestionSubjectSnapshotCopy {
+    class QuestionTemplateSubjectSnapshotCopy {
 
         @Test
         @DisplayName("copies question-subject relationships to snapshot")
-        void copiesQuestionSubjects() {
-            Question q1 = buildQuestion(Q1_ID, 1);
-            QuestionSubject qs1 = buildQuestionSubject(Q1_ID, SUBJECT_OOP, "0.60");
-            QuestionSubject qs2 = buildQuestionSubject(Q1_ID, SUBJECT_FLOW, "0.40");
+        void copiesQuestionTemplateSubjects() {
+            QuestionTemplate q1 = buildQuestion(Q1_ID, 1);
+            QuestionTemplateSubject qs1 = buildQuestionTemplateSubject(Q1_ID, SUBJECT_OOP, "0.60");
+            QuestionTemplateSubject qs2 = buildQuestionTemplateSubject(Q1_ID, SUBJECT_FLOW, "0.40");
 
             stubPublishSnapshot(List.of(q1), List.of(), List.of(qs1, qs2));
 
@@ -150,7 +150,7 @@ class SnapshotServiceTest {
         @Test
         @DisplayName("handles questions with no subjects")
         void noSubjects() {
-            Question q1 = buildQuestion(Q1_ID, 1);
+            QuestionTemplate q1 = buildQuestion(Q1_ID, 1);
 
             stubPublishSnapshot(List.of(q1), List.of(), List.of());
 
@@ -170,14 +170,14 @@ class SnapshotServiceTest {
         @DisplayName("hash changes when subject association is added")
         void hashChangesWithSubject() {
             AssessmentTemplate assessment = buildAssessment();
-            Question q1 = buildQuestion(Q1_ID, 1);
-            List<Question> questions = List.of(q1);
-            Map<UUID, List<Option>> options = Map.of();
+            QuestionTemplate q1 = buildQuestion(Q1_ID, 1);
+            List<QuestionTemplate> questions = List.of(q1);
+            Map<UUID, List<OptionTemplate>> options = Map.of();
 
             String hashWithout = SnapshotService.computeContentHash(
                     assessment, questions, options, Map.of(), List.of());
 
-            QuestionSubject qs = buildQuestionSubject(Q1_ID, SUBJECT_OOP, "1.00");
+            QuestionTemplateSubject qs = buildQuestionTemplateSubject(Q1_ID, SUBJECT_OOP, "1.00");
             String hashWith = SnapshotService.computeContentHash(
                     assessment, questions, options, Map.of(Q1_ID, List.of(qs)), List.of());
 
@@ -188,15 +188,15 @@ class SnapshotServiceTest {
         @DisplayName("hash changes when weight changes")
         void hashChangesWithWeight() {
             AssessmentTemplate assessment = buildAssessment();
-            Question q1 = buildQuestion(Q1_ID, 1);
-            List<Question> questions = List.of(q1);
-            Map<UUID, List<Option>> options = Map.of();
+            QuestionTemplate q1 = buildQuestion(Q1_ID, 1);
+            List<QuestionTemplate> questions = List.of(q1);
+            Map<UUID, List<OptionTemplate>> options = Map.of();
 
-            QuestionSubject qs1 = buildQuestionSubject(Q1_ID, SUBJECT_OOP, "1.00");
+            QuestionTemplateSubject qs1 = buildQuestionTemplateSubject(Q1_ID, SUBJECT_OOP, "1.00");
             String hash1 = SnapshotService.computeContentHash(
                     assessment, questions, options, Map.of(Q1_ID, List.of(qs1)), List.of());
 
-            QuestionSubject qs2 = buildQuestionSubject(Q1_ID, SUBJECT_OOP, "0.50");
+            QuestionTemplateSubject qs2 = buildQuestionTemplateSubject(Q1_ID, SUBJECT_OOP, "0.50");
             String hash2 = SnapshotService.computeContentHash(
                     assessment, questions, options, Map.of(Q1_ID, List.of(qs2)), List.of());
 
@@ -207,12 +207,12 @@ class SnapshotServiceTest {
         @DisplayName("hash is deterministic regardless of subject order")
         void hashDeterministicOrder() {
             AssessmentTemplate assessment = buildAssessment();
-            Question q1 = buildQuestion(Q1_ID, 1);
-            List<Question> questions = List.of(q1);
-            Map<UUID, List<Option>> options = Map.of();
+            QuestionTemplate q1 = buildQuestion(Q1_ID, 1);
+            List<QuestionTemplate> questions = List.of(q1);
+            Map<UUID, List<OptionTemplate>> options = Map.of();
 
-            QuestionSubject qs1 = buildQuestionSubject(Q1_ID, SUBJECT_OOP, "0.60");
-            QuestionSubject qs2 = buildQuestionSubject(Q1_ID, SUBJECT_FLOW, "0.40");
+            QuestionTemplateSubject qs1 = buildQuestionTemplateSubject(Q1_ID, SUBJECT_OOP, "0.60");
+            QuestionTemplateSubject qs2 = buildQuestionTemplateSubject(Q1_ID, SUBJECT_FLOW, "0.40");
 
             String hash1 = SnapshotService.computeContentHash(
                     assessment, questions, options,
@@ -238,7 +238,7 @@ class SnapshotServiceTest {
 
             when(assessmentRepository.findById(TEST_ID))
                     .thenReturn(Optional.of(buildAssessment()));
-            when(questionRepository.findByAssessmentIdOrderByPosition(TEST_ID))
+            when(questionTemplateRepository.findByAssessmentIdOrderByPosition(TEST_ID))
                     .thenReturn(List.of());
             when(snapshotRepository.findByAssessmentIdAndContentHash(eq(TEST_ID), anyString()))
                     .thenReturn(Optional.of(existing));
