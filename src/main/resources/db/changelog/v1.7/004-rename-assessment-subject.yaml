@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-004
+      author: testero
+      comment: >
+        Rename assessment_subject → assessment_template_subject for
+        consistency with assessment_template table naming.
+      changes:
+        - renameTable:
+            oldTableName: assessment_subject
+            newTableName: assessment_template_subject
