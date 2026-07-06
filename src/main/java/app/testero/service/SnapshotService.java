@@ -11,6 +11,7 @@ import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.exception.ResourceNotFoundException;
+import app.testero.entity.assessment.Subject;
 import app.testero.repository.AssessmentSubjectRepository;
 import app.testero.repository.AssessmentTemplateRepository;
 import app.testero.repository.AssessmentSnapshotRepository;
@@ -21,6 +22,7 @@ import app.testero.repository.QuestionTemplateRepository;
 import app.testero.repository.QuestionSnapshotRepository;
 import app.testero.repository.QuestionTemplateSubjectRepository;
 import app.testero.repository.QuestionSnapshotSubjectRepository;
+import app.testero.repository.SubjectRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +51,7 @@ public class SnapshotService {
     private final QuestionSnapshotRepository questionSnapshotRepository;
     private final OptionSnapshotRepository optionSnapshotRepository;
     private final QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
+    private final SubjectRepository subjectRepository;
 
     public SnapshotService(AssessmentTemplateRepository assessmentTemplateRepository,
                            AssessmentSubjectRepository assessmentSubjectRepository,
@@ -59,7 +62,8 @@ public class SnapshotService {
                            AssessmentSnapshotSubjectRepository assessmentSnapshotSubjectRepository,
                            QuestionSnapshotRepository questionSnapshotRepository,
                            OptionSnapshotRepository optionSnapshotRepository,
-                           QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository) {
+                           QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository,
+                           SubjectRepository subjectRepository) {
         this.assessmentTemplateRepository = assessmentTemplateRepository;
         this.assessmentSubjectRepository = assessmentSubjectRepository;
         this.questionTemplateRepository = questionTemplateRepository;
@@ -70,6 +74,7 @@ public class SnapshotService {
         this.questionSnapshotRepository = questionSnapshotRepository;
         this.optionSnapshotRepository = optionSnapshotRepository;
         this.questionSnapshotSubjectRepository = questionSnapshotSubjectRepository;
+        this.subjectRepository = subjectRepository;
     }
 
     @Transactional
@@ -96,6 +101,15 @@ public class SnapshotService {
         List<AssessmentSubject> assessmentSubjects = assessmentSubjectRepository
                 .findByAssessmentId(assessmentId);
 
+        // Collect all subject IDs and fetch labels
+        List<UUID> allSubjectIds = new java.util.ArrayList<>();
+        assessmentSubjects.forEach(as -> allSubjectIds.add(as.getSubjectId()));
+        questionSubjects.forEach(qs -> allSubjectIds.add(qs.getSubjectId()));
+        Map<UUID, String> subjectLabels = allSubjectIds.isEmpty()
+                ? Map.of()
+                : subjectRepository.findByIdIn(allSubjectIds).stream()
+                        .collect(Collectors.toMap(Subject::getId, Subject::getLabel));
+
         String hash = computeContentHash(assessment, questions, optionsByQuestion,
                 subjectsByQuestion, assessmentSubjects);
 
@@ -121,11 +135,12 @@ public class SnapshotService {
         snapshot.setPublishedAt(LocalDateTime.now());
         snapshot = snapshotRepository.save(snapshot);
 
-        // Copy assessment-level subjects
+        // Copy assessment-level subjects with frozen label
         for (AssessmentSubject as : assessmentSubjects) {
             AssessmentSnapshotSubject ass = new AssessmentSnapshotSubject();
             ass.setAssessmentSnapshotId(snapshot.getId());
             ass.setSubjectId(as.getSubjectId());
+            ass.setLabel(subjectLabels.get(as.getSubjectId()));
             assessmentSnapshotSubjectRepository.save(ass);
         }
 
@@ -161,6 +176,7 @@ public class SnapshotService {
                 qss.setQuestionSnapshotId(qs.getId());
                 qss.setSubjectId(qsub.getSubjectId());
                 qss.setWeight(qsub.getWeight());
+                qss.setLabel(subjectLabels.get(qsub.getSubjectId()));
                 questionSnapshotSubjectRepository.save(qss);
             }
         }
