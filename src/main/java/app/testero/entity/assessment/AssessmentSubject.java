@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "assessment_subject")
+@Table(name = "assessment_template_subject")
 @IdClass(AssessmentSubjectId.class)
 @Getter
 @Setter
