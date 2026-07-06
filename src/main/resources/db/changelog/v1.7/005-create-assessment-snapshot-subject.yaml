@@ -1,0 +1,59 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-004
+      author: testero
+      comment: >
+        Create assessment_snapshot_subject table to freeze assessment-level
+        subject associations at publish time.
+      changes:
+        - createTable:
+            tableName: assessment_snapshot_subject
+            columns:
+              - column:
+                  name: assessment_snapshot_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subject_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addPrimaryKey:
+            tableName: assessment_snapshot_subject
+            columnNames: assessment_snapshot_id, subject_id
+            constraintName: pk_assessment_snapshot_subject
+
+        - addForeignKeyConstraint:
+            baseTableName: assessment_snapshot_subject
+            baseColumnNames: assessment_snapshot_id
+            referencedTableName: assessment_snapshot
+            referencedColumnNames: id
+            constraintName: fk_ass_snap_subj_snapshot_id
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: assessment_snapshot_subject
+            baseColumnNames: subject_id
+            referencedTableName: subject
+            referencedColumnNames: id
+            constraintName: fk_ass_snap_subj_subject_id
+
+        - sql:
+            sql: >
+              CREATE TRIGGER trg_assessment_snapshot_subject_updated_at
+              BEFORE UPDATE ON assessment_snapshot_subject
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
