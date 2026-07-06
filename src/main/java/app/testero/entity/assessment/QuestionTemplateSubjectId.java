@@ -13,8 +13,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class QuestionSubjectId implements Serializable {
+public class QuestionTemplateSubjectId implements Serializable {
 
-    private UUID questionId;
+    private UUID questionTemplateId;
     private UUID subjectId;
 }

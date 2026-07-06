@@ -2,9 +2,9 @@ package app.testero.service;
 
 import app.testero.entity.assessment.AssessmentSubject;
 import app.testero.entity.assessment.AssessmentTemplate;
-import app.testero.entity.assessment.Option;
-import app.testero.entity.assessment.Question;
-import app.testero.entity.assessment.QuestionSubject;
+import app.testero.entity.assessment.OptionTemplate;
+import app.testero.entity.assessment.QuestionTemplate;
+import app.testero.entity.assessment.QuestionTemplateSubject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.AssessmentSnapshotSubject;
 import app.testero.entity.snapshot.OptionSnapshot;
@@ -15,11 +15,11 @@ import app.testero.repository.AssessmentSubjectRepository;
 import app.testero.repository.AssessmentTemplateRepository;
 import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.AssessmentSnapshotSubjectRepository;
-import app.testero.repository.OptionRepository;
+import app.testero.repository.OptionTemplateRepository;
 import app.testero.repository.OptionSnapshotRepository;
-import app.testero.repository.QuestionRepository;
+import app.testero.repository.QuestionTemplateRepository;
 import app.testero.repository.QuestionSnapshotRepository;
-import app.testero.repository.QuestionSubjectRepository;
+import app.testero.repository.QuestionTemplateSubjectRepository;
 import app.testero.repository.QuestionSnapshotSubjectRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,9 +41,9 @@ public class SnapshotService {
 
     private final AssessmentTemplateRepository assessmentTemplateRepository;
     private final AssessmentSubjectRepository assessmentSubjectRepository;
-    private final QuestionRepository questionRepository;
-    private final OptionRepository optionRepository;
-    private final QuestionSubjectRepository questionSubjectRepository;
+    private final QuestionTemplateRepository questionTemplateRepository;
+    private final OptionTemplateRepository optionTemplateRepository;
+    private final QuestionTemplateSubjectRepository questionTemplateSubjectRepository;
     private final AssessmentSnapshotRepository snapshotRepository;
     private final AssessmentSnapshotSubjectRepository assessmentSnapshotSubjectRepository;
     private final QuestionSnapshotRepository questionSnapshotRepository;
@@ -52,9 +52,9 @@ public class SnapshotService {
 
     public SnapshotService(AssessmentTemplateRepository assessmentTemplateRepository,
                            AssessmentSubjectRepository assessmentSubjectRepository,
-                           QuestionRepository questionRepository,
-                           OptionRepository optionRepository,
-                           QuestionSubjectRepository questionSubjectRepository,
+                           QuestionTemplateRepository questionTemplateRepository,
+                           OptionTemplateRepository optionTemplateRepository,
+                           QuestionTemplateSubjectRepository questionTemplateSubjectRepository,
                            AssessmentSnapshotRepository snapshotRepository,
                            AssessmentSnapshotSubjectRepository assessmentSnapshotSubjectRepository,
                            QuestionSnapshotRepository questionSnapshotRepository,
@@ -62,9 +62,9 @@ public class SnapshotService {
                            QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository) {
         this.assessmentTemplateRepository = assessmentTemplateRepository;
         this.assessmentSubjectRepository = assessmentSubjectRepository;
-        this.questionRepository = questionRepository;
-        this.optionRepository = optionRepository;
-        this.questionSubjectRepository = questionSubjectRepository;
+        this.questionTemplateRepository = questionTemplateRepository;
+        this.optionTemplateRepository = optionTemplateRepository;
+        this.questionTemplateSubjectRepository = questionTemplateSubjectRepository;
         this.snapshotRepository = snapshotRepository;
         this.assessmentSnapshotSubjectRepository = assessmentSnapshotSubjectRepository;
         this.questionSnapshotRepository = questionSnapshotRepository;
@@ -77,21 +77,21 @@ public class SnapshotService {
         AssessmentTemplate assessment = assessmentTemplateRepository.findById(assessmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Assessment not found"));
 
-        List<Question> questions = questionRepository
+        List<QuestionTemplate> questions = questionTemplateRepository
                 .findByAssessmentIdOrderByPosition(assessmentId);
-        List<UUID> questionIds = questions.stream().map(Question::getId).toList();
-        List<Option> options = questionIds.isEmpty()
+        List<UUID> questionIds = questions.stream().map(QuestionTemplate::getId).toList();
+        List<OptionTemplate> options = questionIds.isEmpty()
                 ? List.of()
-                : optionRepository.findByQuestionIdInOrderByPosition(questionIds);
+                : optionTemplateRepository.findByQuestionTemplateIdInOrderByPosition(questionIds);
 
-        Map<UUID, List<Option>> optionsByQuestion = options.stream()
-                .collect(Collectors.groupingBy(Option::getQuestionId));
+        Map<UUID, List<OptionTemplate>> optionsByQuestion = options.stream()
+                .collect(Collectors.groupingBy(OptionTemplate::getQuestionTemplateId));
 
-        List<QuestionSubject> questionSubjects = questionIds.isEmpty()
+        List<QuestionTemplateSubject> questionSubjects = questionIds.isEmpty()
                 ? List.of()
-                : questionSubjectRepository.findByQuestionIdIn(questionIds);
-        Map<UUID, List<QuestionSubject>> subjectsByQuestion = questionSubjects.stream()
-                .collect(Collectors.groupingBy(QuestionSubject::getQuestionId));
+                : questionTemplateSubjectRepository.findByQuestionTemplateIdIn(questionIds);
+        Map<UUID, List<QuestionTemplateSubject>> subjectsByQuestion = questionSubjects.stream()
+                .collect(Collectors.groupingBy(QuestionTemplateSubject::getQuestionTemplateId));
 
         List<AssessmentSubject> assessmentSubjects = assessmentSubjectRepository
                 .findByAssessmentId(assessmentId);
@@ -137,7 +137,7 @@ public class SnapshotService {
         }
 
         // Copy questions and options
-        for (Question q : questions) {
+        for (QuestionTemplate q : questions) {
             QuestionSnapshot qs = new QuestionSnapshot();
             qs.setAssessmentSnapshotId(snapshot.getId());
             qs.setOriginalQuestionId(q.getId());
@@ -149,8 +149,8 @@ public class SnapshotService {
             qs.setPoints(q.getPoints());
             qs = questionSnapshotRepository.save(qs);
 
-            List<Option> qOptions = optionsByQuestion.getOrDefault(q.getId(), List.of());
-            for (Option o : qOptions) {
+            List<OptionTemplate> qOptions = optionsByQuestion.getOrDefault(q.getId(), List.of());
+            for (OptionTemplate o : qOptions) {
                 OptionSnapshot os = new OptionSnapshot();
                 os.setQuestionSnapshotId(qs.getId());
                 os.setOriginalOptionId(o.getId());
@@ -161,9 +161,9 @@ public class SnapshotService {
                 optionSnapshotRepository.save(os);
             }
 
-            List<QuestionSubject> qSubjects = subjectsByQuestion
+            List<QuestionTemplateSubject> qSubjects = subjectsByQuestion
                     .getOrDefault(q.getId(), List.of());
-            for (QuestionSubject qsub : qSubjects) {
+            for (QuestionTemplateSubject qsub : qSubjects) {
                 QuestionSnapshotSubject qss = new QuestionSnapshotSubject();
                 qss.setQuestionSnapshotId(qs.getId());
                 qss.setSubjectId(qsub.getSubjectId());
@@ -176,9 +176,9 @@ public class SnapshotService {
     }
 
     static String computeContentHash(AssessmentTemplate assessment,
-                                     List<Question> questions,
-                                     Map<UUID, List<Option>> optionsByQuestion,
-                                     Map<UUID, List<QuestionSubject>> subjectsByQuestion,
+                                     List<QuestionTemplate> questions,
+                                     Map<UUID, List<OptionTemplate>> optionsByQuestion,
+                                     Map<UUID, List<QuestionTemplateSubject>> subjectsByQuestion,
                                      List<AssessmentSubject> assessmentSubjects) {
         StringBuilder sb = new StringBuilder();
         sb.append(assessment.getTitle());
@@ -196,25 +196,25 @@ public class SnapshotService {
             sb.append("|AS|").append(as.getSubjectId());
         }
 
-        for (Question q : questions) {
+        for (QuestionTemplate q : questions) {
             sb.append("||Q|").append(q.getType());
             sb.append('|').append(q.getText());
             sb.append('|').append(q.getCode() != null ? q.getCode() : "");
             sb.append('|').append(q.getExplanation() != null ? q.getExplanation() : "");
             sb.append('|').append(q.getPoints() != null ? q.getPoints().toPlainString() : "");
 
-            List<Option> opts = optionsByQuestion.getOrDefault(q.getId(), List.of());
-            for (Option o : opts) {
+            List<OptionTemplate> opts = optionsByQuestion.getOrDefault(q.getId(), List.of());
+            for (OptionTemplate o : opts) {
                 sb.append("|O|").append(o.getText());
                 sb.append('|').append(o.isCorrect());
                 sb.append('|').append(o.isFallback());
             }
 
-            List<QuestionSubject> subs = subjectsByQuestion
+            List<QuestionTemplateSubject> subs = subjectsByQuestion
                     .getOrDefault(q.getId(), List.of()).stream()
-                    .sorted(Comparator.comparing(QuestionSubject::getSubjectId))
+                    .sorted(Comparator.comparing(QuestionTemplateSubject::getSubjectId))
                     .toList();
-            for (QuestionSubject s : subs) {
+            for (QuestionTemplateSubject s : subs) {
                 sb.append("|S|").append(s.getSubjectId());
                 sb.append('|').append(s.getWeight().toPlainString());
             }

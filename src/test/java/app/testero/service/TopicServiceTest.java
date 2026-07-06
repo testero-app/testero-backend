@@ -2,13 +2,13 @@ package app.testero.service;
 
 import app.testero.dto.TopicListResponse;
 import app.testero.entity.assessment.Difficulty;
-import app.testero.entity.assessment.Question;
-import app.testero.entity.assessment.QuestionSubject;
+import app.testero.entity.assessment.QuestionTemplate;
+import app.testero.entity.assessment.QuestionTemplateSubject;
 import app.testero.entity.assessment.Subject;
 import app.testero.entity.assessment.Topic;
 import app.testero.entity.assessment.TopicSubject;
-import app.testero.repository.QuestionRepository;
-import app.testero.repository.QuestionSubjectRepository;
+import app.testero.repository.QuestionTemplateRepository;
+import app.testero.repository.QuestionTemplateSubjectRepository;
 import app.testero.repository.SubjectRepository;
 import app.testero.repository.TopicRepository;
 import app.testero.repository.TopicSubjectRepository;
@@ -33,8 +33,8 @@ class TopicServiceTest {
     @Mock TopicRepository topicRepository;
     @Mock TopicSubjectRepository topicSubjectRepository;
     @Mock SubjectRepository subjectRepository;
-    @Mock QuestionSubjectRepository questionSubjectRepository;
-    @Mock QuestionRepository questionRepository;
+    @Mock QuestionTemplateSubjectRepository questionTemplateSubjectRepository;
+    @Mock QuestionTemplateRepository questionTemplateRepository;
 
     @InjectMocks TopicService topicService;
 
@@ -83,28 +83,28 @@ class TopicServiceTest {
         s2.setLabel("Cicli");
         when(subjectRepository.findAllById(any())).thenReturn(List.of(s1, s2));
 
-        QuestionSubject qs1 = new QuestionSubject();
-        qs1.setQuestionId(Q1);
+        QuestionTemplateSubject qs1 = new QuestionTemplateSubject();
+        qs1.setQuestionTemplateId(Q1);
         qs1.setSubjectId(SUBJECT_1);
-        QuestionSubject qs2 = new QuestionSubject();
-        qs2.setQuestionId(Q2);
+        QuestionTemplateSubject qs2 = new QuestionTemplateSubject();
+        qs2.setQuestionTemplateId(Q2);
         qs2.setSubjectId(SUBJECT_1);
-        QuestionSubject qs3 = new QuestionSubject();
-        qs3.setQuestionId(Q3);
+        QuestionTemplateSubject qs3 = new QuestionTemplateSubject();
+        qs3.setQuestionTemplateId(Q3);
         qs3.setSubjectId(SUBJECT_2);
-        when(questionSubjectRepository.findBySubjectIdIn(any()))
+        when(questionTemplateSubjectRepository.findBySubjectIdIn(any()))
                 .thenReturn(List.of(qs1, qs2, qs3));
 
-        Question q1 = new Question();
+        QuestionTemplate q1 = new QuestionTemplate();
         q1.setId(Q1);
         q1.setDifficulty(Difficulty.BEGINNER);
-        Question q2 = new Question();
+        QuestionTemplate q2 = new QuestionTemplate();
         q2.setId(Q2);
         q2.setDifficulty(Difficulty.INTERMEDIATE);
-        Question q3 = new Question();
+        QuestionTemplate q3 = new QuestionTemplate();
         q3.setId(Q3);
         q3.setDifficulty(Difficulty.ADVANCED);
-        when(questionRepository.findAllById(any())).thenReturn(List.of(q1, q2, q3));
+        when(questionTemplateRepository.findAllById(any())).thenReturn(List.of(q1, q2, q3));
 
         TopicListResponse response = topicService.getTopics();
 

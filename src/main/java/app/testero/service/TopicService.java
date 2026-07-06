@@ -10,11 +10,11 @@ import app.testero.exception.ResourceNotFoundException;
 import app.testero.entity.assessment.Difficulty;
 import app.testero.entity.assessment.Topic;
 import app.testero.entity.assessment.TopicSubject;
-import app.testero.entity.assessment.QuestionSubject;
-import app.testero.entity.assessment.Question;
+import app.testero.entity.assessment.QuestionTemplateSubject;
+import app.testero.entity.assessment.QuestionTemplate;
 import app.testero.entity.assessment.Subject;
-import app.testero.repository.QuestionRepository;
-import app.testero.repository.QuestionSubjectRepository;
+import app.testero.repository.QuestionTemplateRepository;
+import app.testero.repository.QuestionTemplateSubjectRepository;
 import app.testero.repository.SubjectRepository;
 import app.testero.repository.TopicRepository;
 import app.testero.repository.TopicSubjectRepository;
@@ -35,19 +35,19 @@ public class TopicService {
     private final TopicRepository topicRepository;
     private final TopicSubjectRepository topicSubjectRepository;
     private final SubjectRepository subjectRepository;
-    private final QuestionSubjectRepository questionSubjectRepository;
-    private final QuestionRepository questionRepository;
+    private final QuestionTemplateSubjectRepository questionTemplateSubjectRepository;
+    private final QuestionTemplateRepository questionTemplateRepository;
 
     public TopicService(TopicRepository topicRepository,
                         TopicSubjectRepository topicSubjectRepository,
                         SubjectRepository subjectRepository,
-                        QuestionSubjectRepository questionSubjectRepository,
-                        QuestionRepository questionRepository) {
+                        QuestionTemplateSubjectRepository questionTemplateSubjectRepository,
+                        QuestionTemplateRepository questionTemplateRepository) {
         this.topicRepository = topicRepository;
         this.topicSubjectRepository = topicSubjectRepository;
         this.subjectRepository = subjectRepository;
-        this.questionSubjectRepository = questionSubjectRepository;
-        this.questionRepository = questionRepository;
+        this.questionTemplateSubjectRepository = questionTemplateSubjectRepository;
+        this.questionTemplateRepository = questionTemplateRepository;
     }
 
     @Transactional(readOnly = true)
@@ -72,21 +72,21 @@ public class TopicService {
                 .collect(Collectors.toMap(Subject::getId, s -> s));
 
         // Batch-fetch all question-subject links for these subjects
-        List<QuestionSubject> allQs = questionSubjectRepository.findBySubjectIdIn(new ArrayList<>(allSubjectIds));
+        List<QuestionTemplateSubject> allQs = questionTemplateSubjectRepository.findBySubjectIdIn(new ArrayList<>(allSubjectIds));
 
         // Collect all question IDs and fetch questions for difficulty info
         Set<UUID> allQuestionIds = allQs.stream()
-                .map(QuestionSubject::getQuestionId)
+                .map(QuestionTemplateSubject::getQuestionTemplateId)
                 .collect(Collectors.toSet());
-        Map<UUID, Difficulty> questionDifficultyMap = questionRepository
+        Map<UUID, Difficulty> questionDifficultyMap = questionTemplateRepository
                 .findAllById(allQuestionIds).stream()
-                .collect(Collectors.toMap(Question::getId,
+                .collect(Collectors.toMap(QuestionTemplate::getId,
                         q -> q.getDifficulty() != null
                                 ? q.getDifficulty() : Difficulty.BEGINNER));
 
         // Group question-subject links by subject
-        Map<UUID, List<QuestionSubject>> qsBySubject = allQs.stream()
-                .collect(Collectors.groupingBy(QuestionSubject::getSubjectId));
+        Map<UUID, List<QuestionTemplateSubject>> qsBySubject = allQs.stream()
+                .collect(Collectors.groupingBy(QuestionTemplateSubject::getSubjectId));
 
         // Group topic-subject links by topic
         Map<UUID, List<TopicSubject>> linksByTopic = new LinkedHashMap<>();
@@ -106,12 +106,12 @@ public class TopicService {
                     continue;
                 }
 
-                List<QuestionSubject> qs = qsBySubject.getOrDefault(link.getSubjectId(), List.of());
+                List<QuestionTemplateSubject> qs = qsBySubject.getOrDefault(link.getSubjectId(), List.of());
                 int base = 0;
                 int inter = 0;
                 int adv = 0;
-                for (QuestionSubject q : qs) {
-                    Difficulty d = questionDifficultyMap.getOrDefault(q.getQuestionId(), Difficulty.BEGINNER);
+                for (QuestionTemplateSubject q : qs) {
+                    Difficulty d = questionDifficultyMap.getOrDefault(q.getQuestionTemplateId(), Difficulty.BEGINNER);
                     switch (d) {
                         case BEGINNER -> base++;
                         case INTERMEDIATE -> inter++;
@@ -157,17 +157,17 @@ public class TopicService {
                 .stream()
                 .collect(Collectors.toMap(Subject::getId, s -> s));
 
-        List<QuestionSubject> allQs = questionSubjectRepository.findBySubjectIdIn(new ArrayList<>(subjectIds));
+        List<QuestionTemplateSubject> allQs = questionTemplateSubjectRepository.findBySubjectIdIn(new ArrayList<>(subjectIds));
         Set<UUID> questionIds = allQs.stream()
-                .map(QuestionSubject::getQuestionId)
+                .map(QuestionTemplateSubject::getQuestionTemplateId)
                 .collect(Collectors.toSet());
-        Map<UUID, Difficulty> diffMap = questionRepository.findAllById(questionIds)
+        Map<UUID, Difficulty> diffMap = questionTemplateRepository.findAllById(questionIds)
                 .stream()
-                .collect(Collectors.toMap(Question::getId,
+                .collect(Collectors.toMap(QuestionTemplate::getId,
                         q -> q.getDifficulty() != null ? q.getDifficulty() : Difficulty.BEGINNER));
 
-        Map<UUID, List<QuestionSubject>> qsBySubject = allQs.stream()
-                .collect(Collectors.groupingBy(QuestionSubject::getSubjectId));
+        Map<UUID, List<QuestionTemplateSubject>> qsBySubject = allQs.stream()
+                .collect(Collectors.groupingBy(QuestionTemplateSubject::getSubjectId));
 
         int totalBase = 0;
         int totalInter = 0;
@@ -179,12 +179,12 @@ public class TopicService {
                 continue;
             }
 
-            List<QuestionSubject> qs = qsBySubject.getOrDefault(link.getSubjectId(), List.of());
+            List<QuestionTemplateSubject> qs = qsBySubject.getOrDefault(link.getSubjectId(), List.of());
             int base = 0;
             int inter = 0;
             int adv = 0;
-            for (QuestionSubject q : qs) {
-                Difficulty d = diffMap.getOrDefault(q.getQuestionId(), Difficulty.BEGINNER);
+            for (QuestionTemplateSubject q : qs) {
+                Difficulty d = diffMap.getOrDefault(q.getQuestionTemplateId(), Difficulty.BEGINNER);
                 switch (d) {
                     case BEGINNER -> base++;
                     case INTERMEDIATE -> inter++;
