@@ -28,14 +28,11 @@ public class AssessmentSnapshot {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "assessment_id")
-    private UUID assessmentId;
+    @Column(name = "assessment_template_id")
+    private UUID assessmentTemplateId;
 
     @Column(name = "content_hash", nullable = false, length = 64)
     private String contentHash;
-
-    @Column(nullable = false)
-    private int version;
 
     @Column(nullable = false)
     private String title;

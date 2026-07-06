@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-007
+      author: testero
+      comment: >
+        Rename assessment_id → assessment_template_id on assessment_snapshot.
+        Drop redundant version column (derivable from snapshot count).
+      changes:
+        - renameColumn:
+            tableName: assessment_snapshot
+            oldColumnName: assessment_id
+            newColumnName: assessment_template_id
+            columnDataType: uuid
+
+        - dropColumn:
+            tableName: assessment_snapshot
+            columnName: version
