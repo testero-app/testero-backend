@@ -72,7 +72,8 @@ public class TopicService {
                 .collect(Collectors.toMap(Subject::getId, s -> s));
 
         // Batch-fetch all question-subject links for these subjects
-        List<QuestionTemplateSubject> allQs = questionTemplateSubjectRepository.findBySubjectIdIn(new ArrayList<>(allSubjectIds));
+        List<QuestionTemplateSubject> allQs = questionTemplateSubjectRepository
+                .findBySubjectIdIn(new ArrayList<>(allSubjectIds));
 
         // Collect all question IDs and fetch questions for difficulty info
         Set<UUID> allQuestionIds = allQs.stream()
@@ -157,7 +158,8 @@ public class TopicService {
                 .stream()
                 .collect(Collectors.toMap(Subject::getId, s -> s));
 
-        List<QuestionTemplateSubject> allQs = questionTemplateSubjectRepository.findBySubjectIdIn(new ArrayList<>(subjectIds));
+        List<QuestionTemplateSubject> allQs = questionTemplateSubjectRepository
+                .findBySubjectIdIn(new ArrayList<>(subjectIds));
         Set<UUID> questionIds = allQs.stream()
                 .map(QuestionTemplateSubject::getQuestionTemplateId)
                 .collect(Collectors.toSet());

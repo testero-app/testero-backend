@@ -99,7 +99,8 @@ public class TrainingService {
         }
 
         // Find questions linked to the selected chapters
-        List<QuestionTemplateSubject> questionSubjects = questionTemplateSubjectRepository.findBySubjectIdIn(chapterIds);
+        List<QuestionTemplateSubject> questionSubjects = questionTemplateSubjectRepository
+                .findBySubjectIdIn(chapterIds);
         Set<UUID> candidateQuestionIds = questionSubjects.stream()
                 .map(QuestionTemplateSubject::getQuestionTemplateId)
                 .collect(Collectors.toSet());

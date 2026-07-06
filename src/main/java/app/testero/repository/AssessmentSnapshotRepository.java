@@ -12,7 +12,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface AssessmentSnapshotRepository extends JpaRepository<AssessmentSnapshot, UUID> {
 
-    Optional<AssessmentSnapshot> findByAssessmentTemplateIdAndContentHash(UUID assessmentTemplateId, String contentHash);
+    Optional<AssessmentSnapshot> findByAssessmentTemplateIdAndContentHash(
+            UUID assessmentTemplateId, String contentHash);
 
     @Query("SELECT s FROM AssessmentSnapshot s JOIN ClassAssessment ca "
             + "ON ca.assessmentSnapshotId = s.id "
