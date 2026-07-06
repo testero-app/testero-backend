@@ -1,16 +1,20 @@
 package app.testero.service;
 
+import app.testero.entity.assessment.AssessmentSubject;
 import app.testero.entity.assessment.AssessmentTemplate;
 import app.testero.entity.assessment.Option;
 import app.testero.entity.assessment.Question;
 import app.testero.entity.assessment.QuestionSubject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
+import app.testero.entity.snapshot.AssessmentSnapshotSubject;
 import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.exception.ResourceNotFoundException;
+import app.testero.repository.AssessmentSubjectRepository;
 import app.testero.repository.AssessmentTemplateRepository;
 import app.testero.repository.AssessmentSnapshotRepository;
+import app.testero.repository.AssessmentSnapshotSubjectRepository;
 import app.testero.repository.OptionRepository;
 import app.testero.repository.OptionSnapshotRepository;
 import app.testero.repository.QuestionRepository;
@@ -36,27 +40,33 @@ import java.util.stream.Collectors;
 public class SnapshotService {
 
     private final AssessmentTemplateRepository assessmentTemplateRepository;
+    private final AssessmentSubjectRepository assessmentSubjectRepository;
     private final QuestionRepository questionRepository;
     private final OptionRepository optionRepository;
     private final QuestionSubjectRepository questionSubjectRepository;
     private final AssessmentSnapshotRepository snapshotRepository;
+    private final AssessmentSnapshotSubjectRepository assessmentSnapshotSubjectRepository;
     private final QuestionSnapshotRepository questionSnapshotRepository;
     private final OptionSnapshotRepository optionSnapshotRepository;
     private final QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
 
     public SnapshotService(AssessmentTemplateRepository assessmentTemplateRepository,
+                           AssessmentSubjectRepository assessmentSubjectRepository,
                            QuestionRepository questionRepository,
                            OptionRepository optionRepository,
                            QuestionSubjectRepository questionSubjectRepository,
                            AssessmentSnapshotRepository snapshotRepository,
+                           AssessmentSnapshotSubjectRepository assessmentSnapshotSubjectRepository,
                            QuestionSnapshotRepository questionSnapshotRepository,
                            OptionSnapshotRepository optionSnapshotRepository,
                            QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository) {
         this.assessmentTemplateRepository = assessmentTemplateRepository;
+        this.assessmentSubjectRepository = assessmentSubjectRepository;
         this.questionRepository = questionRepository;
         this.optionRepository = optionRepository;
         this.questionSubjectRepository = questionSubjectRepository;
         this.snapshotRepository = snapshotRepository;
+        this.assessmentSnapshotSubjectRepository = assessmentSnapshotSubjectRepository;
         this.questionSnapshotRepository = questionSnapshotRepository;
         this.optionSnapshotRepository = optionSnapshotRepository;
         this.questionSnapshotSubjectRepository = questionSnapshotSubjectRepository;
@@ -83,8 +93,11 @@ public class SnapshotService {
         Map<UUID, List<QuestionSubject>> subjectsByQuestion = questionSubjects.stream()
                 .collect(Collectors.groupingBy(QuestionSubject::getQuestionId));
 
+        List<AssessmentSubject> assessmentSubjects = assessmentSubjectRepository
+                .findByAssessmentId(assessmentId);
+
         String hash = computeContentHash(assessment, questions, optionsByQuestion,
-                subjectsByQuestion);
+                subjectsByQuestion, assessmentSubjects);
 
         // If an identical snapshot already exists, return it
         Optional<AssessmentSnapshot> existing = snapshotRepository
@@ -114,6 +127,14 @@ public class SnapshotService {
         snapshot.setPassingScore(assessment.getPassingScore());
         snapshot.setPublishedAt(LocalDateTime.now());
         snapshot = snapshotRepository.save(snapshot);
+
+        // Copy assessment-level subjects
+        for (AssessmentSubject as : assessmentSubjects) {
+            AssessmentSnapshotSubject ass = new AssessmentSnapshotSubject();
+            ass.setAssessmentSnapshotId(snapshot.getId());
+            ass.setSubjectId(as.getSubjectId());
+            assessmentSnapshotSubjectRepository.save(ass);
+        }
 
         // Copy questions and options
         for (Question q : questions) {
@@ -157,7 +178,8 @@ public class SnapshotService {
     static String computeContentHash(AssessmentTemplate assessment,
                                      List<Question> questions,
                                      Map<UUID, List<Option>> optionsByQuestion,
-                                     Map<UUID, List<QuestionSubject>> subjectsByQuestion) {
+                                     Map<UUID, List<QuestionSubject>> subjectsByQuestion,
+                                     List<AssessmentSubject> assessmentSubjects) {
         StringBuilder sb = new StringBuilder();
         sb.append(assessment.getTitle());
         sb.append('|').append(assessment.getTimerMinutes());
@@ -166,6 +188,13 @@ public class SnapshotService {
         sb.append('|').append(assessment.getQuestionsPerAssessment());
         sb.append('|').append(assessment.getDifficulty() != null ? assessment.getDifficulty().name() : "");
         sb.append('|').append(assessment.getPassingScore() != null ? assessment.getPassingScore().toPlainString() : "");
+
+        List<AssessmentSubject> sortedAssSubjects = assessmentSubjects.stream()
+                .sorted(Comparator.comparing(AssessmentSubject::getSubjectId))
+                .toList();
+        for (AssessmentSubject as : sortedAssSubjects) {
+            sb.append("|AS|").append(as.getSubjectId());
+        }
 
         for (Question q : questions) {
             sb.append("||Q|").append(q.getType());

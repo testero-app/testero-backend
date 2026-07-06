@@ -7,8 +7,10 @@ import app.testero.entity.assessment.QuestionSubject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
+import app.testero.repository.AssessmentSubjectRepository;
 import app.testero.repository.AssessmentTemplateRepository;
 import app.testero.repository.AssessmentSnapshotRepository;
+import app.testero.repository.AssessmentSnapshotSubjectRepository;
 import app.testero.repository.OptionRepository;
 import app.testero.repository.OptionSnapshotRepository;
 import app.testero.repository.QuestionRepository;
@@ -41,10 +43,12 @@ import static org.mockito.Mockito.*;
 class SnapshotServiceTest {
 
     @Mock AssessmentTemplateRepository assessmentRepository;
+    @Mock AssessmentSubjectRepository assessmentSubjectRepository;
     @Mock QuestionRepository questionRepository;
     @Mock OptionRepository optionRepository;
     @Mock QuestionSubjectRepository questionSubjectRepository;
     @Mock AssessmentSnapshotRepository snapshotRepository;
+    @Mock AssessmentSnapshotSubjectRepository assessmentSnapshotSubjectRepository;
     @Mock QuestionSnapshotRepository questionSnapshotRepository;
     @Mock OptionSnapshotRepository optionSnapshotRepository;
     @Mock QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
@@ -81,6 +85,8 @@ class SnapshotServiceTest {
                                      List<QuestionSubject> subjects) {
         when(assessmentRepository.findById(TEST_ID))
                 .thenReturn(Optional.of(buildAssessment()));
+        when(assessmentSubjectRepository.findByAssessmentId(TEST_ID))
+                .thenReturn(List.of());
         when(questionRepository.findByAssessmentIdOrderByPosition(TEST_ID))
                 .thenReturn(questions);
 
@@ -169,11 +175,11 @@ class SnapshotServiceTest {
             Map<UUID, List<Option>> options = Map.of();
 
             String hashWithout = SnapshotService.computeContentHash(
-                    assessment, questions, options, Map.of());
+                    assessment, questions, options, Map.of(), List.of());
 
             QuestionSubject qs = buildQuestionSubject(Q1_ID, SUBJECT_OOP, "1.00");
             String hashWith = SnapshotService.computeContentHash(
-                    assessment, questions, options, Map.of(Q1_ID, List.of(qs)));
+                    assessment, questions, options, Map.of(Q1_ID, List.of(qs)), List.of());
 
             assertThat(hashWith).isNotEqualTo(hashWithout);
         }
@@ -188,11 +194,11 @@ class SnapshotServiceTest {
 
             QuestionSubject qs1 = buildQuestionSubject(Q1_ID, SUBJECT_OOP, "1.00");
             String hash1 = SnapshotService.computeContentHash(
-                    assessment, questions, options, Map.of(Q1_ID, List.of(qs1)));
+                    assessment, questions, options, Map.of(Q1_ID, List.of(qs1)), List.of());
 
             QuestionSubject qs2 = buildQuestionSubject(Q1_ID, SUBJECT_OOP, "0.50");
             String hash2 = SnapshotService.computeContentHash(
-                    assessment, questions, options, Map.of(Q1_ID, List.of(qs2)));
+                    assessment, questions, options, Map.of(Q1_ID, List.of(qs2)), List.of());
 
             assertThat(hash2).isNotEqualTo(hash1);
         }
@@ -210,10 +216,10 @@ class SnapshotServiceTest {
 
             String hash1 = SnapshotService.computeContentHash(
                     assessment, questions, options,
-                    Map.of(Q1_ID, List.of(qs1, qs2)));
+                    Map.of(Q1_ID, List.of(qs1, qs2)), List.of());
             String hash2 = SnapshotService.computeContentHash(
                     assessment, questions, options,
-                    Map.of(Q1_ID, List.of(qs2, qs1)));
+                    Map.of(Q1_ID, List.of(qs2, qs1)), List.of());
 
             assertThat(hash1).isEqualTo(hash2);
         }

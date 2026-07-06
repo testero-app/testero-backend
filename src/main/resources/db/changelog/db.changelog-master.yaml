@@ -69,3 +69,5 @@ databaseChangeLog:
       file: db/changelog/v1.7/003-move-availability-to-class-test.yaml
   - include:
       file: db/changelog/v1.7/004-rename-assessment-subject.yaml
+  - include:
+      file: db/changelog/v1.7/005-create-assessment-snapshot-subject.yaml
