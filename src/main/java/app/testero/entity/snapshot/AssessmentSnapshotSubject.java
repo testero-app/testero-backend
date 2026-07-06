@@ -27,6 +27,9 @@ public class AssessmentSnapshotSubject {
     @Column(name = "subject_id")
     private UUID subjectId;
 
+    @Column
+    private String label;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
