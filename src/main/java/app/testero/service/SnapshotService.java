@@ -101,22 +101,15 @@ public class SnapshotService {
 
         // If an identical snapshot already exists, return it
         Optional<AssessmentSnapshot> existing = snapshotRepository
-                .findByAssessmentIdAndContentHash(assessmentId, hash);
+                .findByAssessmentTemplateIdAndContentHash(assessmentId, hash);
         if (existing.isPresent()) {
             return existing.get();
         }
 
-        // Determine next version number
-        int nextVersion = snapshotRepository
-                .findTopByAssessmentIdOrderByVersionDesc(assessmentId)
-                .map(s -> s.getVersion() + 1)
-                .orElse(1);
-
         // Create snapshot
         AssessmentSnapshot snapshot = new AssessmentSnapshot();
-        snapshot.setAssessmentId(assessmentId);
+        snapshot.setAssessmentTemplateId(assessmentId);
         snapshot.setContentHash(hash);
-        snapshot.setVersion(nextVersion);
         snapshot.setTitle(assessment.getTitle());
         snapshot.setTimerMinutes(assessment.getTimerMinutes());
         snapshot.setQuestionsPerAssessment(assessment.getQuestionsPerAssessment());

@@ -109,9 +109,8 @@ public final class PythonCertificationFixture {
     public static AssessmentSnapshot buildAssessmentSnapshot(BigDecimal ptsCorrect, BigDecimal ptsWrong) {
         AssessmentSnapshot snapshot = new AssessmentSnapshot();
         snapshot.setId(SNAPSHOT_ID);
-        snapshot.setAssessmentId(TEST_ID);
+        snapshot.setAssessmentTemplateId(TEST_ID);
         snapshot.setContentHash("fixture-hash");
-        snapshot.setVersion(1);
         snapshot.setTitle(TITLE);
         snapshot.setTimerMinutes(TIMER_MINUTES);
         snapshot.setQuestionsPerAssessment(QUESTIONS_PER_ASSESSMENT);

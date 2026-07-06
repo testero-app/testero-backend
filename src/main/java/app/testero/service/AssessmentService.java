@@ -83,7 +83,7 @@ public class AssessmentService {
 
         // Batch-fetch subjects for all assessments
         List<UUID> assessmentIds = snapshots.stream()
-                .map(AssessmentSnapshot::getAssessmentId)
+                .map(AssessmentSnapshot::getAssessmentTemplateId)
                 .filter(id -> id != null)
                 .distinct()
                 .toList();
@@ -104,8 +104,8 @@ public class AssessmentService {
                         status = "COMPLETED";
                         score = sub.getScore();
                     }
-                    List<SubjectDto> subjects = s.getAssessmentId() != null
-                            ? subjectsByAssessment.getOrDefault(s.getAssessmentId(), List.of())
+                    List<SubjectDto> subjects = s.getAssessmentTemplateId() != null
+                            ? subjectsByAssessment.getOrDefault(s.getAssessmentTemplateId(), List.of())
                             : List.of();
                     return new AssessmentListResponse.AssessmentListItem(
                             s.getId().toString(),
@@ -157,8 +157,8 @@ public class AssessmentService {
     public AssessmentConfigResponse getAssessmentConfig(String snapshotId) {
         AssessmentSnapshot snapshot = findSnapshotOrThrow(snapshotId);
 
-        List<SubjectDto> subjects = snapshot.getAssessmentId() != null
-                ? fetchSubjectsForAssessment(snapshot.getAssessmentId())
+        List<SubjectDto> subjects = snapshot.getAssessmentTemplateId() != null
+                ? fetchSubjectsForAssessment(snapshot.getAssessmentTemplateId())
                 : List.of();
 
         return new AssessmentConfigResponse(
