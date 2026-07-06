@@ -2,8 +2,11 @@ package app.testero.entity.assessment;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Getter;
@@ -11,29 +14,39 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "option")
+@Table(name = "question_template")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Option {
+public class QuestionTemplate {
 
     @Id
     private UUID id;
 
-    @Column(name = "question_id", nullable = false)
-    private UUID questionId;
+    @Column(name = "assessment_template_id", nullable = false)
+    private UUID assessmentId;
 
     @Column(nullable = false)
+    private String type;
+
+    @Column(nullable = false, columnDefinition = "text")
     private String text;
 
-    @Column(name = "is_correct", nullable = false)
-    private boolean correct;
+    @Column(columnDefinition = "text")
+    private String code;
 
-    @Column(name = "is_fallback", nullable = false)
-    private boolean fallback;
+    @Column(columnDefinition = "text")
+    private String explanation;
 
     @Column(nullable = false)
     private int position;
+
+    @Column
+    private BigDecimal points;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private Difficulty difficulty;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
