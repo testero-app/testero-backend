@@ -18,6 +18,9 @@ import app.testero.repository.QuestionSnapshotRepository;
 import app.testero.repository.QuestionTemplateSubjectRepository;
 import app.testero.repository.QuestionSnapshotSubjectRepository;
 import app.testero.repository.SubjectRepository;
+import app.testero.repository.AssessmentTemplateTopicRepository;
+import app.testero.repository.AssessmentSnapshotTopicRepository;
+import app.testero.repository.TopicRepository;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -54,6 +57,9 @@ class SnapshotServiceTest {
     @Mock OptionSnapshotRepository optionSnapshotRepository;
     @Mock QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
     @Mock SubjectRepository subjectRepository;
+    @Mock AssessmentTemplateTopicRepository assessmentTemplateTopicRepository;
+    @Mock AssessmentSnapshotTopicRepository assessmentSnapshotTopicRepository;
+    @Mock TopicRepository topicRepository;
 
     @InjectMocks SnapshotService snapshotService;
 
@@ -101,6 +107,8 @@ class SnapshotServiceTest {
         }
 
         lenient().when(subjectRepository.findByIdIn(any()))
+                .thenReturn(List.of());
+        when(assessmentTemplateTopicRepository.findByAssessmentTemplateId(TEST_ID))
                 .thenReturn(List.of());
 
         when(snapshotRepository.findByAssessmentTemplateIdAndContentHash(eq(TEST_ID), anyString()))
