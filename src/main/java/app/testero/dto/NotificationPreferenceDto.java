@@ -1,6 +1,7 @@
 package app.testero.dto;
 
 public record NotificationPreferenceDto(
-        String type,
+        String event,
+        String channel,
         boolean enabled
 ) {}

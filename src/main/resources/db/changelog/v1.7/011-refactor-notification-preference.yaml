@@ -1,0 +1,44 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-011
+      author: testero
+      comment: >
+        Refactor notification_preference: rename type → event,
+        add channel column (EMAIL, IN_APP). Drop old unique constraint
+        and add new one on (user_id, event, channel).
+      changes:
+        - renameColumn:
+            tableName: notification_preference
+            oldColumnName: type
+            newColumnName: event
+            columnDataType: VARCHAR(50)
+
+        - addColumn:
+            tableName: notification_preference
+            columns:
+              - column:
+                  name: channel
+                  type: VARCHAR(20)
+                  defaultValue: IN_APP
+                  constraints:
+                    nullable: false
+
+        # Migrate existing data: old records become IN_APP channel
+        - sql:
+            sql: >
+              UPDATE notification_preference
+              SET channel = 'IN_APP'
+              WHERE channel = 'IN_APP';
+
+        # Update old event names
+        - sql:
+            sql: >
+              UPDATE notification_preference
+              SET event = 'EXAM_RESULT'
+              WHERE event = 'EXAM_RESULT';
+
+        # Add unique constraint on (user_id, event, channel)
+        - addUniqueConstraint:
+            tableName: notification_preference
+            columnNames: user_id, event, channel
+            constraintName: uq_notification_user_event_channel
