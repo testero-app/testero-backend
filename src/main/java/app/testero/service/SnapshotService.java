@@ -6,16 +6,22 @@ import app.testero.entity.assessment.OptionTemplate;
 import app.testero.entity.assessment.QuestionTemplate;
 import app.testero.entity.assessment.QuestionTemplateSubject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
+import app.testero.entity.assessment.AssessmentTemplateTopic;
+import app.testero.entity.assessment.Subject;
+import app.testero.entity.assessment.Topic;
 import app.testero.entity.snapshot.AssessmentSnapshotSubject;
+import app.testero.entity.snapshot.AssessmentSnapshotTopic;
 import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.exception.ResourceNotFoundException;
-import app.testero.entity.assessment.Subject;
 import app.testero.repository.AssessmentSubjectRepository;
 import app.testero.repository.AssessmentTemplateRepository;
+import app.testero.repository.AssessmentTemplateTopicRepository;
 import app.testero.repository.AssessmentSnapshotRepository;
 import app.testero.repository.AssessmentSnapshotSubjectRepository;
+import app.testero.repository.AssessmentSnapshotTopicRepository;
+import app.testero.repository.TopicRepository;
 import app.testero.repository.OptionTemplateRepository;
 import app.testero.repository.OptionSnapshotRepository;
 import app.testero.repository.QuestionTemplateRepository;
@@ -52,18 +58,25 @@ public class SnapshotService {
     private final OptionSnapshotRepository optionSnapshotRepository;
     private final QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
     private final SubjectRepository subjectRepository;
+    private final AssessmentTemplateTopicRepository assessmentTemplateTopicRepository;
+    private final AssessmentSnapshotTopicRepository assessmentSnapshotTopicRepository;
+    private final TopicRepository topicRepository;
 
-    public SnapshotService(AssessmentTemplateRepository assessmentTemplateRepository,
-                           AssessmentSubjectRepository assessmentSubjectRepository,
-                           QuestionTemplateRepository questionTemplateRepository,
-                           OptionTemplateRepository optionTemplateRepository,
-                           QuestionTemplateSubjectRepository questionTemplateSubjectRepository,
-                           AssessmentSnapshotRepository snapshotRepository,
-                           AssessmentSnapshotSubjectRepository assessmentSnapshotSubjectRepository,
-                           QuestionSnapshotRepository questionSnapshotRepository,
-                           OptionSnapshotRepository optionSnapshotRepository,
-                           QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository,
-                           SubjectRepository subjectRepository) {
+    public SnapshotService(
+            AssessmentTemplateRepository assessmentTemplateRepository,
+            AssessmentSubjectRepository assessmentSubjectRepository,
+            QuestionTemplateRepository questionTemplateRepository,
+            OptionTemplateRepository optionTemplateRepository,
+            QuestionTemplateSubjectRepository questionTemplateSubjectRepository,
+            AssessmentSnapshotRepository snapshotRepository,
+            AssessmentSnapshotSubjectRepository assessmentSnapshotSubjectRepository,
+            QuestionSnapshotRepository questionSnapshotRepository,
+            OptionSnapshotRepository optionSnapshotRepository,
+            QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository,
+            SubjectRepository subjectRepository,
+            AssessmentTemplateTopicRepository assessmentTemplateTopicRepository,
+            AssessmentSnapshotTopicRepository assessmentSnapshotTopicRepository,
+            TopicRepository topicRepository) {
         this.assessmentTemplateRepository = assessmentTemplateRepository;
         this.assessmentSubjectRepository = assessmentSubjectRepository;
         this.questionTemplateRepository = questionTemplateRepository;
@@ -75,6 +88,9 @@ public class SnapshotService {
         this.optionSnapshotRepository = optionSnapshotRepository;
         this.questionSnapshotSubjectRepository = questionSnapshotSubjectRepository;
         this.subjectRepository = subjectRepository;
+        this.assessmentTemplateTopicRepository = assessmentTemplateTopicRepository;
+        this.assessmentSnapshotTopicRepository = assessmentSnapshotTopicRepository;
+        this.topicRepository = topicRepository;
     }
 
     @Transactional
@@ -142,6 +158,27 @@ public class SnapshotService {
             ass.setSubjectId(as.getSubjectId());
             ass.setLabel(subjectLabels.get(as.getSubjectId()));
             assessmentSnapshotSubjectRepository.save(ass);
+        }
+
+        // Copy assessment-level topics with frozen title
+        List<AssessmentTemplateTopic> assessmentTopics =
+                assessmentTemplateTopicRepository
+                        .findByAssessmentTemplateId(assessmentId);
+        if (!assessmentTopics.isEmpty()) {
+            List<UUID> topicIds = assessmentTopics.stream()
+                    .map(AssessmentTemplateTopic::getTopicId).toList();
+            Map<UUID, String> topicTitles = topicRepository
+                    .findAllById(topicIds).stream()
+                    .collect(Collectors.toMap(
+                            Topic::getId, Topic::getTitle));
+            for (AssessmentTemplateTopic at : assessmentTopics) {
+                AssessmentSnapshotTopic ast =
+                        new AssessmentSnapshotTopic();
+                ast.setAssessmentSnapshotId(snapshot.getId());
+                ast.setTopicId(at.getTopicId());
+                ast.setTitle(topicTitles.get(at.getTopicId()));
+                assessmentSnapshotTopicRepository.save(ast);
+            }
         }
 
         // Copy questions and options
