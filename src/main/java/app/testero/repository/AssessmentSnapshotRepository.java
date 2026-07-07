@@ -15,14 +15,14 @@ public interface AssessmentSnapshotRepository extends JpaRepository<AssessmentSn
     Optional<AssessmentSnapshot> findByAssessmentTemplateIdAndContentHash(
             UUID assessmentTemplateId, String contentHash);
 
-    @Query("SELECT s FROM AssessmentSnapshot s JOIN ClassAssessment ca "
+    @Query("SELECT s FROM AssessmentSnapshot s JOIN ClassAssessmentAssignment ca "
             + "ON ca.assessmentSnapshotId = s.id "
             + "WHERE ca.classId = :classId "
             + "AND (ca.availableFrom IS NULL OR ca.availableFrom <= CURRENT_TIMESTAMP) "
             + "AND (ca.availableUntil IS NULL OR ca.availableUntil >= CURRENT_TIMESTAMP)")
     List<AssessmentSnapshot> findSnapshotsByClassId(@Param("classId") UUID classId);
 
-    @Query("SELECT s FROM AssessmentSnapshot s JOIN ClassAssessment ca "
+    @Query("SELECT s FROM AssessmentSnapshot s JOIN ClassAssessmentAssignment ca "
             + "ON ca.assessmentSnapshotId = s.id "
             + "WHERE ca.classId = :classId "
             + "AND (ca.availableFrom IS NULL OR ca.availableFrom <= CURRENT_TIMESTAMP) "

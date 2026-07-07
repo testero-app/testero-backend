@@ -5,7 +5,7 @@ import app.testero.dto.NotificationPreferenceDto;
 import app.testero.dto.UserProfileResponse;
 import app.testero.entity.user.AppRole;
 import app.testero.entity.user.AppUser;
-import app.testero.entity.user.AppUserRole;
+import app.testero.entity.user.NotificationChannel;
 import app.testero.entity.user.NotificationPreference;
 import app.testero.entity.user.NotificationType;
 import app.testero.entity.user.StudentProfile;
@@ -21,7 +21,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.EnumMap;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -32,11 +33,18 @@ public class UserService {
 
     private static final int MIN_PASSWORD_LENGTH = 8;
 
-    private static final Map<NotificationType, Boolean> DEFAULT_PREFS = Map.of(
-            NotificationType.EXAM_RESULT, true,
-            NotificationType.DEADLINE_REMINDER, true,
-            NotificationType.PRODUCT_NEWS, false
-    );
+    /** Default preferences: event → (channel → enabled). */
+    private static final Map<NotificationType, Map<NotificationChannel, Boolean>> DEFAULT_PREFS;
+
+    static {
+        DEFAULT_PREFS = new HashMap<>();
+        for (NotificationType event : NotificationType.values()) {
+            Map<NotificationChannel, Boolean> channels = new HashMap<>();
+            channels.put(NotificationChannel.IN_APP, true);
+            channels.put(NotificationChannel.EMAIL, false);
+            DEFAULT_PREFS.put(event, channels);
+        }
+    }
 
     private final AppUserRepository appUserRepository;
     private final StudentProfileRepository studentProfileRepository;
@@ -108,27 +116,47 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<NotificationPreferenceDto> getNotificationPreferences(UUID userId) {
-        List<NotificationPreference> saved = notificationPreferenceRepository.findByUserId(userId);
-        Map<NotificationType, Boolean> merged = new EnumMap<>(DEFAULT_PREFS);
+        List<NotificationPreference> saved =
+                notificationPreferenceRepository.findByUserId(userId);
+
+        // Build lookup: event+channel → enabled
+        Map<String, Boolean> savedMap = new HashMap<>();
         for (NotificationPreference pref : saved) {
-            merged.put(pref.getType(), pref.isEnabled());
+            String key = pref.getEvent().name() + "|" + pref.getChannel().name();
+            savedMap.put(key, pref.isEnabled());
         }
-        return merged.entrySet().stream()
-                .map(e -> new NotificationPreferenceDto(e.getKey().name(), e.getValue()))
-                .toList();
+
+        // Merge with defaults
+        List<NotificationPreferenceDto> result = new ArrayList<>();
+        for (var eventEntry : DEFAULT_PREFS.entrySet()) {
+            for (var channelEntry : eventEntry.getValue().entrySet()) {
+                String key = eventEntry.getKey().name() + "|"
+                        + channelEntry.getKey().name();
+                boolean enabled = savedMap.getOrDefault(
+                        key, channelEntry.getValue());
+                result.add(new NotificationPreferenceDto(
+                        eventEntry.getKey().name(),
+                        channelEntry.getKey().name(),
+                        enabled));
+            }
+        }
+        return result;
     }
 
     @Transactional
-    public List<NotificationPreferenceDto> updateNotificationPreferences(UUID userId,
-                                                                         List<NotificationPreferenceDto> updates) {
+    public List<NotificationPreferenceDto> updateNotificationPreferences(
+            UUID userId, List<NotificationPreferenceDto> updates) {
         for (NotificationPreferenceDto dto : updates) {
-            NotificationType type = NotificationType.valueOf(dto.type());
+            NotificationType event = NotificationType.valueOf(dto.event());
+            NotificationChannel channel =
+                    NotificationChannel.valueOf(dto.channel());
             NotificationPreference pref = notificationPreferenceRepository
-                    .findByUserIdAndType(userId, type)
+                    .findByUserIdAndEventAndChannel(userId, event, channel)
                     .orElseGet(() -> {
                         NotificationPreference p = new NotificationPreference();
                         p.setUserId(userId);
-                        p.setType(type);
+                        p.setEvent(event);
+                        p.setChannel(channel);
                         return p;
                     });
             pref.setEnabled(dto.enabled());
@@ -138,25 +166,26 @@ public class UserService {
     }
 
     private String resolveRole(UUID userId) {
-        List<AppUserRole> userRoles = appUserRoleRepository.findByUserId(userId);
-        if (userRoles.isEmpty()) {
-            return "";
-        }
-        return appRoleRepository.findById(userRoles.getFirst().getRoleId())
+        return appUserRoleRepository.findByUserId(userId).stream()
+                .findFirst()
+                .flatMap(ur -> appRoleRepository.findById(ur.getRoleId()))
                 .map(AppRole::getName)
-                .orElse("");
+                .orElse("STUDENT");
     }
 
-    public void validatePasswordStrength(String password) {
+    void validatePasswordStrength(String password) {
         if (password.length() < MIN_PASSWORD_LENGTH) {
             throw new InvalidPasswordException(
-                    "Password must be at least 8 characters with 1 uppercase letter and 1 number");
+                    "Password must be at least " + MIN_PASSWORD_LENGTH
+                            + " characters");
         }
-        boolean hasUppercase = password.chars().anyMatch(Character::isUpperCase);
-        boolean hasDigit = password.chars().anyMatch(Character::isDigit);
-        if (!hasUppercase || !hasDigit) {
+        if (!password.matches(".*[A-Z].*")) {
             throw new InvalidPasswordException(
-                    "Password must be at least 8 characters with 1 uppercase letter and 1 number");
+                    "Password must contain at least 1 uppercase letter");
+        }
+        if (!password.matches(".*[0-9].*")) {
+            throw new InvalidPasswordException(
+                    "Password must contain at least 1 number");
         }
     }
 }

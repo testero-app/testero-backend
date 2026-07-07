@@ -172,18 +172,17 @@ class UserControllerTest {
         void success() throws Exception {
             when(userService.getNotificationPreferences(USER_ID))
                     .thenReturn(List.of(
-                            new NotificationPreferenceDto("EXAM_RESULT", true),
-                            new NotificationPreferenceDto("DEADLINE_REMINDER", true),
-                            new NotificationPreferenceDto("PRODUCT_NEWS", false)
+                            new NotificationPreferenceDto("EXAM_RESULT", "IN_APP", true),
+                            new NotificationPreferenceDto("DEADLINE_REMINDER", "IN_APP", true),
+                            new NotificationPreferenceDto("EXAM_RESULT", "EMAIL", false)
                     ));
 
             mockMvc.perform(get("/users/me/notifications").with(jwt()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.length()").value(3))
-                    .andExpect(jsonPath("$[0].type").value("EXAM_RESULT"))
-                    .andExpect(jsonPath("$[0].enabled").value(true))
-                    .andExpect(jsonPath("$[2].type").value("PRODUCT_NEWS"))
-                    .andExpect(jsonPath("$[2].enabled").value(false));
+                    .andExpect(jsonPath("$[0].event").value("EXAM_RESULT"))
+                    .andExpect(jsonPath("$[0].channel").value("IN_APP"))
+                    .andExpect(jsonPath("$[0].enabled").value(true));
         }
 
         @Test
@@ -203,9 +202,8 @@ class UserControllerTest {
         void success() throws Exception {
             when(userService.updateNotificationPreferences(eq(USER_ID), any()))
                     .thenReturn(List.of(
-                            new NotificationPreferenceDto("EXAM_RESULT", false),
-                            new NotificationPreferenceDto("DEADLINE_REMINDER", true),
-                            new NotificationPreferenceDto("PRODUCT_NEWS", true)
+                            new NotificationPreferenceDto("EXAM_RESULT", "IN_APP", false),
+                            new NotificationPreferenceDto("EXAM_RESULT", "EMAIL", true)
                     ));
 
             mockMvc.perform(put("/users/me/notifications")
@@ -214,13 +212,13 @@ class UserControllerTest {
                             .content("""
                                     {
                                       "preferences": [
-                                        { "type": "EXAM_RESULT", "enabled": false },
-                                        { "type": "PRODUCT_NEWS", "enabled": true }
+                                        { "event": "EXAM_RESULT", "channel": "IN_APP", "enabled": false },
+                                        { "event": "EXAM_RESULT", "channel": "EMAIL", "enabled": true }
                                       ]
                                     }
                                     """))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(3))
+                    .andExpect(jsonPath("$.length()").value(2))
                     .andExpect(jsonPath("$[0].enabled").value(false));
         }
 

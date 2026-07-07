@@ -12,12 +12,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "class_test")
-@IdClass(ClassAssessmentId.class)
+@Table(name = "class_assessment_assignment")
+@IdClass(ClassAssessmentAssignmentId.class)
 @Getter
 @Setter
 @NoArgsConstructor
-public class ClassAssessment {
+public class ClassAssessmentAssignment {
 
     @Id
     @Column(name = "class_id")
