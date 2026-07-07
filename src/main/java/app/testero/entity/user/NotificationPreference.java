@@ -30,7 +30,11 @@ public class NotificationPreference {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private NotificationType type;
+    private NotificationType event;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private NotificationChannel channel;
 
     @Column(nullable = false)
     private boolean enabled;
