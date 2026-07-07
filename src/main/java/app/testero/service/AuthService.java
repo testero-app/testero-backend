@@ -48,6 +48,11 @@ public class AuthService {
                     return new InvalidCredentialsException();
                 });
 
+        if (!user.isActive()) {
+            log.warn("Login failed: account disabled for identifier={}", identifier);
+            throw new InvalidCredentialsException();
+        }
+
         if (user.getPasswordHash() == null ||
                 !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             log.warn("Login failed: wrong password for identifier={}", identifier);

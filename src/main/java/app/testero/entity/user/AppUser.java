@@ -34,6 +34,9 @@ public class AppUser {
     @Column(name = "must_change_password", nullable = false)
     private boolean mustChangePassword;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean active = true;
+
     @Column(name = "password_expires_at")
     private LocalDateTime passwordExpiresAt;
 

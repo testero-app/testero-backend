@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-010
+      author: testero
+      comment: "Add is_active column to app_user for soft-disable without deletion."
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: is_active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
