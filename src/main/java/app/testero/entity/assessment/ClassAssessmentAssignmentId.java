@@ -13,7 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class ClassAssessmentId implements Serializable {
+public class ClassAssessmentAssignmentId implements Serializable {
 
     private UUID classId;
     private UUID assessmentSnapshotId;

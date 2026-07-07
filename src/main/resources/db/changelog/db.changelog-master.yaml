@@ -79,3 +79,5 @@ databaseChangeLog:
       file: db/changelog/v1.7/008-add-label-to-snapshot-subjects.yaml
   - include:
       file: db/changelog/v1.7/011-refactor-notification-preference.yaml
+  - include:
+      file: db/changelog/v1.7/012-rename-class-test.yaml

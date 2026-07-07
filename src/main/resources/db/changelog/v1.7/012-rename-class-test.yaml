@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-012
+      author: testero
+      comment: "Rename class_test → class_assessment_assignment."
+      changes:
+        - renameTable:
+            oldTableName: class_test
+            newTableName: class_assessment_assignment
