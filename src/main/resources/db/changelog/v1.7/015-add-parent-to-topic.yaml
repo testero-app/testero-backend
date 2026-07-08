@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-015
+      author: testero
+      comment: "Add parent_id to topic for hierarchical nesting."
+      changes:
+        - addColumn:
+            tableName: topic
+            columns:
+              - column:
+                  name: parent_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+
+        - addForeignKeyConstraint:
+            baseTableName: topic
+            baseColumnNames: parent_id
+            referencedTableName: topic
+            referencedColumnNames: id
+            constraintName: fk_topic_parent_id
