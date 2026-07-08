@@ -69,6 +69,7 @@ class SubmissionServiceTest {
     @Mock QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
     @Mock SubjectRepository subjectRepository;
     @Mock ApplicationEventPublisher eventPublisher;
+    @Mock NotificationService notificationService;
 
     ScoringService scoringService;
     SubmissionService submissionService;
@@ -102,7 +103,7 @@ class SubmissionServiceTest {
                 submissionRepository, userAnswerRepository, userAnswerSelectedOptionRepository,
                 optionSnapshotRepository, assessmentSnapshotRepository, questionSnapshotRepository,
                 questionSnapshotSubjectRepository, subjectRepository,
-                scoringService, eventPublisher);
+                scoringService, notificationService, eventPublisher);
     }
 
     // ── Stub helpers ───────────────────────────────────────────────

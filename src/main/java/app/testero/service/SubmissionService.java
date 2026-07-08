@@ -16,8 +16,10 @@ import app.testero.dto.SubmissionReviewResponse.ReviewOption;
 import app.testero.dto.SubmissionReviewResponse.ReviewQuestion;
 import app.testero.dto.SubmissionStartResponse;
 import app.testero.dto.SubmissionSubmitRequest;
+import app.testero.entity.assessment.AssessmentType;
 import app.testero.entity.assessment.Subject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
+import app.testero.entity.user.NotificationType;
 import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
@@ -68,6 +70,7 @@ public class SubmissionService {
     private final QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
     private final SubjectRepository subjectRepository;
     private final ScoringService scoringService;
+    private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
 
     public SubmissionService(SubmissionRepository submissionRepository,
@@ -79,6 +82,7 @@ public class SubmissionService {
                              QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository,
                              SubjectRepository subjectRepository,
                              ScoringService scoringService,
+                             NotificationService notificationService,
                              ApplicationEventPublisher eventPublisher) {
         this.submissionRepository = submissionRepository;
         this.userAnswerRepository = userAnswerRepository;
@@ -89,6 +93,7 @@ public class SubmissionService {
         this.questionSnapshotSubjectRepository = questionSnapshotSubjectRepository;
         this.subjectRepository = subjectRepository;
         this.scoringService = scoringService;
+        this.notificationService = notificationService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -262,6 +267,24 @@ public class SubmissionService {
         AssessmentSnapshot snapshot = assessmentSnapshotRepository
                 .findById(submission.getAssessmentSnapshotId())
                 .orElse(null);
+
+        // Notify student of result (non-training assessments only)
+        if (snapshot != null && snapshot.getType() != AssessmentType.TRAINING) {
+            NotificationType notifEvent = snapshot.getType() == AssessmentType.EXAM
+                    ? NotificationType.EXAM_RESULT
+                    : NotificationType.CERT_SIMULATION_RESULT;
+            String notifTitle = snapshot.getType() == AssessmentType.EXAM
+                    ? "Risultato esame disponibile"
+                    : "Simulazione completata";
+            String notifMsg = snapshot.getTitle() + ": "
+                    + Math.round(submission.getScore()) + " punti";
+            notificationService.notify(submission.getUserId(), notifEvent, notifTitle, notifMsg);
+        }
+
+        // TODO: ALL_SUBMITTED notification for teachers.
+        // When all students in a class have submitted for this snapshot,
+        // notify the class teacher(s) via NotificationType.ALL_SUBMITTED.
+        // Deferred until teacher UI is available.
 
         // Fetch question snapshots for accurate maxScore
         List<QuestionSnapshot> questionSnapshots = questionSnapshotRepository
