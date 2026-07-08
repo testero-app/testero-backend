@@ -87,3 +87,5 @@ databaseChangeLog:
       file: db/changelog/v1.7/012-rename-class-test.yaml
   - include:
       file: db/changelog/v1.7/013-split-name-to-first-last.yaml
+  - include:
+      file: db/changelog/v1.7/014-create-notification-table.yaml
