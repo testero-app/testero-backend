@@ -85,3 +85,5 @@ databaseChangeLog:
       file: db/changelog/v1.7/011-refactor-notification-preference.yaml
   - include:
       file: db/changelog/v1.7/012-rename-class-test.yaml
+  - include:
+      file: db/changelog/v1.7/013-split-name-to-first-last.yaml

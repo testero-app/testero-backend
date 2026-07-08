@@ -10,7 +10,8 @@ public record LoginResponse(
 ) {
     public record UserInfo(
             String id,
-            String name,
+            @JsonProperty("first_name") String firstName,
+            @JsonProperty("last_name") String lastName,
             String username,
             @JsonProperty("class_name") String className
     ) {}

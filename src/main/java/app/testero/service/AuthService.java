@@ -106,7 +106,8 @@ public class AuthService {
                 : "";
         return new LoginResponse.UserInfo(
                 user.getId().toString(),
-                user.getName(),
+                user.getFirstName(),
+                user.getLastName(),
                 user.getUsername(),
                 className
         );

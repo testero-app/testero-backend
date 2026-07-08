@@ -2,6 +2,7 @@ package app.testero.service;
 
 import app.testero.dto.ChangePasswordRequest;
 import app.testero.dto.NotificationPreferenceDto;
+import app.testero.dto.UpdateProfileRequest;
 import app.testero.dto.UserProfileResponse;
 import app.testero.entity.user.AppRole;
 import app.testero.entity.user.AppUser;
@@ -81,12 +82,25 @@ public class UserService {
 
         return new UserProfileResponse(
                 user.getId().toString(),
-                user.getName(),
+                user.getFirstName(),
+                user.getLastName(),
                 user.getUsername(),
                 user.getEmail(),
                 className,
                 role
         );
+    }
+
+    @Transactional
+    public UserProfileResponse updateProfile(UUID userId, UpdateProfileRequest request) {
+        AppUser user = appUserRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setEmail(request.email());
+        appUserRepository.save(user);
+
+        log.info("Profile updated for userId={}", userId);
+        return getProfile(userId);
     }
 
     @Transactional

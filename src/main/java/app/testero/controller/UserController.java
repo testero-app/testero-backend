@@ -3,6 +3,7 @@ package app.testero.controller;
 import app.testero.dto.ChangePasswordRequest;
 import app.testero.dto.NotificationPreferenceDto;
 import app.testero.dto.UpdateNotificationPreferencesRequest;
+import app.testero.dto.UpdateProfileRequest;
 import app.testero.dto.UserProfileResponse;
 import app.testero.security.UserPrincipal;
 import app.testero.service.UserService;
@@ -32,6 +33,13 @@ public class UserController {
     public ResponseEntity<UserProfileResponse> getProfile(
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(userService.getProfile(principal.userId()));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<UserProfileResponse> updateProfile(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(userService.updateProfile(principal.userId(), request));
     }
 
     @GetMapping("/me/notifications")
