@@ -35,7 +35,6 @@ BEGIN
     (gen_random_uuid(), v_q_id, 'High Tech Transfer Process', false, false, 2),
     (gen_random_uuid(), v_q_id, 'HyperText Transmission Program', false, false, 3),
     (gen_random_uuid(), v_q_id, 'Home Tool Transfer Protocol', false, false, 4);
-
   -- Q2
   v_q_id := gen_random_uuid();
   INSERT INTO question (id, test_id, type, text, code, position)

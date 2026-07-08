@@ -38,6 +38,7 @@ BEGIN
       text, is_correct, position)
     SELECT gen_random_uuid(), v_qs_id, id, text, is_correct, position
     FROM option WHERE question_id = v_q_id ORDER BY position;
+
   END LOOP;
 
   INSERT INTO class_test (class_id, assessment_snapshot_id, activated_at)
