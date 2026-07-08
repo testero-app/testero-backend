@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-016-seed-dev-question-subjects
+      author: testero
+      context: dev
+      comment: "Seed question-subject links, snapshot copies, and topic for demo data."
+      changes:
+        - sqlFile:
+            path: db/seed/dev/65_demo_question_subjects.sql
+            splitStatements: false
