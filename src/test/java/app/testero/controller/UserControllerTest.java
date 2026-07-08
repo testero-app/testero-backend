@@ -5,6 +5,7 @@ import app.testero.config.JwtProperties;
 import app.testero.config.SecurityConfig;
 import app.testero.dto.ChangePasswordRequest;
 import app.testero.dto.NotificationPreferenceDto;
+import app.testero.dto.UpdateProfileRequest;
 import app.testero.dto.UserProfileResponse;
 import app.testero.exception.InvalidPasswordException;
 import app.testero.security.JwtService;
@@ -66,14 +67,15 @@ class UserControllerTest {
         @DisplayName("authenticated → 200 with profile")
         void success() throws Exception {
             var profile = new UserProfileResponse(
-                    USER_ID.toString(), "Mario Rossi", "mario",
+                    USER_ID.toString(), "Mario", "Rossi", "mario",
                     "mario@test.com", "5A", "STUDENT");
             when(userService.getProfile(USER_ID)).thenReturn(profile);
 
             mockMvc.perform(get("/users/me").with(jwt()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(USER_ID.toString()))
-                    .andExpect(jsonPath("$.name").value("Mario Rossi"))
+                    .andExpect(jsonPath("$.first_name").value("Mario"))
+                    .andExpect(jsonPath("$.last_name").value("Rossi"))
                     .andExpect(jsonPath("$.username").value("mario"))
                     .andExpect(jsonPath("$.email").value("mario@test.com"))
                     .andExpect(jsonPath("$.class_name").value("5A"))
@@ -84,6 +86,43 @@ class UserControllerTest {
         @DisplayName("no token → 403")
         void unauthorized() throws Exception {
             mockMvc.perform(get("/users/me"))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Nested
+    @DisplayName("PUT /users/me")
+    class UpdateProfile {
+
+        @Test
+        @DisplayName("valid request → 200 with updated profile")
+        void success() throws Exception {
+            var profile = new UserProfileResponse(
+                    USER_ID.toString(), "Mario", "Rossi", "mario",
+                    "new@test.com", "5A", "STUDENT");
+            when(userService.updateProfile(eq(USER_ID), any(UpdateProfileRequest.class)))
+                    .thenReturn(profile);
+
+            mockMvc.perform(put("/users/me")
+                            .with(jwt())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"email": "new@test.com"}
+                                    """))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.email").value("new@test.com"))
+                    .andExpect(jsonPath("$.first_name").value("Mario"))
+                    .andExpect(jsonPath("$.last_name").value("Rossi"));
+        }
+
+        @Test
+        @DisplayName("no token → 403")
+        void unauthorized() throws Exception {
+            mockMvc.perform(put("/users/me")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"email": "new@test.com"}
+                                    """))
                     .andExpect(status().isForbidden());
         }
     }

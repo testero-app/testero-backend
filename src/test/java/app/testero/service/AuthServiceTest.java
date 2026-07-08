@@ -52,7 +52,8 @@ class AuthServiceTest {
     private AppUser buildUser() {
         AppUser user = new AppUser();
         user.setId(USER_ID);
-        user.setName("Mario Rossi");
+        user.setFirstName("Mario");
+        user.setLastName("Rossi");
         user.setUsername(USERNAME);
         user.setEmail(EMAIL);
         user.setPasswordHash(HASH);
@@ -92,7 +93,8 @@ class AuthServiceTest {
 
             assertThat(response.token()).isEqualTo(TOKEN);
             assertThat(response.user().id()).isEqualTo(USER_ID.toString());
-            assertThat(response.user().name()).isEqualTo("Mario Rossi");
+            assertThat(response.user().firstName()).isEqualTo("Mario");
+            assertThat(response.user().lastName()).isEqualTo("Rossi");
             assertThat(response.user().username()).isEqualTo(USERNAME);
             assertThat(response.user().className()).isEqualTo("5A");
             assertThat(response.mustChangePassword()).isFalse();

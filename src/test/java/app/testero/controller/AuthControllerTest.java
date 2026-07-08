@@ -63,7 +63,7 @@ class AuthControllerTest {
         @Test
         @DisplayName("valid credentials → 200 with token and user info")
         void success() throws Exception {
-            var userInfo = new LoginResponse.UserInfo("user-id-1", "Mario Rossi", "mario", "5A");
+            var userInfo = new LoginResponse.UserInfo("user-id-1", "Mario", "Rossi", "mario", "5A");
             var loginResponse = new LoginResponse("jwt.token.here", userInfo, false, false);
             when(authService.login(any(LoginRequest.class))).thenReturn(loginResponse);
 
@@ -76,7 +76,8 @@ class AuthControllerTest {
                     .andExpect(header().exists("X-Request-Id"))
                     .andExpect(jsonPath("$.token").value("jwt.token.here"))
                     .andExpect(jsonPath("$.user.id").value("user-id-1"))
-                    .andExpect(jsonPath("$.user.name").value("Mario Rossi"))
+                    .andExpect(jsonPath("$.user.first_name").value("Mario"))
+                    .andExpect(jsonPath("$.user.last_name").value("Rossi"))
                     .andExpect(jsonPath("$.user.username").value("mario"))
                     .andExpect(jsonPath("$.user.class_name").value("5A"))
                     .andExpect(jsonPath("$.must_change_password").value(false))
@@ -86,7 +87,7 @@ class AuthControllerTest {
         @Test
         @DisplayName("must change password → 200 with flags")
         void mustChangePassword() throws Exception {
-            var userInfo = new LoginResponse.UserInfo("user-id-1", "Mario Rossi", "mario", "5A");
+            var userInfo = new LoginResponse.UserInfo("user-id-1", "Mario", "Rossi", "mario", "5A");
             var loginResponse = new LoginResponse("limited.token", userInfo, true, false);
             when(authService.login(any(LoginRequest.class))).thenReturn(loginResponse);
 
@@ -142,7 +143,7 @@ class AuthControllerTest {
         @Test
         @DisplayName("no Authorization header required (public endpoint)")
         void publicEndpoint() throws Exception {
-            var userInfo = new LoginResponse.UserInfo("id", "Name", "user", "");
+            var userInfo = new LoginResponse.UserInfo("id", "First", "Last", "user", "");
             when(authService.login(any(LoginRequest.class)))
                     .thenReturn(new LoginResponse("token", userInfo, false, false));
 
@@ -162,7 +163,7 @@ class AuthControllerTest {
         @Test
         @DisplayName("valid request with limited token → 200")
         void success() throws Exception {
-            var userInfo = new LoginResponse.UserInfo(USER_ID.toString(), "Mario", "mario", "");
+            var userInfo = new LoginResponse.UserInfo(USER_ID.toString(), "Mario", "Rossi", "mario", "");
             var response = new LoginResponse("full.token", userInfo, false, false);
             when(authService.setPassword(eq(USER_ID), any(SetPasswordRequest.class)))
                     .thenReturn(response);

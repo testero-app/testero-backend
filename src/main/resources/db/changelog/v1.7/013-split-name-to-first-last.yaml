@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-013
+      author: testero
+      comment: "Split app_user.name into first_name + last_name."
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: first_name
+                  type: VARCHAR(255)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: VARCHAR(255)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false
+
+        - sql:
+            sql: >
+              UPDATE app_user SET
+                first_name = split_part(name, ' ', 1),
+                last_name = CASE
+                  WHEN position(' ' in name) > 0
+                  THEN substring(name from position(' ' in name) + 1)
+                  ELSE ''
+                END;
+
+        - dropColumn:
+            tableName: app_user
+            columnName: name

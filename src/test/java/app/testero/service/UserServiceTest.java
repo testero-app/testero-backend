@@ -1,6 +1,7 @@
 package app.testero.service;
 
 import app.testero.dto.ChangePasswordRequest;
+import app.testero.dto.UpdateProfileRequest;
 import app.testero.dto.UserProfileResponse;
 import app.testero.entity.user.AppRole;
 import app.testero.entity.user.AppUser;
@@ -51,7 +52,8 @@ class UserServiceTest {
     private AppUser buildUser() {
         AppUser user = new AppUser();
         user.setId(USER_ID);
-        user.setName("Mario Rossi");
+        user.setFirstName("Mario");
+        user.setLastName("Rossi");
         user.setUsername("mario");
         user.setEmail("mario@test.com");
         user.setPasswordHash("hashed");
@@ -84,7 +86,8 @@ class UserServiceTest {
             UserProfileResponse response = userService.getProfile(USER_ID);
 
             assertThat(response.id()).isEqualTo(USER_ID.toString());
-            assertThat(response.name()).isEqualTo("Mario Rossi");
+            assertThat(response.firstName()).isEqualTo("Mario");
+            assertThat(response.lastName()).isEqualTo("Rossi");
             assertThat(response.username()).isEqualTo("mario");
             assertThat(response.email()).isEqualTo("mario@test.com");
             assertThat(response.className()).isEqualTo("5A");
@@ -117,6 +120,45 @@ class UserServiceTest {
             when(appUserRepository.findById(USER_ID)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> userService.getProfile(USER_ID))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("updateProfile")
+    class UpdateProfileTests {
+
+        @Test
+        @DisplayName("updates email and returns profile")
+        void success() {
+            AppUser user = buildUser();
+            when(appUserRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+            when(studentProfileRepository.findByUserId(USER_ID)).thenReturn(Optional.empty());
+
+            AppUserRole userRole = new AppUserRole();
+            userRole.setRoleId(ROLE_ID);
+            when(appUserRoleRepository.findByUserId(USER_ID)).thenReturn(List.of(userRole));
+            AppRole role = new AppRole();
+            role.setName("STUDENT");
+            when(appRoleRepository.findById(ROLE_ID)).thenReturn(Optional.of(role));
+
+            UserProfileResponse response = userService.updateProfile(
+                    USER_ID, new UpdateProfileRequest("new@test.com"));
+
+            assertThat(user.getEmail()).isEqualTo("new@test.com");
+            verify(appUserRepository).save(user);
+            assertThat(response.email()).isEqualTo("new@test.com");
+            assertThat(response.firstName()).isEqualTo("Mario");
+            assertThat(response.lastName()).isEqualTo("Rossi");
+        }
+
+        @Test
+        @DisplayName("throws 404 when user not found")
+        void userNotFound() {
+            when(appUserRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> userService.updateProfile(
+                    USER_ID, new UpdateProfileRequest("new@test.com")))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
     }

@@ -65,7 +65,8 @@ class StudentFlowIntegrationTest {
         assertThat(token).isNotBlank();
 
         Map<String, Object> user = (Map<String, Object>) response.getBody().get("user");
-        assertThat(user.get("name")).isEqualTo("Alice Rossi");
+        assertThat(user.get("first_name")).isEqualTo("Alice");
+        assertThat(user.get("last_name")).isEqualTo("Rossi");
         assertThat(user.get("username")).isEqualTo("a.rossi");
         assertThat(user.get("class_name")).isEqualTo("Demo-2026");
     }
