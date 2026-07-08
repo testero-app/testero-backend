@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.27.0](https://github.com/testero-app/testero-backend/compare/v1.26.0...v1.27.0) (2026-07-08)
+
+
+### Features
+
+* split name into first_name/last_name, add PUT /users/me ([#199](https://github.com/testero-app/testero-backend/issues/199)) ([0a18a8f](https://github.com/testero-app/testero-backend/commit/0a18a8f8e9fc0409216c9f092d01c418ae9a9509))
+
 ## [1.26.0](https://github.com/testero-app/testero-backend/compare/v1.25.0...v1.26.0) (2026-07-07)
 
 
