@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.28.0](https://github.com/testero-app/testero-backend/compare/v1.27.0...v1.28.0) (2026-07-08)
+
+
+### Features
+
+* add in-app notification system ([#201](https://github.com/testero-app/testero-backend/issues/201)) ([5cd98d4](https://github.com/testero-app/testero-backend/commit/5cd98d41de1dc387fa7fba9fda6997c43d2d03c1))
+
 ## [1.27.0](https://github.com/testero-app/testero-backend/compare/v1.26.0...v1.27.0) (2026-07-08)
 
 
