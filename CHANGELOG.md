@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.30.0](https://github.com/testero-app/testero-backend/compare/v1.29.0...v1.30.0) (2026-07-12)
+
+
+### Features
+
+* difficulty-weighted mastery + date filter on competencies ([#207](https://github.com/testero-app/testero-backend/issues/207)) ([7c99fb5](https://github.com/testero-app/testero-backend/commit/7c99fb53fdabe43dc9177320a162a70a1bb06c5f))
+
+
+### Bug Fixes
+
+* add question-subject links and topic to dev seed data ([#205](https://github.com/testero-app/testero-backend/issues/205)) ([1970713](https://github.com/testero-app/testero-backend/commit/1970713bd4ddbfe2660f68bf62c2e401581c1830))
+
 ## [1.29.0](https://github.com/testero-app/testero-backend/compare/v1.28.0...v1.29.0) (2026-07-08)
 
 
