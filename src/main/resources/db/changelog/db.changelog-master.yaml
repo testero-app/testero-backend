@@ -93,3 +93,5 @@ databaseChangeLog:
       file: db/changelog/v1.7/015-add-parent-to-topic.yaml
   - include:
       file: db/changelog/v1.7/016-seed-dev-question-subjects.yaml
+  - include:
+      file: db/changelog/v1.7/017-difficulty-cleanup-and-snapshot.yaml

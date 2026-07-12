@@ -4,21 +4,25 @@ import app.testero.dto.CompetencyResponse;
 import app.testero.dto.CompetencyResponse.SubjectMastery;
 import app.testero.dto.CompetencyResponse.TopicMastery;
 import app.testero.entity.assessment.AssessmentType;
+import app.testero.entity.assessment.Difficulty;
 import app.testero.entity.assessment.Subject;
 import app.testero.entity.assessment.Topic;
 import app.testero.entity.assessment.TopicSubject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
+import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.SubmissionStatus;
 import app.testero.entity.submission.UserAnswer;
 import app.testero.repository.AssessmentSnapshotRepository;
+import app.testero.repository.QuestionSnapshotRepository;
 import app.testero.repository.QuestionSnapshotSubjectRepository;
 import app.testero.repository.SubjectRepository;
 import app.testero.repository.SubmissionRepository;
 import app.testero.repository.TopicRepository;
 import app.testero.repository.TopicSubjectRepository;
 import app.testero.repository.UserAnswerRepository;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +39,7 @@ public class CompetencyService {
     private final SubmissionRepository submissionRepository;
     private final UserAnswerRepository userAnswerRepository;
     private final QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
+    private final QuestionSnapshotRepository questionSnapshotRepository;
     private final AssessmentSnapshotRepository assessmentSnapshotRepository;
     private final TopicRepository topicRepository;
     private final TopicSubjectRepository topicSubjectRepository;
@@ -44,6 +49,7 @@ public class CompetencyService {
             SubmissionRepository submissionRepository,
             UserAnswerRepository userAnswerRepository,
             QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository,
+            QuestionSnapshotRepository questionSnapshotRepository,
             AssessmentSnapshotRepository assessmentSnapshotRepository,
             TopicRepository topicRepository,
             TopicSubjectRepository topicSubjectRepository,
@@ -51,6 +57,7 @@ public class CompetencyService {
         this.submissionRepository = submissionRepository;
         this.userAnswerRepository = userAnswerRepository;
         this.questionSnapshotSubjectRepository = questionSnapshotSubjectRepository;
+        this.questionSnapshotRepository = questionSnapshotRepository;
         this.assessmentSnapshotRepository = assessmentSnapshotRepository;
         this.topicRepository = topicRepository;
         this.topicSubjectRepository = topicSubjectRepository;
@@ -58,12 +65,26 @@ public class CompetencyService {
     }
 
     @Transactional(readOnly = true)
-    public CompetencyResponse calculateMastery(UUID userId) {
+    public CompetencyResponse calculateMastery(UUID userId, LocalDateTime from, LocalDateTime to) {
         // 1. Get completed submissions (SUBMITTED or AUTO_CLOSED)
         List<Submission> submissions = submissionRepository
                 .findByUserIdAndStatusInOrderBySubmittedAtDesc(
                         userId,
                         List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED));
+
+        // Filter by date range if provided
+        if (from != null) {
+            submissions = submissions.stream()
+                    .filter(s -> s.getSubmittedAt() != null
+                            && !s.getSubmittedAt().isBefore(from))
+                    .toList();
+        }
+        if (to != null) {
+            submissions = submissions.stream()
+                    .filter(s -> s.getSubmittedAt() != null
+                            && !s.getSubmittedAt().isAfter(to))
+                    .toList();
+        }
 
         if (submissions.isEmpty()) {
             return buildEmptyResponse();
@@ -115,9 +136,16 @@ public class CompetencyService {
         Map<UUID, List<QuestionSnapshotSubject>> subjectsByQuestion = qsSubjects.stream()
                 .collect(Collectors.groupingBy(QuestionSnapshotSubject::getQuestionSnapshotId));
 
-        // 5. Calculate mastery per subject: correct / total * 100
+        // 5. Fetch question snapshots to get difficulty weights
+        List<QuestionSnapshot> questionSnapshots = questionSnapshotRepository
+                .findByIdIn(questionSnapshotIds);
+        Map<UUID, Difficulty> difficultyByQuestion = questionSnapshots.stream()
+                .collect(Collectors.toMap(QuestionSnapshot::getId, qs ->
+                        qs.getDifficulty() != null ? qs.getDifficulty() : Difficulty.BEGINNER));
+
+        // 6. Calculate difficulty-weighted mastery per subject
         //    Each answer contributes to all subjects linked to its question
-        Map<UUID, int[]> subjectStats = new HashMap<>(); // subjectId -> [correct, total]
+        Map<UUID, double[]> subjectStats = new HashMap<>(); // subjectId -> [weightedCorrect, weightedTotal]
 
         for (UserAnswer answer : allAnswers) {
             List<QuestionSnapshotSubject> links = subjectsByQuestion
@@ -125,25 +153,38 @@ public class CompetencyService {
             if (links == null || answer.getIsCorrect() == null) {
                 continue;
             }
+            double weight = difficultyWeight(
+                    difficultyByQuestion.get(answer.getQuestionSnapshotId()));
             for (QuestionSnapshotSubject link : links) {
-                int[] stats = subjectStats.computeIfAbsent(
-                        link.getSubjectId(), k -> new int[]{0, 0});
-                stats[1]++; // total
+                double[] stats = subjectStats.computeIfAbsent(
+                        link.getSubjectId(), k -> new double[]{0.0, 0.0});
+                stats[1] += weight; // weighted total
                 if (Boolean.TRUE.equals(answer.getIsCorrect())) {
-                    stats[0]++; // correct
+                    stats[0] += weight; // weighted correct
                 }
             }
         }
 
-        // 6. Build topic hierarchy with mastery
+        // 7. Build topic hierarchy with mastery
         return buildResponse(subjectStats);
+    }
+
+    static double difficultyWeight(Difficulty difficulty) {
+        if (difficulty == null) {
+            return 1.0;
+        }
+        return switch (difficulty) {
+            case BEGINNER -> 1.0;
+            case INTERMEDIATE -> 1.5;
+            case ADVANCED -> 2.0;
+        };
     }
 
     private CompetencyResponse buildEmptyResponse() {
         return buildResponse(Map.of());
     }
 
-    private CompetencyResponse buildResponse(Map<UUID, int[]> subjectStats) {
+    private CompetencyResponse buildResponse(Map<UUID, double[]> subjectStats) {
         // Load all enabled topics
         List<Topic> allTopics = topicRepository.findByEnabledTrueOrderByPositionAsc();
 
@@ -187,7 +228,7 @@ public class CompetencyService {
             Map<UUID, List<Topic>> childrenByParent,
             Map<UUID, List<TopicSubject>> topicSubjectMap,
             Map<UUID, Subject> subjectMap,
-            Map<UUID, int[]> subjectStats) {
+            Map<UUID, double[]> subjectStats) {
 
         // Build subject mastery list for this topic
         List<TopicSubject> topicSubjects = topicSubjectMap
@@ -229,12 +270,12 @@ public class CompetencyService {
                 subjectMasteries);
     }
 
-    private int calculateSubjectMastery(UUID subjectId, Map<UUID, int[]> subjectStats) {
-        int[] stats = subjectStats.get(subjectId);
+    private int calculateSubjectMastery(UUID subjectId, Map<UUID, double[]> subjectStats) {
+        double[] stats = subjectStats.get(subjectId);
         if (stats == null || stats[1] == 0) {
             return 0;
         }
-        return Math.round((float) stats[0] / stats[1] * 100);
+        return (int) Math.round(stats[0] / stats[1] * 100);
     }
 
     private int calculateTopicMastery(

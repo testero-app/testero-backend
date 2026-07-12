@@ -2,15 +2,18 @@ package app.testero.service;
 
 import app.testero.dto.CompetencyResponse;
 import app.testero.entity.assessment.AssessmentType;
+import app.testero.entity.assessment.Difficulty;
 import app.testero.entity.assessment.Subject;
 import app.testero.entity.assessment.Topic;
 import app.testero.entity.assessment.TopicSubject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
+import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.SubmissionStatus;
 import app.testero.entity.submission.UserAnswer;
 import app.testero.repository.AssessmentSnapshotRepository;
+import app.testero.repository.QuestionSnapshotRepository;
 import app.testero.repository.QuestionSnapshotSubjectRepository;
 import app.testero.repository.SubjectRepository;
 import app.testero.repository.SubmissionRepository;
@@ -40,6 +43,7 @@ class CompetencyServiceTest {
     @Mock SubmissionRepository submissionRepository;
     @Mock UserAnswerRepository userAnswerRepository;
     @Mock QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
+    @Mock QuestionSnapshotRepository questionSnapshotRepository;
     @Mock AssessmentSnapshotRepository assessmentSnapshotRepository;
     @Mock TopicRepository topicRepository;
     @Mock TopicSubjectRepository topicSubjectRepository;
@@ -88,7 +92,7 @@ class CompetencyServiceTest {
         when(topicSubjectRepository.findByTopicIdInOrderByPositionAsc(any()))
                 .thenReturn(List.of());
 
-        CompetencyResponse response = competencyService.calculateMastery(USER_ID);
+        CompetencyResponse response = competencyService.calculateMastery(USER_ID, null, null);
 
         assertThat(response.topics()).hasSize(1);
         assertThat(response.topics().getFirst().mastery()).isZero();
@@ -121,7 +125,7 @@ class CompetencyServiceTest {
         when(topicSubjectRepository.findByTopicIdInOrderByPositionAsc(any()))
                 .thenReturn(List.of());
 
-        CompetencyResponse response = competencyService.calculateMastery(USER_ID);
+        CompetencyResponse response = competencyService.calculateMastery(USER_ID, null, null);
 
         assertThat(response.topics()).hasSize(1);
         assertThat(response.topics().getFirst().mastery()).isZero();
@@ -155,14 +159,22 @@ class CompetencyServiceTest {
                         createQSSubject(Q3, SUBJECT_1)
                 ));
 
+        // All BEGINNER difficulty (weight 1.0)
+        when(questionSnapshotRepository.findByIdIn(any()))
+                .thenReturn(List.of(
+                        createQuestionSnapshot(Q1, null),
+                        createQuestionSnapshot(Q2, null),
+                        createQuestionSnapshot(Q3, null)
+                ));
+
         stubTopicHierarchy();
 
-        CompetencyResponse response = competencyService.calculateMastery(USER_ID);
+        CompetencyResponse response = competencyService.calculateMastery(USER_ID, null, null);
 
         assertThat(response.topics()).hasSize(1);
         var topicMastery = response.topics().getFirst();
 
-        // Subject 1: 2/3 = 67%
+        // Subject 1: 2/3 = 67% (all BEGINNER, weight 1.0 each)
         var s1 = topicMastery.subjects().stream()
                 .filter(s -> s.id().equals(SUBJECT_1.toString()))
                 .findFirst().orElseThrow();
@@ -201,9 +213,12 @@ class CompetencyServiceTest {
                         createQSSubject(Q1, SUBJECT_2)
                 ));
 
+        when(questionSnapshotRepository.findByIdIn(any()))
+                .thenReturn(List.of(createQuestionSnapshot(Q1, null)));
+
         stubTopicHierarchy();
 
-        CompetencyResponse response = competencyService.calculateMastery(USER_ID);
+        CompetencyResponse response = competencyService.calculateMastery(USER_ID, null, null);
 
         var topicMastery = response.topics().getFirst();
         assertThat(topicMastery.subjects()).hasSize(2);
@@ -244,6 +259,9 @@ class CompetencyServiceTest {
         when(questionSnapshotSubjectRepository.findByQuestionSnapshotIdIn(any()))
                 .thenReturn(List.of(createQSSubject(Q1, childSubjectId)));
 
+        when(questionSnapshotRepository.findByIdIn(any()))
+                .thenReturn(List.of(createQuestionSnapshot(Q1, null)));
+
         // Topic hierarchy: root topic has no subjects, child topic has childSubject
         when(topicRepository.findByEnabledTrueOrderByPositionAsc())
                 .thenReturn(List.of(topic, childTopic));
@@ -258,7 +276,7 @@ class CompetencyServiceTest {
         when(subjectRepository.findByIdIn(any()))
                 .thenReturn(List.of(childSubject));
 
-        CompetencyResponse response = competencyService.calculateMastery(USER_ID);
+        CompetencyResponse response = competencyService.calculateMastery(USER_ID, null, null);
 
         assertThat(response.topics()).hasSize(1);
         var root = response.topics().getFirst();
@@ -299,6 +317,13 @@ class CompetencyServiceTest {
         answer.setType("SINGLE_CHOICE");
         answer.setIsCorrect(correct);
         return answer;
+    }
+
+    private QuestionSnapshot createQuestionSnapshot(UUID id, Difficulty difficulty) {
+        QuestionSnapshot qs = new QuestionSnapshot();
+        qs.setId(id);
+        qs.setDifficulty(difficulty);
+        return qs;
     }
 
     private QuestionSnapshotSubject createQSSubject(UUID questionSnapshotId, UUID subjectId) {

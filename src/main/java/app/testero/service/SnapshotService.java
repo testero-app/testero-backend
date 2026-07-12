@@ -192,6 +192,7 @@ public class SnapshotService {
             qs.setExplanation(q.getExplanation());
             qs.setPosition(q.getPosition());
             qs.setPoints(q.getPoints());
+            qs.setDifficulty(q.getDifficulty());
             qs = questionSnapshotRepository.save(qs);
 
             List<OptionTemplate> qOptions = optionsByQuestion.getOrDefault(q.getId(), List.of());
