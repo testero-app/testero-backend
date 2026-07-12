@@ -57,7 +57,7 @@ class CompetencyControllerTest {
                 new SubjectMastery("s2", "Cicli", 60)
         );
         var topic = new TopicMastery("t1", "Fondamenti Python I", 70, List.of(), subjects);
-        when(competencyService.calculateMastery(USER_ID))
+        when(competencyService.calculateMastery(USER_ID, null, null))
                 .thenReturn(new CompetencyResponse(List.of(topic)));
 
         mockMvc.perform(get("/competencies").with(jwt()))
@@ -74,7 +74,7 @@ class CompetencyControllerTest {
     @Test
     @DisplayName("GET /competencies empty mastery returns 200 with empty topics")
     void empty() throws Exception {
-        when(competencyService.calculateMastery(USER_ID))
+        when(competencyService.calculateMastery(USER_ID, null, null))
                 .thenReturn(new CompetencyResponse(List.of()));
 
         mockMvc.perform(get("/competencies").with(jwt()))

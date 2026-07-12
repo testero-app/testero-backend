@@ -116,7 +116,7 @@ public class TopicService {
                     switch (d) {
                         case BEGINNER -> base++;
                         case INTERMEDIATE -> inter++;
-                        case ADVANCED, EXPERT -> adv++;
+                        case ADVANCED -> adv++;
                         default -> base++;
                     }
                 }
@@ -190,7 +190,7 @@ public class TopicService {
                 switch (d) {
                     case BEGINNER -> base++;
                     case INTERMEDIATE -> inter++;
-                    case ADVANCED, EXPERT -> adv++;
+                    case ADVANCED -> adv++;
                     default -> base++;
                 }
             }
