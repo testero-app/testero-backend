@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.7-017
+      author: testero
+      comment: >
+        Remove EXPERT from difficulty values, add difficulty to
+        question_snapshot for competency weighting.
+      changes:
+        # Migrate any EXPERT values to ADVANCED
+        - sql:
+            sql: >
+              UPDATE assessment_template
+              SET difficulty = 'ADVANCED'
+              WHERE difficulty = 'EXPERT';
+
+        - sql:
+            sql: >
+              UPDATE assessment_snapshot
+              SET difficulty = 'ADVANCED'
+              WHERE difficulty = 'EXPERT';
+
+        - sql:
+            sql: >
+              UPDATE question_template
+              SET difficulty = 'ADVANCED'
+              WHERE difficulty = 'EXPERT';
+
+        # Add difficulty to question_snapshot
+        - addColumn:
+            tableName: question_snapshot
+            columns:
+              - column:
+                  name: difficulty
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: true
