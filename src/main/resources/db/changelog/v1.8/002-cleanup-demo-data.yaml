@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.8-002-cleanup-demo-data
+      author: testero
+      context: dev
+      comment: >
+        Remove the legacy "Programming Basics — Demo" seed data, superseded by
+        the Python Certification content seeded in v1.8-001. The original seed
+        files (50/60/65/70) are left untouched so that the checksums of the
+        already-applied changesets that reference them stay valid.
+      changes:
+        - sqlFile:
+            path: db/seed/dev/85_cleanup_demo_data.sql
+            splitStatements: false
