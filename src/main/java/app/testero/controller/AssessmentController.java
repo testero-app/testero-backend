@@ -8,6 +8,7 @@ import app.testero.entity.user.StudentProfile;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.StudentProfileRepository;
 import app.testero.security.UserPrincipal;
+import app.testero.service.AccessService;
 import app.testero.service.AssessmentService;
 import app.testero.service.SnapshotService;
 import app.testero.service.SubmissionService;
@@ -33,15 +34,18 @@ public class AssessmentController {
     private final SubmissionService submissionService;
     private final SnapshotService snapshotService;
     private final StudentProfileRepository studentProfileRepository;
+    private final AccessService accessService;
 
     public AssessmentController(AssessmentService assessmentService,
                                 SubmissionService submissionService,
                                 SnapshotService snapshotService,
-                                StudentProfileRepository studentProfileRepository) {
+                                StudentProfileRepository studentProfileRepository,
+                                AccessService accessService) {
         this.assessmentService = assessmentService;
         this.submissionService = submissionService;
         this.snapshotService = snapshotService;
         this.studentProfileRepository = studentProfileRepository;
+        this.accessService = accessService;
     }
 
     @GetMapping
@@ -79,10 +83,20 @@ public class AssessmentController {
         return ResponseEntity.ok(assessmentService.getAssessmentQuestions(snapshotId));
     }
 
+    /**
+     * Publishing freezes an assessment into a snapshot that students can then be made to
+     * sit. It is a teaching action, never a student one — until this check existed, any
+     * authenticated user could call it, students included.
+     *
+     * <p>Ownership ("only the teacher who owns this assessment may publish it") cannot be
+     * enforced yet: {@code assessment_template} has no owner column. See #212.
+     */
     @PostMapping("/{assessmentId}/publish")
     public ResponseEntity<Void> publishAssessment(
             @PathVariable UUID assessmentId,
             @AuthenticationPrincipal UserPrincipal principal) {
+        accessService.requireAnyRole(principal.userId(),
+                AccessService.ROLE_TEACHER, AccessService.ROLE_ADMIN);
         snapshotService.publishSnapshot(assessmentId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }

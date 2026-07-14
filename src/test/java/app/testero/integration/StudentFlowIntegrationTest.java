@@ -18,11 +18,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +42,9 @@ class StudentFlowIntegrationTest {
 
     @Autowired
     TestRestTemplate rest;
+
+    @Autowired
+    JdbcTemplate jdbc;
 
     private String token;
     private String assessmentId;
@@ -326,7 +331,53 @@ class StudentFlowIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
+    // ── 10. Publishing is not a student action ─────────────────────
+
+    @Test
+    @Order(10)
+    @DisplayName("POST /assessments/{id}/publish as a student → 403")
+    void studentCannotPublish() {
+        ResponseEntity<Map> response = rest.exchange(
+                "/assessments/{id}/publish", HttpMethod.POST,
+                withAuth(null), Map.class, assessmentId);
+
+        assertThat(response.getStatusCode())
+                .as("a student must never be able to publish an assessment")
+                .isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("POST /assessments/{id}/publish as a teacher → 201")
+    void teacherCanPublish() {
+        String teacherToken = loginAs("teacher");
+
+        // publish takes a template id, whereas GET /assessments returns snapshot ids,
+        // so resolve the template the seeded assessment was published from.
+        UUID templateId = jdbc.queryForObject(
+                "SELECT id FROM assessment_template WHERE title = ?",
+                UUID.class, "Python Certification Exam Practice");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(teacherToken);
+        ResponseEntity<Void> response = rest.exchange(
+                "/assessments/{id}/publish", HttpMethod.POST,
+                new HttpEntity<>(null, headers), Void.class, templateId);
+
+        assertThat(response.getStatusCode())
+                .as("a teacher is authorized to publish (401/403 would mean the role check is wrong)")
+                .isEqualTo(HttpStatus.CREATED);
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────
+
+    private String loginAs(String username) {
+        ResponseEntity<Map> response = rest.postForEntity(
+                "/auth/login", Map.of("username", username, "password", "password"), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return (String) response.getBody().get("token");
+    }
 
     private HttpEntity<Object> withAuth(Object body) {
         HttpHeaders headers = new HttpHeaders();
