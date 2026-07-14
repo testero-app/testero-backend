@@ -112,8 +112,11 @@ class StudentFlowIntegrationTest {
 
         Map<String, Object> scoring =
                 (Map<String, Object>) response.getBody().get("scoring");
+        // Scoring of the seeded "Python Certification Exam Practice": a PCEP-style
+        // simulation, so a wrong answer costs nothing. The retired demo assessment
+        // this test used to pick up scored -0.25 per wrong answer.
         assertThat(scoring.get("pointsPerCorrect")).isEqualTo(1.0);
-        assertThat(scoring.get("pointsPerWrong")).isEqualTo(-0.25);
+        assertThat(scoring.get("pointsPerWrong")).isEqualTo(0.0);
     }
 
     // ── 4. Get questions ───────────────────────────────────────────
