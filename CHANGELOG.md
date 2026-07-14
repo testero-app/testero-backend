@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.31.1](https://github.com/testero-app/testero-backend/compare/v1.31.0...v1.31.1) (2026-07-14)
+
+
+### Bug Fixes
+
+* **security:** restrict assessment publishing to teachers and admins ([#213](https://github.com/testero-app/testero-backend/issues/213)) ([6e27ba5](https://github.com/testero-app/testero-backend/commit/6e27ba5f1e9eb1bfba226d5fc997d52aff558a58))
+
 ## [1.31.0](https://github.com/testero-app/testero-backend/compare/v1.30.0...v1.31.0) (2026-07-14)
 
 
