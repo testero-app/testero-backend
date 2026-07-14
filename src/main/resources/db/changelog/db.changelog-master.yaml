@@ -95,3 +95,9 @@ databaseChangeLog:
       file: db/changelog/v1.7/016-seed-dev-question-subjects.yaml
   - include:
       file: db/changelog/v1.7/017-difficulty-cleanup-and-snapshot.yaml
+  - include:
+      file: db/changelog/v1.8/001-seed-python-cert.yaml
+  - include:
+      file: db/changelog/v1.8/002-cleanup-demo-data.yaml
+  - include:
+      file: db/changelog/v1.8/003-publish-python-cert-dev.yaml
