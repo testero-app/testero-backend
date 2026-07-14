@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.8-001-seed-python-cert
+      author: testero
+      context: prod,dev
+      comment: >
+        Seed Python Certification Exam Practice assessment template
+        with 67 questions, 23 subjects, and 3-level topic hierarchy.
+        This is product content, not demo data: it ships to every
+        environment, so it lives under db/seed/content/.
+      changes:
+        - sqlFile:
+            path: db/seed/content/80_python_cert_data.sql
+            splitStatements: false
