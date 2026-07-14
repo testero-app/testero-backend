@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.8-003-publish-python-cert-dev
+      author: testero
+      context: dev
+      comment: >
+        Publish a snapshot of the Python Certification assessment and assign it to the
+        Demo-2026 class, so a freshly seeded dev database has an assessment a student can
+        sit. In production this is a teacher action in the app, never a migration.
+      changes:
+        - sqlFile:
+            path: db/seed/dev/86_publish_python_cert.sql
+            splitStatements: false
