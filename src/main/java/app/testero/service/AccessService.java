@@ -1,7 +1,10 @@
 package app.testero.service;
 
+import app.testero.entity.assessment.AssessmentTemplate;
 import app.testero.exception.ForbiddenException;
+import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AppUserRoleRepository;
+import app.testero.repository.AssessmentTemplateRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,9 +33,12 @@ public class AccessService {
     private static final Logger LOG = LoggerFactory.getLogger(AccessService.class);
 
     private final AppUserRoleRepository appUserRoleRepository;
+    private final AssessmentTemplateRepository assessmentTemplateRepository;
 
-    public AccessService(AppUserRoleRepository appUserRoleRepository) {
+    public AccessService(AppUserRoleRepository appUserRoleRepository,
+                         AssessmentTemplateRepository assessmentTemplateRepository) {
         this.appUserRoleRepository = appUserRoleRepository;
+        this.assessmentTemplateRepository = assessmentTemplateRepository;
     }
 
     @Transactional(readOnly = true)
@@ -49,6 +55,45 @@ public class AccessService {
         if (!hasAnyRole(userId, roles)) {
             LOG.warn("Forbidden: userId={} lacks any of {}", userId, List.of(roles));
             throw new ForbiddenException("You are not allowed to perform this action");
+        }
+    }
+
+    /**
+     * Authorize publishing (and, later, editing) of an assessment template.
+     *
+     * <ul>
+     *   <li>an admin may act on any template, including platform content (owner is null);</li>
+     *   <li>a teacher may act only on a template they own;</li>
+     *   <li>anyone else is forbidden.</li>
+     * </ul>
+     *
+     * <p>Non-teachers/non-admins (e.g. students) are rejected before the template is looked
+     * up, so probing this endpoint cannot reveal which template ids exist.
+     *
+     * @throws ForbiddenException       if the caller may not act on this template → 403
+     * @throws ResourceNotFoundException if the template does not exist → 404
+     */
+    @Transactional(readOnly = true)
+    public void requireCanManageAssessment(UUID userId, UUID templateId) {
+        List<String> roles = appUserRoleRepository.findRoleNamesByUserId(userId);
+        boolean admin = roles.contains(ROLE_ADMIN);
+        boolean teacher = roles.contains(ROLE_TEACHER);
+
+        if (!admin && !teacher) {
+            LOG.warn("Forbidden: userId={} is neither TEACHER nor ADMIN", userId);
+            throw new ForbiddenException("You are not allowed to perform this action");
+        }
+        if (admin) {
+            return;
+        }
+
+        // Teacher: allowed only on a template they own. Platform content (owner null) is
+        // admin-only, so a teacher is forbidden there too.
+        AssessmentTemplate template = assessmentTemplateRepository.findById(templateId)
+                .orElseThrow(() -> new ResourceNotFoundException("Assessment not found"));
+        if (!userId.equals(template.getOwnerId())) {
+            LOG.warn("Forbidden: teacher userId={} does not own template={}", userId, templateId);
+            throw new ForbiddenException("You do not own this assessment");
         }
     }
 }

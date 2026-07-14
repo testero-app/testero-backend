@@ -1,0 +1,56 @@
+databaseChangeLog:
+  # An assessment template belongs 1:1 to the teacher who created it. That teacher is the
+  # only one who may edit and publish it (see #23/#24/#25), and this column is what makes
+  # that rule expressible at all.
+  #
+  # owner_id is NULLABLE on purpose, and NULL carries a precise meaning:
+  # "platform content, managed only by an admin". Two cases collapse into it —
+  #   * seeded platform content that never had a teacher (e.g. Python Certification), and
+  #   * a template orphaned when its owner's account is deleted.
+  # The ON DELETE SET NULL below is what produces the second case automatically: delete the
+  # teacher, and their templates become admin-managed without any application code running.
+  - changeSet:
+      id: v1.9-001-add-assessment-owner
+      author: testero
+      comment: >
+        Add assessment_template.owner_id → app_user(id), nullable, ON DELETE SET NULL.
+        NULL means platform content (admin-managed).
+      changes:
+        - addColumn:
+            tableName: assessment_template
+            columns:
+              - column:
+                  name: owner_id
+                  type: uuid
+        - addForeignKeyConstraint:
+            constraintName: fk_assessment_template_owner
+            baseTableName: assessment_template
+            baseColumnNames: owner_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            onDelete: SET NULL
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: assessment_template
+            constraintName: fk_assessment_template_owner
+        - dropColumn:
+            tableName: assessment_template
+            columnName: owner_id
+
+  - changeSet:
+      id: v1.9-002-index-assessment-owner
+      author: testero
+      comment: >
+        PostgreSQL does not index foreign key columns automatically. This one is walked by
+        every "the assessments I own" query, so it gets an index.
+      changes:
+        - createIndex:
+            indexName: idx_assessment_template_owner
+            tableName: assessment_template
+            columns:
+              - column:
+                  name: owner_id
+      rollback:
+        - dropIndex:
+            indexName: idx_assessment_template_owner
+            tableName: assessment_template

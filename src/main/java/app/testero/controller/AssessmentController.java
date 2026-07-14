@@ -85,18 +85,14 @@ public class AssessmentController {
 
     /**
      * Publishing freezes an assessment into a snapshot that students can then be made to
-     * sit. It is a teaching action, never a student one — until this check existed, any
-     * authenticated user could call it, students included.
-     *
-     * <p>Ownership ("only the teacher who owns this assessment may publish it") cannot be
-     * enforced yet: {@code assessment_template} has no owner column. See #212.
+     * sit. Only the teacher who owns the template may publish it; an admin may publish any
+     * template, including platform content. Everyone else — students included — is forbidden.
      */
     @PostMapping("/{assessmentId}/publish")
     public ResponseEntity<Void> publishAssessment(
             @PathVariable UUID assessmentId,
             @AuthenticationPrincipal UserPrincipal principal) {
-        accessService.requireAnyRole(principal.userId(),
-                AccessService.ROLE_TEACHER, AccessService.ROLE_ADMIN);
+        accessService.requireCanManageAssessment(principal.userId(), assessmentId);
         snapshotService.publishSnapshot(assessmentId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
