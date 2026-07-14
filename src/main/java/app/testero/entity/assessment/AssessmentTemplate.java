@@ -64,6 +64,14 @@ public class AssessmentTemplate {
     @Column(name = "assessment_description", columnDefinition = "text")
     private String assessmentDescription;
 
+    /**
+     * The teacher who owns this template, or {@code null} for platform content that only an
+     * admin manages. Cleared automatically when the owning account is deleted
+     * (ON DELETE SET NULL).
+     */
+    @Column(name = "owner_id")
+    private UUID ownerId;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
