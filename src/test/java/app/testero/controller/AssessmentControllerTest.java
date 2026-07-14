@@ -16,6 +16,7 @@ import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.StudentProfileRepository;
 import app.testero.security.JwtService;
 import app.testero.security.UserPrincipal;
+import app.testero.service.AccessService;
 import app.testero.service.AssessmentService;
 import app.testero.service.SnapshotService;
 import app.testero.service.SubmissionService;
@@ -56,6 +57,7 @@ class AssessmentControllerTest {
     @MockitoBean SubmissionService submissionService;
     @MockitoBean SnapshotService snapshotService;
     @MockitoBean StudentProfileRepository studentProfileRepository;
+    @MockitoBean AccessService accessService;
     @MockitoBean JwtService jwtService;
 
     private static final UUID USER_ID = UUID.fromString("aa000000-0000-0000-0000-000000000001");

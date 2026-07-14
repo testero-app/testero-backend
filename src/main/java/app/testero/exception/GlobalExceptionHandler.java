@@ -18,6 +18,12 @@ public class GlobalExceptionHandler {
                 .body(Map.of("detail", e.getMessage()));
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, String>> handleForbidden(ForbiddenException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("detail", e.getMessage()));
+    }
+
     @ExceptionHandler(AuthService.InvalidCredentialsException.class)
     public ResponseEntity<Map<String, String>> handleInvalidCredentials(AuthService.InvalidCredentialsException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
