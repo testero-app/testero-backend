@@ -348,24 +348,42 @@ class StudentFlowIntegrationTest {
 
     @Test
     @Order(11)
-    @DisplayName("POST /assessments/{id}/publish as a teacher → 201")
-    void teacherCanPublish() {
-        String teacherToken = loginAs("teacher");
+    @DisplayName("POST /assessments/{id}/publish: a teacher publishes a template they own → 201")
+    void teacherPublishesOwnTemplate() {
+        UUID teacherId = jdbc.queryForObject(
+                "SELECT id FROM app_user WHERE username = ?", UUID.class, "teacher");
+        UUID templateId = insertTemplateOwnedBy(teacherId);
 
-        // publish takes a template id, whereas GET /assessments returns snapshot ids,
-        // so resolve the template the seeded assessment was published from.
-        UUID templateId = jdbc.queryForObject(
+        assertThat(publishAs("teacher", templateId))
+                .as("a teacher must be able to publish their own template")
+                .isEqualTo(HttpStatus.CREATED);
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("POST /assessments/{id}/publish: a teacher may not publish platform content → 403")
+    void teacherCannotPublishPlatformContent() {
+        // The seeded Python Certification is platform content (owner_id IS NULL); only an
+        // admin manages it. A teacher must not be able to publish it.
+        UUID platformTemplateId = jdbc.queryForObject(
                 "SELECT id FROM assessment_template WHERE title = ?",
                 UUID.class, "Python Certification Exam Practice");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(teacherToken);
-        ResponseEntity<Void> response = rest.exchange(
-                "/assessments/{id}/publish", HttpMethod.POST,
-                new HttpEntity<>(null, headers), Void.class, templateId);
+        assertThat(publishAs("teacher", platformTemplateId))
+                .as("platform content is admin-only")
+                .isEqualTo(HttpStatus.FORBIDDEN);
+    }
 
-        assertThat(response.getStatusCode())
-                .as("a teacher is authorized to publish (401/403 would mean the role check is wrong)")
+    @Test
+    @Order(13)
+    @DisplayName("POST /assessments/{id}/publish: an admin may publish platform content → 201")
+    void adminPublishesPlatformContent() {
+        UUID platformTemplateId = jdbc.queryForObject(
+                "SELECT id FROM assessment_template WHERE title = ?",
+                UUID.class, "Python Certification Exam Practice");
+
+        assertThat(publishAs("admin", platformTemplateId))
+                .as("an admin may publish any template, including platform content")
                 .isEqualTo(HttpStatus.CREATED);
     }
 
@@ -377,6 +395,28 @@ class StudentFlowIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         return (String) response.getBody().get("token");
+    }
+
+    /** Publish the given template as the given user; returns the HTTP status. */
+    private HttpStatus publishAs(String username, UUID templateId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(loginAs(username));
+        return (HttpStatus) rest.exchange(
+                "/assessments/{id}/publish", HttpMethod.POST,
+                new HttpEntity<>(null, headers), Void.class, templateId).getStatusCode();
+    }
+
+    /** A minimal assessment template owned by the given user; enough to be published. */
+    private UUID insertTemplateOwnedBy(UUID ownerId) {
+        UUID id = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO assessment_template (
+                  id, title, timer_minutes, questions_per_assessment,
+                  pts_correct, pts_wrong, pts_unanswered, type,
+                  shuffle_questions, shuffle_options, owner_id)
+                VALUES (?, 'Owned by teacher', 30, 5, 1.00, 0.00, 0.00, 'EXAM', false, false, ?)
+                """, id, ownerId);
+        return id;
     }
 
     private HttpEntity<Object> withAuth(Object body) {
