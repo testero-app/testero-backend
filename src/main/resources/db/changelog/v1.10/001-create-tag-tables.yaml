@@ -1,0 +1,130 @@
+databaseChangeLog:
+  # Teacher-scoped tag vocabulary for organising the question bank.
+  #
+  # A tag belongs to one teacher (tag.teacher_id): each teacher has their own vocabulary,
+  # never shared globally. UNIQUE(teacher_id, name) stops a teacher duplicating a tag, while
+  # letting two teachers each have a tag called "Hard". ON DELETE CASCADE because a personal
+  # vocabulary with no owner is meaningless — delete the teacher, their tags go with them.
+  #
+  # question_tag links a tag to a question_template (the editable bank), not to a snapshot
+  # (the frozen, already-administered copy). Mirrors the existing question_subject join.
+  - changeSet:
+      id: v1.10-001-create-tag
+      author: testero
+      comment: Teacher-owned tag vocabulary for the question bank.
+      changes:
+        - createTable:
+            tableName: tag
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_tag
+              - column:
+                  name: teacher_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addForeignKeyConstraint:
+            constraintName: fk_tag_teacher
+            baseTableName: tag
+            baseColumnNames: teacher_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addUniqueConstraint:
+            tableName: tag
+            columnNames: teacher_id, name
+            constraintName: uq_tag_teacher_name
+        - createIndex:
+            indexName: idx_tag_teacher
+            tableName: tag
+            columns:
+              - column:
+                  name: teacher_id
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_tag_updated_at
+              BEFORE UPDATE ON tag
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+      rollback:
+        - sql:
+            sql: DROP TRIGGER IF EXISTS trg_tag_updated_at ON tag;
+        - dropTable:
+            tableName: tag
+
+  - changeSet:
+      id: v1.10-002-create-question-tag
+      author: testero
+      comment: Many-to-many between question_template and tag.
+      changes:
+        - createTable:
+            tableName: question_tag
+            columns:
+              - column:
+                  name: question_template_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tag_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addPrimaryKey:
+            tableName: question_tag
+            columnNames: question_template_id, tag_id
+            constraintName: pk_question_tag
+        - addForeignKeyConstraint:
+            constraintName: fk_question_tag_question
+            baseTableName: question_tag
+            baseColumnNames: question_template_id
+            referencedTableName: question_template
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_question_tag_tag
+            baseTableName: question_tag
+            baseColumnNames: tag_id
+            referencedTableName: tag
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_question_tag_tag
+            tableName: question_tag
+            columns:
+              - column:
+                  name: tag_id
+        - sql:
+            sql: |
+              CREATE TRIGGER trg_question_tag_updated_at
+              BEFORE UPDATE ON question_tag
+              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+      rollback:
+        - sql:
+            sql: DROP TRIGGER IF EXISTS trg_question_tag_updated_at ON question_tag;
+        - dropTable:
+            tableName: question_tag

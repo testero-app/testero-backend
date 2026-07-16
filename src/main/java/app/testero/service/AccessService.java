@@ -1,10 +1,12 @@
 package app.testero.service;
 
 import app.testero.entity.assessment.AssessmentTemplate;
+import app.testero.entity.tag.Tag;
 import app.testero.exception.ForbiddenException;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AppUserRoleRepository;
 import app.testero.repository.AssessmentTemplateRepository;
+import app.testero.repository.TagRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -34,11 +36,14 @@ public class AccessService {
 
     private final AppUserRoleRepository appUserRoleRepository;
     private final AssessmentTemplateRepository assessmentTemplateRepository;
+    private final TagRepository tagRepository;
 
     public AccessService(AppUserRoleRepository appUserRoleRepository,
-                         AssessmentTemplateRepository assessmentTemplateRepository) {
+                         AssessmentTemplateRepository assessmentTemplateRepository,
+                         TagRepository tagRepository) {
         this.appUserRoleRepository = appUserRoleRepository;
         this.assessmentTemplateRepository = assessmentTemplateRepository;
+        this.tagRepository = tagRepository;
     }
 
     @Transactional(readOnly = true)
@@ -95,5 +100,35 @@ public class AccessService {
             LOG.warn("Forbidden: teacher userId={} does not own template={}", userId, templateId);
             throw new ForbiddenException("You do not own this assessment");
         }
+    }
+
+    /**
+     * Authorize managing a tag (rename, delete, attach to / detach from a question).
+     *
+     * <p>A tag is a teacher's private vocabulary: only its owner may touch it. An admin may
+     * touch any. Anyone else — and any teacher who is not the owner — is forbidden.
+     *
+     * @return the loaded tag, so the caller need not fetch it again
+     * @throws ForbiddenException        if the caller may not manage this tag → 403
+     * @throws ResourceNotFoundException if the tag does not exist → 404
+     */
+    @Transactional(readOnly = true)
+    public Tag requireCanManageTag(UUID userId, UUID tagId) {
+        List<String> roles = appUserRoleRepository.findRoleNamesByUserId(userId);
+        boolean admin = roles.contains(ROLE_ADMIN);
+        boolean teacher = roles.contains(ROLE_TEACHER);
+
+        if (!admin && !teacher) {
+            LOG.warn("Forbidden: userId={} is neither TEACHER nor ADMIN", userId);
+            throw new ForbiddenException("You are not allowed to perform this action");
+        }
+
+        Tag tag = tagRepository.findById(tagId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag not found"));
+        if (!admin && !userId.equals(tag.getTeacherId())) {
+            LOG.warn("Forbidden: teacher userId={} does not own tag={}", userId, tagId);
+            throw new ForbiddenException("You do not own this tag");
+        }
+        return tag;
     }
 }
