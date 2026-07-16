@@ -24,6 +24,12 @@ public class GlobalExceptionHandler {
                 .body(Map.of("detail", e.getMessage()));
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, String>> handleConflict(ConflictException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("detail", e.getMessage()));
+    }
+
     @ExceptionHandler(AuthService.InvalidCredentialsException.class)
     public ResponseEntity<Map<String, String>> handleInvalidCredentials(AuthService.InvalidCredentialsException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

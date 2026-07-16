@@ -103,3 +103,5 @@ databaseChangeLog:
       file: db/changelog/v1.8/003-publish-python-cert-dev.yaml
   - include:
       file: db/changelog/v1.9/001-add-assessment-owner.yaml
+  - include:
+      file: db/changelog/v1.10/001-create-tag-tables.yaml

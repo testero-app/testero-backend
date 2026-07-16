@@ -1,10 +1,12 @@
 package app.testero.service;
 
 import app.testero.entity.assessment.AssessmentTemplate;
+import app.testero.entity.tag.Tag;
 import app.testero.exception.ForbiddenException;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.AppUserRoleRepository;
 import app.testero.repository.AssessmentTemplateRepository;
+import app.testero.repository.TagRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,11 +33,15 @@ class AccessServiceTest {
     @Mock
     AssessmentTemplateRepository assessmentTemplateRepository;
 
+    @Mock
+    TagRepository tagRepository;
+
     @InjectMocks
     AccessService accessService;
 
     private static final UUID USER_ID = UUID.randomUUID();
     private static final UUID TEMPLATE_ID = UUID.randomUUID();
+    private static final UUID TAG_ID = UUID.randomUUID();
 
     private void grant(String... roles) {
         when(appUserRoleRepository.findRoleNamesByUserId(USER_ID)).thenReturn(List.of(roles));
@@ -47,6 +53,13 @@ class AccessServiceTest {
         template.setOwnerId(ownerId);
         lenient().when(assessmentTemplateRepository.findById(TEMPLATE_ID))
                 .thenReturn(Optional.of(template));
+    }
+
+    private void tagOwnedBy(UUID teacherId) {
+        Tag tag = new Tag();
+        tag.setId(TAG_ID);
+        tag.setTeacherId(teacherId);
+        lenient().when(tagRepository.findById(TAG_ID)).thenReturn(Optional.of(tag));
     }
 
     @Test
@@ -149,6 +162,57 @@ class AccessServiceTest {
         when(assessmentTemplateRepository.findById(TEMPLATE_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> accessService.requireCanManageAssessment(USER_ID, TEMPLATE_ID))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // ── requireCanManageTag ────────────────────────────────────────
+
+    @Test
+    @DisplayName("a teacher may manage a tag they own, and gets it back")
+    void teacherManagesOwnTag() {
+        grant("TEACHER");
+        tagOwnedBy(USER_ID);
+
+        Tag tag = accessService.requireCanManageTag(USER_ID, TAG_ID);
+        assertThat(tag.getTeacherId()).isEqualTo(USER_ID);
+    }
+
+    @Test
+    @DisplayName("a teacher may not manage another teacher's tag")
+    void teacherCannotManageOthersTag() {
+        grant("TEACHER");
+        tagOwnedBy(UUID.randomUUID());
+
+        assertThatThrownBy(() -> accessService.requireCanManageTag(USER_ID, TAG_ID))
+                .isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
+    @DisplayName("an admin may manage any tag")
+    void adminManagesAnyTag() {
+        grant("ADMIN");
+        tagOwnedBy(UUID.randomUUID());
+
+        assertThatCode(() -> accessService.requireCanManageTag(USER_ID, TAG_ID))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("a student is rejected before the tag is ever looked up")
+    void studentRejectedWithoutTagLookup() {
+        grant("STUDENT");
+
+        assertThatThrownBy(() -> accessService.requireCanManageTag(USER_ID, TAG_ID))
+                .isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
+    @DisplayName("a teacher acting on a non-existent tag gets a 404")
+    void teacherOnMissingTagGets404() {
+        grant("TEACHER");
+        when(tagRepository.findById(TAG_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> accessService.requireCanManageTag(USER_ID, TAG_ID))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 }
