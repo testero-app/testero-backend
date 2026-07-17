@@ -1,0 +1,37 @@
+databaseChangeLog:
+  # Rename tag.teacher_id → owner_id so that "owned by a teacher" is expressed one way across
+  # the schema, matching assessment_template.owner_id. The identity target is unchanged
+  # (app_user); this is purely a naming alignment.
+  #
+  # A follow-up changeset, not an edit of v1.10: that one is already merged, and editing it
+  # would change its checksum and break validation on any database that already applied it.
+  #
+  # Postgres keeps the FK, unique constraint and index valid across the column rename (they
+  # track the column by identity); only their names still say "teacher", so we rename those
+  # too for consistency with fk/uq/idx on assessment_template's owner.
+  - changeSet:
+      id: v1.11-001-rename-tag-owner
+      author: testero
+      comment: Rename tag.teacher_id → owner_id (and its fk/unique/index) for schema consistency.
+      changes:
+        - renameColumn:
+            tableName: tag
+            oldColumnName: teacher_id
+            newColumnName: owner_id
+            columnDataType: uuid
+        - sql:
+            sql: |
+              ALTER TABLE tag RENAME CONSTRAINT fk_tag_teacher TO fk_tag_owner;
+              ALTER TABLE tag RENAME CONSTRAINT uq_tag_teacher_name TO uq_tag_owner_name;
+              ALTER INDEX idx_tag_teacher RENAME TO idx_tag_owner;
+      rollback:
+        - sql:
+            sql: |
+              ALTER INDEX idx_tag_owner RENAME TO idx_tag_teacher;
+              ALTER TABLE tag RENAME CONSTRAINT uq_tag_owner_name TO uq_tag_teacher_name;
+              ALTER TABLE tag RENAME CONSTRAINT fk_tag_owner TO fk_tag_teacher;
+        - renameColumn:
+            tableName: tag
+            oldColumnName: owner_id
+            newColumnName: teacher_id
+            columnDataType: uuid

@@ -125,7 +125,7 @@ public class AccessService {
 
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tag not found"));
-        if (!admin && !userId.equals(tag.getTeacherId())) {
+        if (!admin && !userId.equals(tag.getOwnerId())) {
             LOG.warn("Forbidden: teacher userId={} does not own tag={}", userId, tagId);
             throw new ForbiddenException("You do not own this tag");
         }
