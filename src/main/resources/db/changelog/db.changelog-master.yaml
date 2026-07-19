@@ -105,3 +105,5 @@ databaseChangeLog:
       file: db/changelog/v1.9/001-add-assessment-owner.yaml
   - include:
       file: db/changelog/v1.10/001-create-tag-tables.yaml
+  - include:
+      file: db/changelog/v1.11/001-rename-tag-owner.yaml

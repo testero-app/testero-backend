@@ -49,19 +49,19 @@ public class TagService {
     public TagResponse create(UUID userId, String name) {
         accessService.requireAnyRole(userId, AccessService.ROLE_TEACHER, AccessService.ROLE_ADMIN);
         String trimmed = name.trim();
-        if (tagRepository.existsByTeacherIdAndName(userId, trimmed)) {
+        if (tagRepository.existsByOwnerIdAndName(userId, trimmed)) {
             throw new ConflictException("You already have a tag named '" + trimmed + "'");
         }
         Tag tag = new Tag();
         tag.setId(UUID.randomUUID());
-        tag.setTeacherId(userId);
+        tag.setOwnerId(userId);
         tag.setName(trimmed);
         return TagResponse.from(tagRepository.save(tag));
     }
 
     @Transactional(readOnly = true)
     public List<TagResponse> listOwn(UUID userId) {
-        return tagRepository.findByTeacherIdOrderByName(userId).stream()
+        return tagRepository.findByOwnerIdOrderByName(userId).stream()
                 .map(TagResponse::from)
                 .toList();
     }
@@ -71,7 +71,7 @@ public class TagService {
         Tag tag = accessService.requireCanManageTag(userId, tagId);
         String trimmed = name.trim();
         if (!trimmed.equals(tag.getName())
-                && tagRepository.existsByTeacherIdAndName(tag.getTeacherId(), trimmed)) {
+                && tagRepository.existsByOwnerIdAndName(tag.getOwnerId(), trimmed)) {
             throw new ConflictException("You already have a tag named '" + trimmed + "'");
         }
         tag.setName(trimmed);
