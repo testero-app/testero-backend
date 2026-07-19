@@ -55,10 +55,10 @@ class AccessServiceTest {
                 .thenReturn(Optional.of(template));
     }
 
-    private void tagOwnedBy(UUID teacherId) {
+    private void tagOwnedBy(UUID ownerId) {
         Tag tag = new Tag();
         tag.setId(TAG_ID);
-        tag.setTeacherId(teacherId);
+        tag.setOwnerId(ownerId);
         lenient().when(tagRepository.findById(TAG_ID)).thenReturn(Optional.of(tag));
     }
 
@@ -174,7 +174,7 @@ class AccessServiceTest {
         tagOwnedBy(USER_ID);
 
         Tag tag = accessService.requireCanManageTag(USER_ID, TAG_ID);
-        assertThat(tag.getTeacherId()).isEqualTo(USER_ID);
+        assertThat(tag.getOwnerId()).isEqualTo(USER_ID);
     }
 
     @Test

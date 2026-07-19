@@ -7,9 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TagRepository extends JpaRepository<Tag, UUID> {
 
-    List<Tag> findByTeacherIdOrderByName(UUID teacherId);
+    List<Tag> findByOwnerIdOrderByName(UUID ownerId);
 
-    boolean existsByTeacherIdAndName(UUID teacherId, String name);
+    boolean existsByOwnerIdAndName(UUID ownerId, String name);
 
     /** Tags attached to a question, ordered by name — for the question view. */
     List<Tag> findByIdInOrderByName(List<UUID> ids);

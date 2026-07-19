@@ -13,8 +13,9 @@ import lombok.Setter;
 /**
  * A tag in a teacher's private vocabulary for organising their question bank.
  *
- * <p>Scoped to one teacher via {@code teacherId}: tags are never shared globally. Two teachers
- * may each own a tag with the same name, but a single teacher cannot (UNIQUE teacher_id, name).
+ * <p>Owned by one teacher via {@code ownerId} (an {@code app_user}, gated to teachers by role):
+ * tags are never shared globally. Two teachers may each own a tag with the same name, but a
+ * single teacher cannot (UNIQUE owner_id, name). Mirrors {@code assessment_template.owner_id}.
  */
 @Entity
 @Table(name = "tag")
@@ -26,8 +27,8 @@ public class Tag {
     @Id
     private UUID id;
 
-    @Column(name = "teacher_id", nullable = false)
-    private UUID teacherId;
+    @Column(name = "owner_id", nullable = false)
+    private UUID ownerId;
 
     @Column(nullable = false, length = 50)
     private String name;
