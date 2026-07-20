@@ -148,6 +148,7 @@ public class SnapshotService {
         snapshot.setDifficulty(assessment.getDifficulty());
         snapshot.setType(assessment.getType());
         snapshot.setPassingScore(assessment.getPassingScore());
+        snapshot.setMaxAttempts(assessment.getMaxAttempts());
         snapshot.setPublishedAt(LocalDateTime.now());
         snapshot = snapshotRepository.save(snapshot);
 

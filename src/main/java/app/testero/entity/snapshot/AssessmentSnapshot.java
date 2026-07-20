@@ -60,6 +60,10 @@ public class AssessmentSnapshot {
     @Column(name = "passing_score")
     private BigDecimal passingScore;
 
+    /** Max attempts a student may make on this snapshot; {@code null} = unlimited. Frozen at publish. */
+    @Column(name = "max_attempts")
+    private Integer maxAttempts;
+
     @Column(name = "published_at", nullable = false)
     private LocalDateTime publishedAt;
 
