@@ -107,3 +107,5 @@ databaseChangeLog:
       file: db/changelog/v1.10/001-create-tag-tables.yaml
   - include:
       file: db/changelog/v1.11/001-rename-tag-owner.yaml
+  - include:
+      file: db/changelog/v1.12/001-add-max-attempts-to-snapshot.yaml
