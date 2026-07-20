@@ -25,4 +25,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     List<Submission> findByStatus(SubmissionStatus status);
 
     List<Submission> findByUserIdAndAssessmentSnapshotIdIn(UUID userId, List<UUID> snapshotIds);
+
+    /** How many attempts a user has made on a snapshot — one row per attempt, any status. */
+    long countByAssessmentSnapshotIdAndUserId(UUID assessmentSnapshotId, UUID userId);
 }

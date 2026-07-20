@@ -114,6 +114,19 @@ public class SubmissionService {
             );
         }
 
+        // Enforce the attempt limit frozen into the snapshot. null = unlimited. Checked only
+        // once past the idempotent branch above, so resuming an in-progress attempt never
+        // counts against the limit — every remaining submission here is a finished attempt.
+        Integer maxAttempts = snapshot.getMaxAttempts();
+        if (maxAttempts != null) {
+            long attemptsMade = submissionRepository
+                    .countByAssessmentSnapshotIdAndUserId(assessmentSnapshotId, userId);
+            if (attemptsMade >= maxAttempts) {
+                throw new IllegalSubmissionStateException(
+                        "Maximum number of attempts (" + maxAttempts + ") reached for this assessment");
+            }
+        }
+
         Submission submission = new Submission();
         submission.setUserId(userId);
         submission.setAssessmentSnapshotId(assessmentSnapshotId);

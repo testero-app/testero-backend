@@ -1,0 +1,24 @@
+databaseChangeLog:
+  # max_attempts is a rule of the assessment, like the timer and the scoring — and those are
+  # all frozen into the snapshot at publish time. It was the one rule left on the template
+  # only, so a teacher editing it after publish would retroactively change the limit for an
+  # administration already under way. Snapshot it too, so the rules a student plays under are
+  # fixed the moment the snapshot is published.
+  #
+  # Nullable = unlimited (unchanged default). Snapshots published before this migration keep
+  # NULL, i.e. unlimited — the current behaviour.
+  - changeSet:
+      id: v1.12-001-add-max-attempts-to-snapshot
+      author: testero
+      comment: Freeze max_attempts into assessment_snapshot (nullable = unlimited).
+      changes:
+        - addColumn:
+            tableName: assessment_snapshot
+            columns:
+              - column:
+                  name: max_attempts
+                  type: int
+      rollback:
+        - dropColumn:
+            tableName: assessment_snapshot
+            columnName: max_attempts
