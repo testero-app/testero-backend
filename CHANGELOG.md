@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.33.0](https://github.com/testero-app/testero-backend/compare/v1.32.0...v1.33.0) (2026-07-20)
+
+
+### Features
+
+* **submissions:** enforce max_attempts, frozen into the snapshot ([#228](https://github.com/testero-app/testero-backend/issues/228)) ([f6eee39](https://github.com/testero-app/testero-backend/commit/f6eee39605ccb97709e7f49a05c367bff6835d41))
+
 ## [1.32.0](https://github.com/testero-app/testero-backend/compare/v1.31.1...v1.32.0) (2026-07-16)
 
 
