@@ -109,3 +109,5 @@ databaseChangeLog:
       file: db/changelog/v1.11/001-rename-tag-owner.yaml
   - include:
       file: db/changelog/v1.12/001-add-max-attempts-to-snapshot.yaml
+  - include:
+      file: db/changelog/v1.13/001-create-deadline-reminder-sent.yaml
