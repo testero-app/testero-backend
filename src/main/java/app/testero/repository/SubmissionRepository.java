@@ -28,4 +28,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
     /** How many attempts a user has made on a snapshot — one row per attempt, any status. */
     long countByAssessmentSnapshotIdAndUserId(UUID assessmentSnapshotId, UUID userId);
+
+    /** Whether a user has any submission (of any status) for a snapshot — i.e. has engaged with it. */
+    boolean existsByAssessmentSnapshotIdAndUserId(UUID assessmentSnapshotId, UUID userId);
 }

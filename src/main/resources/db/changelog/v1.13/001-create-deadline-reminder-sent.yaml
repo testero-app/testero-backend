@@ -1,0 +1,52 @@
+databaseChangeLog:
+  # Records that a DEADLINE_REMINDER has already been sent to a given student for a
+  # given administered assessment, so the scheduler reminds each student at most once
+  # per assignment. Keyed per-student (not per-assignment) so a student enrolled after
+  # an earlier reminder still gets their own, and so the de-dup survives restarts.
+  #
+  # ON DELETE CASCADE on both sides: a marker with no snapshot or no user is meaningless.
+  - changeSet:
+      id: v1.13-001-create-deadline-reminder-sent
+      author: testero
+      comment: Per-student de-dup log for deadline reminders.
+      changes:
+        - createTable:
+            tableName: deadline_reminder_sent
+            columns:
+              - column:
+                  name: assessment_snapshot_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sent_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: deadline_reminder_sent
+            columnNames: assessment_snapshot_id, user_id
+            constraintName: pk_deadline_reminder_sent
+        - addForeignKeyConstraint:
+            constraintName: fk_deadline_reminder_snapshot
+            baseTableName: deadline_reminder_sent
+            baseColumnNames: assessment_snapshot_id
+            referencedTableName: assessment_snapshot
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_deadline_reminder_user
+            baseTableName: deadline_reminder_sent
+            baseColumnNames: user_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            onDelete: CASCADE
+      rollback:
+        - dropTable:
+            tableName: deadline_reminder_sent
