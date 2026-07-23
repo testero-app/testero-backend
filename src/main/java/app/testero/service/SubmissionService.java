@@ -286,12 +286,12 @@ public class SubmissionService {
             NotificationType notifEvent = snapshot.getType() == AssessmentType.EXAM
                     ? NotificationType.EXAM_RESULT
                     : NotificationType.CERT_SIMULATION_RESULT;
-            String notifTitle = snapshot.getType() == AssessmentType.EXAM
-                    ? "Risultato esame disponibile"
-                    : "Simulazione completata";
-            String notifMsg = snapshot.getTitle() + ": "
-                    + Math.round(submission.getScore()) + " punti";
-            notificationService.notify(submission.getUserId(), notifEvent, notifTitle, notifMsg);
+            String titleKey = snapshot.getType() == AssessmentType.EXAM
+                    ? "notification.exam_result.title"
+                    : "notification.cert_result.title";
+            notificationService.notify(submission.getUserId(), notifEvent,
+                    titleKey, "notification.result.message",
+                    snapshot.getTitle(), Math.round(submission.getScore()));
         }
 
         // TODO: ALL_SUBMITTED notification for teachers.

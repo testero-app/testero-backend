@@ -85,10 +85,6 @@ public class NotificationScheduler {
             return 0;
         }
 
-        String title = "Verifica in scadenza";
-        String message = "La verifica \"" + snapshot.getTitle()
-                + "\" scade a breve. Completala prima della scadenza.";
-
         int sent = 0;
         for (StudentProfile student : studentProfileRepository.findByClassId(assignment.getClassId())) {
             UUID userId = student.getUserId();
@@ -100,7 +96,9 @@ public class NotificationScheduler {
                 continue; // already reminded
             }
 
-            notificationService.notify(userId, NotificationType.DEADLINE_REMINDER, title, message);
+            notificationService.notify(userId, NotificationType.DEADLINE_REMINDER,
+                    "notification.deadline.title", "notification.deadline.message",
+                    snapshot.getTitle());
             reminderSentRepository.save(new DeadlineReminderSent(snapshotId, userId));
             sent++;
         }

@@ -9,5 +9,6 @@ public record UserProfileResponse(
         String username,
         String email,
         @JsonProperty("class_name") String className,
-        String role
+        String role,
+        String language
 ) {}

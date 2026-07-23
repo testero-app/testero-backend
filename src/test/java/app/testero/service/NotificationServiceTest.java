@@ -2,10 +2,12 @@ package app.testero.service;
 
 import app.testero.dto.NotificationItemDto;
 import app.testero.entity.notification.Notification;
+import app.testero.entity.user.AppUser;
 import app.testero.entity.user.NotificationChannel;
 import app.testero.entity.user.NotificationPreference;
 import app.testero.entity.user.NotificationType;
 import app.testero.exception.ResourceNotFoundException;
+import app.testero.repository.AppUserRepository;
 import app.testero.repository.NotificationPreferenceRepository;
 import app.testero.repository.NotificationRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -19,12 +21,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +39,8 @@ class NotificationServiceTest {
 
     @Mock NotificationRepository notificationRepository;
     @Mock NotificationPreferenceRepository preferenceRepository;
+    @Mock AppUserRepository appUserRepository;
+    @Mock org.springframework.context.MessageSource messageSource;
 
     @InjectMocks NotificationService notificationService;
 
@@ -63,22 +70,35 @@ class NotificationServiceTest {
     @DisplayName("notify")
     class Notify {
 
+        private AppUser userWithLanguage(String lang) {
+            AppUser u = new AppUser();
+            u.setId(USER_ID);
+            u.setLanguage(lang);
+            return u;
+        }
+
         @Test
-        @DisplayName("saves notification when no preference exists (default enabled)")
+        @DisplayName("saves notification with text translated into the recipient's language")
         void defaultEnabled() {
             when(preferenceRepository.findByUserIdAndEventAndChannel(
                     USER_ID, NotificationType.EXAM_RESULT, NotificationChannel.IN_APP))
                     .thenReturn(Optional.empty());
+            when(appUserRepository.findById(USER_ID)).thenReturn(Optional.of(userWithLanguage("en")));
+            when(messageSource.getMessage(eq("title.key"), any(), eq(Locale.of("en"))))
+                    .thenReturn("Exam result available");
+            when(messageSource.getMessage(eq("msg.key"), any(), eq(Locale.of("en"))))
+                    .thenReturn("Python: 18 points");
 
-            notificationService.notify(USER_ID, NotificationType.EXAM_RESULT, "Title", "Message");
+            notificationService.notify(USER_ID, NotificationType.EXAM_RESULT,
+                    "title.key", "msg.key", "Python", 18);
 
             ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
             verify(notificationRepository).save(captor.capture());
             Notification saved = captor.getValue();
             assertThat(saved.getUserId()).isEqualTo(USER_ID);
             assertThat(saved.getEvent()).isEqualTo("EXAM_RESULT");
-            assertThat(saved.getTitle()).isEqualTo("Title");
-            assertThat(saved.getMessage()).isEqualTo("Message");
+            assertThat(saved.getTitle()).isEqualTo("Exam result available");
+            assertThat(saved.getMessage()).isEqualTo("Python: 18 points");
             assertThat(saved.isRead()).isFalse();
         }
 
@@ -90,14 +110,16 @@ class NotificationServiceTest {
             when(preferenceRepository.findByUserIdAndEventAndChannel(
                     USER_ID, NotificationType.EXAM_RESULT, NotificationChannel.IN_APP))
                     .thenReturn(Optional.of(pref));
+            lenient().when(appUserRepository.findById(USER_ID))
+                    .thenReturn(Optional.of(userWithLanguage("it")));
 
-            notificationService.notify(USER_ID, NotificationType.EXAM_RESULT, "Title", "Msg");
+            notificationService.notify(USER_ID, NotificationType.EXAM_RESULT, "title.key", "msg.key");
 
             verify(notificationRepository).save(any(Notification.class));
         }
 
         @Test
-        @DisplayName("skips notification when preference is disabled")
+        @DisplayName("skips notification (and translation) when preference is disabled")
         void disabled() {
             NotificationPreference pref = new NotificationPreference();
             pref.setEnabled(false);
@@ -105,7 +127,7 @@ class NotificationServiceTest {
                     USER_ID, NotificationType.EXAM_RESULT, NotificationChannel.IN_APP))
                     .thenReturn(Optional.of(pref));
 
-            notificationService.notify(USER_ID, NotificationType.EXAM_RESULT, "Title", "Msg");
+            notificationService.notify(USER_ID, NotificationType.EXAM_RESULT, "title.key", "msg.key");
 
             verify(notificationRepository, never()).save(any());
         }

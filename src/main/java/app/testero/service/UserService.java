@@ -87,7 +87,8 @@ public class UserService {
                 user.getUsername(),
                 user.getEmail(),
                 className,
-                role
+                role,
+                user.getLanguage()
         );
     }
 
@@ -96,7 +97,12 @@ public class UserService {
         AppUser user = appUserRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        user.setEmail(request.email());
+        if (request.email() != null) {
+            user.setEmail(request.email());
+        }
+        if (request.language() != null) {
+            user.setLanguage(request.language());
+        }
         appUserRepository.save(user);
 
         log.info("Profile updated for userId={}", userId);

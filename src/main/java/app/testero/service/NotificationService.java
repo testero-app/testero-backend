@@ -2,15 +2,19 @@ package app.testero.service;
 
 import app.testero.dto.NotificationItemDto;
 import app.testero.entity.notification.Notification;
+import app.testero.entity.user.AppUser;
 import app.testero.entity.user.NotificationChannel;
 import app.testero.entity.user.NotificationPreference;
 import app.testero.entity.user.NotificationType;
 import app.testero.exception.ResourceNotFoundException;
+import app.testero.repository.AppUserRepository;
 import app.testero.repository.NotificationPreferenceRepository;
 import app.testero.repository.NotificationRepository;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,15 +23,29 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationPreferenceRepository preferenceRepository;
+    private final AppUserRepository appUserRepository;
+    private final MessageSource messageSource;
 
     public NotificationService(NotificationRepository notificationRepository,
-                               NotificationPreferenceRepository preferenceRepository) {
+                               NotificationPreferenceRepository preferenceRepository,
+                               AppUserRepository appUserRepository,
+                               MessageSource messageSource) {
         this.notificationRepository = notificationRepository;
         this.preferenceRepository = preferenceRepository;
+        this.appUserRepository = appUserRepository;
+        this.messageSource = messageSource;
     }
 
-    public void notify(UUID userId, NotificationType event, String title, String message) {
-        // Check if user has IN_APP enabled for this event.
+    /**
+     * Persists an in-app notification, rendered in the recipient's language.
+     * Title and message are resolved from {@code titleKey}/{@code messageKey} against the
+     * message bundles at creation time (translate-at-send), so the stored text is already
+     * localised. No-op if the user has disabled the IN_APP channel for this event.
+     *
+     * @param messageArgs positional arguments for the message template (e.g. assessment title, score)
+     */
+    public void notify(UUID userId, NotificationType event,
+                       String titleKey, String messageKey, Object... messageArgs) {
         // Default is true if no preference record exists.
         Optional<NotificationPreference> pref = preferenceRepository
                 .findByUserIdAndEventAndChannel(userId, event, NotificationChannel.IN_APP);
@@ -37,13 +55,22 @@ public class NotificationService {
             return;
         }
 
+        Locale locale = localeFor(userId);
         Notification n = new Notification();
         n.setUserId(userId);
         n.setEvent(event.name());
-        n.setTitle(title);
-        n.setMessage(message);
+        n.setTitle(messageSource.getMessage(titleKey, null, locale));
+        n.setMessage(messageSource.getMessage(messageKey, messageArgs, locale));
         n.setRead(false);
         notificationRepository.save(n);
+    }
+
+    /** The recipient's interface language, defaulting to Italian if the user is missing or unset. */
+    private Locale localeFor(UUID userId) {
+        String lang = appUserRepository.findById(userId)
+                .map(AppUser::getLanguage)
+                .orElse("it");
+        return Locale.of(lang == null ? "it" : lang);
     }
 
     @Transactional(readOnly = true)

@@ -68,7 +68,7 @@ class UserControllerTest {
         void success() throws Exception {
             var profile = new UserProfileResponse(
                     USER_ID.toString(), "Mario", "Rossi", "mario",
-                    "mario@test.com", "5A", "STUDENT");
+                    "mario@test.com", "5A", "STUDENT", "it");
             when(userService.getProfile(USER_ID)).thenReturn(profile);
 
             mockMvc.perform(get("/users/me").with(jwt()))
@@ -99,7 +99,7 @@ class UserControllerTest {
         void success() throws Exception {
             var profile = new UserProfileResponse(
                     USER_ID.toString(), "Mario", "Rossi", "mario",
-                    "new@test.com", "5A", "STUDENT");
+                    "new@test.com", "5A", "STUDENT", "it");
             when(userService.updateProfile(eq(USER_ID), any(UpdateProfileRequest.class)))
                     .thenReturn(profile);
 

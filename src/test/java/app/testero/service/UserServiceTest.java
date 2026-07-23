@@ -143,7 +143,7 @@ class UserServiceTest {
             when(appRoleRepository.findById(ROLE_ID)).thenReturn(Optional.of(role));
 
             UserProfileResponse response = userService.updateProfile(
-                    USER_ID, new UpdateProfileRequest("new@test.com"));
+                    USER_ID, new UpdateProfileRequest("new@test.com", null));
 
             assertThat(user.getEmail()).isEqualTo("new@test.com");
             verify(appUserRepository).save(user);
@@ -153,12 +153,35 @@ class UserServiceTest {
         }
 
         @Test
+        @DisplayName("updates language and returns it, leaving email untouched when omitted")
+        void updatesLanguage() {
+            AppUser user = buildUser();
+            user.setEmail("keep@test.com");
+            when(appUserRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+            when(studentProfileRepository.findByUserId(USER_ID)).thenReturn(Optional.empty());
+
+            AppUserRole userRole = new AppUserRole();
+            userRole.setRoleId(ROLE_ID);
+            when(appUserRoleRepository.findByUserId(USER_ID)).thenReturn(List.of(userRole));
+            AppRole role = new AppRole();
+            role.setName("STUDENT");
+            when(appRoleRepository.findById(ROLE_ID)).thenReturn(Optional.of(role));
+
+            UserProfileResponse response = userService.updateProfile(
+                    USER_ID, new UpdateProfileRequest(null, "en"));
+
+            assertThat(user.getLanguage()).isEqualTo("en");
+            assertThat(user.getEmail()).isEqualTo("keep@test.com"); // omitted email not cleared
+            assertThat(response.language()).isEqualTo("en");
+        }
+
+        @Test
         @DisplayName("throws 404 when user not found")
         void userNotFound() {
             when(appUserRepository.findById(USER_ID)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> userService.updateProfile(
-                    USER_ID, new UpdateProfileRequest("new@test.com")))
+                    USER_ID, new UpdateProfileRequest("new@test.com", null)))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
     }
