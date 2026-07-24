@@ -1,0 +1,22 @@
+databaseChangeLog:
+  # Per-user interface language. Single source of truth for i18n: both the frontend
+  # (UI strings) and the backend (notifications, errors) render text in this language.
+  # 'it' by default — the platform's primary audience is Italian schools.
+  - changeSet:
+      id: v1.14-001-add-language-to-user
+      author: testero
+      comment: Per-user interface language preference.
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: language
+                  type: varchar(5)
+                  defaultValue: it
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropColumn:
+            tableName: app_user
+            columnName: language

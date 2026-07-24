@@ -1,6 +1,6 @@
 package app.testero.exception;
 
-import app.testero.service.AuthService;
+import app.testero.service.user.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;

@@ -142,4 +142,33 @@ class DeadlineReminderIntegrationTest {
         assertThat(deadlineReminders(rossiId)).isZero();
         assertThat(markers()).isZero();
     }
+
+    @Test
+    @Order(4)
+    @DisplayName("renders the reminder in the recipient's language (Italian override, English fallback)")
+    void reminderIsLocalised() {
+        try {
+            // Italian (the default) resolves the messages_it override.
+            resetState();
+            setDeadline(LocalDateTime.now().plusHours(2));
+            jdbc.update("UPDATE app_user SET language = 'it' WHERE id = ?::uuid", rossiId);
+            scheduler.sendDeadlineReminders();
+            assertThat(reminderTitle()).isEqualTo("Verifica in scadenza");
+
+            // English falls back to the base bundle (the reference language).
+            resetState();
+            setDeadline(LocalDateTime.now().plusHours(2));
+            jdbc.update("UPDATE app_user SET language = 'en' WHERE id = ?::uuid", rossiId);
+            scheduler.sendDeadlineReminders();
+            assertThat(reminderTitle()).isEqualTo("Assessment due soon");
+        } finally {
+            jdbc.update("UPDATE app_user SET language = 'it' WHERE id = ?::uuid", rossiId);
+        }
+    }
+
+    private String reminderTitle() {
+        return jdbc.queryForObject(
+                "SELECT title FROM notification WHERE user_id = ?::uuid AND event = 'DEADLINE_REMINDER'",
+                String.class, rossiId);
+    }
 }

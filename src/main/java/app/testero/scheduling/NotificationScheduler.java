@@ -5,12 +5,12 @@ import app.testero.entity.notification.DeadlineReminderSent;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.user.NotificationType;
 import app.testero.entity.user.StudentProfile;
-import app.testero.repository.AssessmentSnapshotRepository;
-import app.testero.repository.ClassAssessmentAssignmentRepository;
-import app.testero.repository.DeadlineReminderSentRepository;
-import app.testero.repository.StudentProfileRepository;
-import app.testero.repository.SubmissionRepository;
-import app.testero.service.NotificationService;
+import app.testero.repository.assessment.AssessmentSnapshotRepository;
+import app.testero.repository.assessment.ClassAssessmentAssignmentRepository;
+import app.testero.repository.notification.DeadlineReminderSentRepository;
+import app.testero.repository.user.StudentProfileRepository;
+import app.testero.repository.submission.SubmissionRepository;
+import app.testero.service.notification.NotificationService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -85,10 +85,6 @@ public class NotificationScheduler {
             return 0;
         }
 
-        String title = "Verifica in scadenza";
-        String message = "La verifica \"" + snapshot.getTitle()
-                + "\" scade a breve. Completala prima della scadenza.";
-
         int sent = 0;
         for (StudentProfile student : studentProfileRepository.findByClassId(assignment.getClassId())) {
             UUID userId = student.getUserId();
@@ -100,7 +96,9 @@ public class NotificationScheduler {
                 continue; // already reminded
             }
 
-            notificationService.notify(userId, NotificationType.DEADLINE_REMINDER, title, message);
+            notificationService.notify(userId, NotificationType.DEADLINE_REMINDER,
+                    "notification.deadline.title", "notification.deadline.message",
+                    snapshot.getTitle());
             reminderSentRepository.save(new DeadlineReminderSent(snapshotId, userId));
             sent++;
         }
