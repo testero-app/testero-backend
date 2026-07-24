@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.35.0](https://github.com/testero-app/testero-backend/compare/v1.34.0...v1.35.0) (2026-07-24)
+
+
+### Features
+
+* **i18n:** backend language preference + localised notifications (+ package reorg) ([#234](https://github.com/testero-app/testero-backend/issues/234)) ([95196de](https://github.com/testero-app/testero-backend/commit/95196de9d26d32ffa0332c451ef7e253a4296857))
+
 ## [1.34.0](https://github.com/testero-app/testero-backend/compare/v1.33.0...v1.34.0) (2026-07-23)
 
 
