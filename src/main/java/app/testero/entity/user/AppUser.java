@@ -40,6 +40,9 @@ public class AppUser {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    @Column(nullable = false)
+    private String language = "it";
+
     @Column(name = "password_expires_at")
     private LocalDateTime passwordExpiresAt;
 

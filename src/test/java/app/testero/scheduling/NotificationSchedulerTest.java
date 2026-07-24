@@ -5,12 +5,12 @@ import app.testero.entity.notification.DeadlineReminderSent;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.user.NotificationType;
 import app.testero.entity.user.StudentProfile;
-import app.testero.repository.AssessmentSnapshotRepository;
-import app.testero.repository.ClassAssessmentAssignmentRepository;
-import app.testero.repository.DeadlineReminderSentRepository;
-import app.testero.repository.StudentProfileRepository;
-import app.testero.repository.SubmissionRepository;
-import app.testero.service.NotificationService;
+import app.testero.repository.assessment.AssessmentSnapshotRepository;
+import app.testero.repository.assessment.ClassAssessmentAssignmentRepository;
+import app.testero.repository.notification.DeadlineReminderSentRepository;
+import app.testero.repository.user.StudentProfileRepository;
+import app.testero.repository.submission.SubmissionRepository;
+import app.testero.service.notification.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -78,7 +78,7 @@ class NotificationSchedulerTest {
 
         scheduler.sendDeadlineReminders();
 
-        verify(notificationService).notify(eq(STUDENT_A), eq(NotificationType.DEADLINE_REMINDER), any(), any());
+        verify(notificationService).notify(eq(STUDENT_A), eq(NotificationType.DEADLINE_REMINDER), any(), any(), any());
         verify(reminderSentRepository).save(any(DeadlineReminderSent.class));
     }
 
@@ -90,7 +90,7 @@ class NotificationSchedulerTest {
 
         scheduler.sendDeadlineReminders();
 
-        verify(notificationService, never()).notify(any(), any(), any(), any());
+        verify(notificationService, never()).notify(any(), any(), any(), any(), any());
         verify(reminderSentRepository, never()).save(any());
     }
 
@@ -103,7 +103,7 @@ class NotificationSchedulerTest {
 
         scheduler.sendDeadlineReminders();
 
-        verify(notificationService, never()).notify(any(), any(), any(), any());
+        verify(notificationService, never()).notify(any(), any(), any(), any(), any());
         verify(reminderSentRepository, never()).save(any());
     }
 
@@ -119,8 +119,8 @@ class NotificationSchedulerTest {
 
         scheduler.sendDeadlineReminders();
 
-        verify(notificationService, never()).notify(eq(STUDENT_A), any(), any(), any());
-        verify(notificationService, times(1)).notify(eq(STUDENT_B), eq(NotificationType.DEADLINE_REMINDER), any(), any());
+        verify(notificationService, never()).notify(eq(STUDENT_A), any(), any(), any(), any());
+        verify(notificationService, times(1)).notify(eq(STUDENT_B), eq(NotificationType.DEADLINE_REMINDER), any(), any(), any());
     }
 
     @Test
@@ -130,7 +130,7 @@ class NotificationSchedulerTest {
 
         scheduler.sendDeadlineReminders();
 
-        verify(notificationService, never()).notify(any(), any(), any(), any());
+        verify(notificationService, never()).notify(any(), any(), any(), any(), any());
         verify(studentProfileRepository, never()).findByClassId(any());
     }
 }
