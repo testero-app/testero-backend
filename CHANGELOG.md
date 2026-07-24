@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.34.0](https://github.com/testero-app/testero-backend/compare/v1.33.0...v1.34.0) (2026-07-23)
+
+
+### Features
+
+* **notifications:** generate DEADLINE_REMINDER notifications ([#232](https://github.com/testero-app/testero-backend/issues/232)) ([b186678](https://github.com/testero-app/testero-backend/commit/b186678890aa9c7fedee375acedbafdb960e07cb)), closes [#231](https://github.com/testero-app/testero-backend/issues/231)
+
 ## [1.33.0](https://github.com/testero-app/testero-backend/compare/v1.32.0...v1.33.0) (2026-07-20)
 
 
