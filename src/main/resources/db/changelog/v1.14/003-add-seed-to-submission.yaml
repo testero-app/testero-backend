@@ -1,0 +1,26 @@
+databaseChangeLog:
+  # The question draw (random subset, question order, option order) must be frozen per
+  # submission: a student who reloads or resumes has to get exactly the same paper. We make
+  # the draw reproducible by seeding it with a value fixed at submission start and stored
+  # here, so every fetch of the questions for a submission replays the identical result.
+  #
+  # Existing rows backfill to 0 — a valid, deterministic (if arbitrary) seed. New submissions
+  # always set an explicit random seed at start.
+  - changeSet:
+      id: v1.14-003-add-seed-to-submission
+      author: testero
+      comment: Add randomisation seed to submission, frozen at start for a reproducible draw.
+      changes:
+        - addColumn:
+            tableName: submission
+            columns:
+              - column:
+                  name: seed
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropColumn:
+            tableName: submission
+            columnName: seed

@@ -113,3 +113,7 @@ databaseChangeLog:
       file: db/changelog/v1.13/001-create-deadline-reminder-sent.yaml
   - include:
       file: db/changelog/v1.14/001-add-language-to-user.yaml
+  - include:
+      file: db/changelog/v1.14/002-freeze-shuffle-flags-into-snapshot.yaml
+  - include:
+      file: db/changelog/v1.14/003-add-seed-to-submission.yaml
