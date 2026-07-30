@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -133,6 +134,9 @@ public class SubmissionService {
         submission.setAssessmentSnapshotId(assessmentSnapshotId);
         submission.setStatus(SubmissionStatus.IN_PROGRESS);
         submission.setStartedAt(LocalDateTime.now());
+        // Freeze the randomisation seed now: the question draw for this submission is derived
+        // from it, so it stays identical across reloads and resumes for its whole lifetime.
+        submission.setSeed(ThreadLocalRandom.current().nextLong());
         submission = submissionRepository.save(submission);
 
         log.info("Submission started: submissionId={}, userId={}, snapshotId={}",

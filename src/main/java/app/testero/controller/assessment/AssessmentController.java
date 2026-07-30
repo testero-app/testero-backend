@@ -80,7 +80,8 @@ public class AssessmentController {
     public ResponseEntity<AssessmentQuestionsResponse> getAssessmentQuestions(
             @PathVariable String snapshotId,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(assessmentService.getAssessmentQuestions(snapshotId));
+        return ResponseEntity.ok(
+                assessmentService.getAssessmentQuestions(snapshotId, principal.userId()));
     }
 
     /**

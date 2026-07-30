@@ -209,6 +209,9 @@ class SubmissionServiceTest {
             assertThat(saved.getStatus()).isEqualTo(SubmissionStatus.IN_PROGRESS);
             assertThat(saved.getUserId()).isEqualTo(STUDENT_ID);
             assertThat(saved.getAssessmentSnapshotId()).isEqualTo(SNAPSHOT_ID);
+            // A randomisation seed is frozen at start (0 would mean it was never generated;
+            // the odds of nextLong() genuinely returning 0 are 1 in 2^64).
+            assertThat(saved.getSeed()).isNotZero();
 
             verify(eventPublisher).publishEvent(any(app.testero.event.SubmissionStartedEvent.class));
         }

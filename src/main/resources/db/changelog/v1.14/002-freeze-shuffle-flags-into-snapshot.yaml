@@ -1,0 +1,35 @@
+databaseChangeLog:
+  # shuffle_questions / shuffle_options are rules of the assessment, like the timer, the
+  # scoring and max_attempts — all of which are frozen into the snapshot at publish time.
+  # These two were left on the template only, so the delivery pipeline had no per-snapshot
+  # value to honour and always shuffled. Snapshot them too, so the randomisation rules a
+  # student plays under are fixed the moment the snapshot is published.
+  #
+  # Existing snapshots backfill to true, i.e. the current always-shuffle behaviour.
+  - changeSet:
+      id: v1.14-002-freeze-shuffle-flags-into-snapshot
+      author: testero
+      comment: Freeze shuffle_questions / shuffle_options into assessment_snapshot (default true).
+      changes:
+        - addColumn:
+            tableName: assessment_snapshot
+            columns:
+              - column:
+                  name: shuffle_questions
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: shuffle_options
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropColumn:
+            tableName: assessment_snapshot
+            columnName: shuffle_questions
+        - dropColumn:
+            tableName: assessment_snapshot
+            columnName: shuffle_options

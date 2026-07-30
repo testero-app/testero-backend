@@ -173,15 +173,25 @@ public class AssessmentService {
                         snapshot.getPtsWrong().doubleValue(),
                         0.0
                 ),
-                true,
-                true,
+                snapshot.isShuffleQuestions(),
+                snapshot.isShuffleOptions(),
                 null,
                 subjects
         );
     }
 
-    public AssessmentQuestionsResponse getAssessmentQuestions(String snapshotId) {
+    public AssessmentQuestionsResponse getAssessmentQuestions(String snapshotId, UUID userId) {
         AssessmentSnapshot snapshot = findSnapshotOrThrow(snapshotId);
+
+        // Reproducible draw: use the seed frozen on the caller's in-progress submission, so a
+        // reload or resume replays the identical paper. With no submission (e.g. a teacher
+        // preview) fall back to a seed derived from the snapshot id — stable per snapshot.
+        long seed = submissionRepository
+                .findByAssessmentSnapshotIdAndUserIdAndStatus(
+                        snapshot.getId(), userId, SubmissionStatus.IN_PROGRESS)
+                .map(Submission::getSeed)
+                .orElseGet(() -> snapshot.getId().getMostSignificantBits()
+                        ^ snapshot.getId().getLeastSignificantBits());
 
         List<QuestionSnapshot> questions = questionSnapshotRepository
                 .findByAssessmentSnapshotIdOrderByPosition(snapshot.getId());
@@ -216,10 +226,14 @@ public class AssessmentService {
                 })
                 .toList();
 
-        // Run through preparation pipeline: random subset, shuffle, shuffle options
+        // Run through preparation pipeline: subset, question order, option order — all seeded
+        // and gated on the snapshot's shuffle flags.
         List<QuestionDto> prepared = questionPrepService.prepare(
                 new ArrayList<>(questionDtos),
-                snapshot.getQuestionsPerAssessment()
+                snapshot.getQuestionsPerAssessment(),
+                snapshot.isShuffleQuestions(),
+                snapshot.isShuffleOptions(),
+                seed
         );
 
         return new AssessmentQuestionsResponse(

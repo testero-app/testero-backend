@@ -60,6 +60,14 @@ public class Submission {
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
 
+    /**
+     * Randomisation seed, fixed once when the submission starts. Makes the question draw
+     * (subset, question order, option order) reproducible: every fetch of the questions for
+     * this submission replays the identical paper, so a reload or resume never reshuffles.
+     */
+    @Column(name = "seed", nullable = false)
+    private long seed;
+
     private Double score;
 
     @Column(name = "created_at", insertable = false, updatable = false)

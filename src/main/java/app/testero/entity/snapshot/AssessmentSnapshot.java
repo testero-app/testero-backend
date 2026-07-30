@@ -64,6 +64,12 @@ public class AssessmentSnapshot {
     @Column(name = "max_attempts")
     private Integer maxAttempts;
 
+    @Column(name = "shuffle_questions", nullable = false)
+    private boolean shuffleQuestions = true;
+
+    @Column(name = "shuffle_options", nullable = false)
+    private boolean shuffleOptions = true;
+
     @Column(name = "published_at", nullable = false)
     private LocalDateTime publishedAt;
 

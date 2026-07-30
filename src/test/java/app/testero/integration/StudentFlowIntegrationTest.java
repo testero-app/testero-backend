@@ -387,6 +387,50 @@ class StudentFlowIntegrationTest {
                 .isEqualTo(HttpStatus.CREATED);
     }
 
+    // ── Reproducible draw ───────────────────────────────────────────
+
+    @Test
+    @Order(14)
+    @DisplayName("questions are frozen per submission — two fetches return the identical paper")
+    void questionsAreFrozenPerSubmission() {
+        // Ensure an in-progress submission exists (idempotent — reuses the one from start).
+        rest.exchange("/assessments/{id}/start", HttpMethod.POST,
+                withAuth(null), Map.class, assessmentId);
+
+        String first = paperSignature();
+        String second = paperSignature();
+
+        // Before the fix the draw was re-randomised on every request; now the submission's
+        // frozen seed makes both fetches identical — same questions, order and option order.
+        assertThat(second).isEqualTo(first);
+    }
+
+    /** A stable fingerprint of the current questions payload: question ids in order, each
+     *  followed by its option ids in order. */
+    @SuppressWarnings("unchecked")
+    private String paperSignature() {
+        ResponseEntity<Map> response = rest.exchange(
+                "/assessments/{id}/questions", HttpMethod.GET,
+                withAuth(null), Map.class, assessmentId);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        List<Map<String, Object>> q =
+                (List<Map<String, Object>>) response.getBody().get("questions");
+        StringBuilder sb = new StringBuilder();
+        for (Map<String, Object> question : q) {
+            sb.append('Q').append(question.get("id"));
+            List<Map<String, Object>> options =
+                    (List<Map<String, Object>>) question.get("options");
+            if (options != null) {
+                for (Map<String, Object> opt : options) {
+                    sb.append('|').append(opt.get("id"));
+                }
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────
 
     private String loginAs(String username) {

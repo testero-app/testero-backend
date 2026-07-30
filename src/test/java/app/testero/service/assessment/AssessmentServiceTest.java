@@ -40,8 +40,10 @@ import java.util.UUID;
 import static app.testero.fixture.PythonCertificationFixture.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -61,6 +63,7 @@ class AssessmentServiceTest {
 
     // ── Helpers ────────────────────────────────────────────────────
 
+    private static final UUID USER_ID = UUID.fromString("cc000000-0000-0000-0000-000000000001");
     private static final UUID CLASS_ID = UUID.fromString("bb000000-0000-0000-0000-000000000099");
     private static final UUID SUBJECT_A_ID = UUID.fromString("ab000000-0000-0000-0000-000000000001");
     private static final UUID SUBJECT_B_ID = UUID.fromString("ab000000-0000-0000-0000-000000000002");
@@ -290,11 +293,11 @@ class AssessmentServiceTest {
                     .thenReturn(List.of(opt1a, opt1b, opt2a));
 
             // QuestionPrepService returns its input unchanged for this test
-            when(questionPrepService.prepare(anyList(), anyInt()))
+            when(questionPrepService.prepare(anyList(), anyInt(), anyBoolean(), anyBoolean(), anyLong()))
                     .thenAnswer(inv -> inv.getArgument(0));
 
             AssessmentQuestionsResponse response =
-                    assessmentService.getAssessmentQuestions(SNAPSHOT_ID.toString());
+                    assessmentService.getAssessmentQuestions(SNAPSHOT_ID.toString(), USER_ID);
 
             assertThat(response.assessmentId()).isEqualTo(SNAPSHOT_ID.toString());
             assertThat(response.title()).isEqualTo(TITLE);
@@ -311,7 +314,7 @@ class AssessmentServiceTest {
             assertThat(dto2.options()).hasSize(1);
 
             // Verify prep service was called
-            verify(questionPrepService).prepare(anyList(), eq(QUESTIONS_PER_ASSESSMENT));
+            verify(questionPrepService).prepare(anyList(), eq(QUESTIONS_PER_ASSESSMENT), anyBoolean(), anyBoolean(), anyLong());
         }
 
         @Test
@@ -321,7 +324,7 @@ class AssessmentServiceTest {
             when(snapshotRepository.findById(unknownId)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() ->
-                    assessmentService.getAssessmentQuestions(unknownId.toString()))
+                    assessmentService.getAssessmentQuestions(unknownId.toString(), USER_ID))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
 
@@ -339,11 +342,11 @@ class AssessmentServiceTest {
                     .thenReturn(List.of(q));
             when(optionSnapshotRepository.findByQuestionSnapshotIdInOrderByPosition(List.of(Q1_ID)))
                     .thenReturn(List.of(opt));
-            when(questionPrepService.prepare(anyList(), anyInt()))
+            when(questionPrepService.prepare(anyList(), anyInt(), anyBoolean(), anyBoolean(), anyLong()))
                     .thenAnswer(inv -> inv.getArgument(0));
 
             AssessmentQuestionsResponse response =
-                    assessmentService.getAssessmentQuestions(SNAPSHOT_ID.toString());
+                    assessmentService.getAssessmentQuestions(SNAPSHOT_ID.toString(), USER_ID);
 
             assertThat(response.questions()).hasSize(1);
             QuestionDto dto = response.questions().get(0);
@@ -362,7 +365,7 @@ class AssessmentServiceTest {
                     .thenReturn(List.of(q));
             when(optionSnapshotRepository.findByQuestionSnapshotIdInOrderByPosition(List.of(Q1_ID)))
                     .thenReturn(List.of(opt));
-            when(questionPrepService.prepare(anyList(), anyInt()))
+            when(questionPrepService.prepare(anyList(), anyInt(), anyBoolean(), anyBoolean(), anyLong()))
                     .thenAnswer(inv -> inv.getArgument(0));
 
             QuestionSnapshotSubject qss = new QuestionSnapshotSubject();
@@ -374,7 +377,7 @@ class AssessmentServiceTest {
                     .thenReturn(List.of(buildSubject(SUBJECT_A_ID, "Variables")));
 
             AssessmentQuestionsResponse response =
-                    assessmentService.getAssessmentQuestions(SNAPSHOT_ID.toString());
+                    assessmentService.getAssessmentQuestions(SNAPSHOT_ID.toString(), USER_ID);
 
             assertThat(response.questions()).hasSize(1);
             QuestionDto dto = response.questions().get(0);
@@ -390,11 +393,11 @@ class AssessmentServiceTest {
             when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
                     .thenReturn(List.of());
 
-            when(questionPrepService.prepare(anyList(), anyInt()))
+            when(questionPrepService.prepare(anyList(), anyInt(), anyBoolean(), anyBoolean(), anyLong()))
                     .thenAnswer(inv -> inv.getArgument(0));
 
             AssessmentQuestionsResponse response =
-                    assessmentService.getAssessmentQuestions(SNAPSHOT_ID.toString());
+                    assessmentService.getAssessmentQuestions(SNAPSHOT_ID.toString(), USER_ID);
 
             assertThat(response.questions()).isEmpty();
             assertThat(response.totalQuestions()).isZero();
