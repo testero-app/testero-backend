@@ -189,7 +189,7 @@ class AssessmentControllerTest {
                     new QuestionDto("q1", "multiple", "What is 2+2?", null,
                             List.of(new OptionDto("o1", "4", false), new OptionDto("o2", "5", false)), null, List.of())
             );
-            when(assessmentService.getAssessmentQuestions(ASSESSMENT_ID))
+            when(assessmentService.getAssessmentQuestions(ASSESSMENT_ID, USER_ID))
                     .thenReturn(new AssessmentQuestionsResponse(
                             ASSESSMENT_ID, "Test 1", null, null, 45, 1, questions
                     ));

@@ -149,6 +149,8 @@ public class SnapshotService {
         snapshot.setType(assessment.getType());
         snapshot.setPassingScore(assessment.getPassingScore());
         snapshot.setMaxAttempts(assessment.getMaxAttempts());
+        snapshot.setShuffleQuestions(assessment.isShuffleQuestions());
+        snapshot.setShuffleOptions(assessment.isShuffleOptions());
         snapshot.setPublishedAt(LocalDateTime.now());
         snapshot = snapshotRepository.save(snapshot);
 
@@ -236,6 +238,8 @@ public class SnapshotService {
         sb.append('|').append(assessment.getQuestionsPerAssessment());
         sb.append('|').append(assessment.getDifficulty() != null ? assessment.getDifficulty().name() : "");
         sb.append('|').append(assessment.getPassingScore() != null ? assessment.getPassingScore().toPlainString() : "");
+        sb.append('|').append(assessment.isShuffleQuestions());
+        sb.append('|').append(assessment.isShuffleOptions());
 
         List<AssessmentSubject> sortedAssSubjects = assessmentSubjects.stream()
                 .sorted(Comparator.comparing(AssessmentSubject::getSubjectId))
