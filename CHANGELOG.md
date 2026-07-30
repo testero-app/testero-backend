@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.35.1](https://github.com/testero-app/testero-backend/compare/v1.35.0...v1.35.1) (2026-07-30)
+
+
+### Bug Fixes
+
+* **assessment:** freeze question draw per submission and honor shuffle flags ([#238](https://github.com/testero-app/testero-backend/issues/238)) ([603168e](https://github.com/testero-app/testero-backend/commit/603168e9d5afe1c5eb10cb0350a3be1dab5f02f3)), closes [#237](https://github.com/testero-app/testero-backend/issues/237)
+
 ## [1.35.0](https://github.com/testero-app/testero-backend/compare/v1.34.0...v1.35.0) (2026-07-24)
 
 
