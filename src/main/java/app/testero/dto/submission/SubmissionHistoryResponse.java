@@ -21,6 +21,8 @@ public record SubmissionHistoryResponse(
             @JsonProperty("total_questions") int totalQuestions,
             @JsonProperty("correct_count") int correctCount,
             @JsonProperty("wrong_count") int wrongCount,
-            @JsonProperty("unanswered_count") int unansweredCount
+            @JsonProperty("unanswered_count") int unansweredCount,
+            @JsonProperty("subject_scores")
+            List<SubmissionFeedbackResponse.SubjectScore> subjectScores
     ) {}
 }

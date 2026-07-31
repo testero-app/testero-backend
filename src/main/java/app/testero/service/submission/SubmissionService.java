@@ -51,9 +51,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -305,8 +307,7 @@ public class SubmissionService {
         // Deferred until teacher UI is available.
 
         // Fetch question snapshots for accurate maxScore
-        List<QuestionSnapshot> questionSnapshots = questionSnapshotRepository
-                .findByAssessmentSnapshotIdOrderByPosition(submission.getAssessmentSnapshotId());
+        List<QuestionSnapshot> questionSnapshots = questionSnapshotsOf(answers);
 
         return new SubmissionFeedbackResponse(
                 submission.getId().toString(),
@@ -423,8 +424,7 @@ public class SubmissionService {
                 .orElse(null);
 
         // Fetch question snapshots for accurate maxScore
-        List<QuestionSnapshot> questionSnapshots = questionSnapshotRepository
-                .findByAssessmentSnapshotIdOrderByPosition(submission.getAssessmentSnapshotId());
+        List<QuestionSnapshot> questionSnapshots = questionSnapshotsOf(answers);
 
         // Compute subject scores via ScoringService
         List<SubjectScore> subjectScores = scoringService.computeSubjectScores(
@@ -475,11 +475,31 @@ public class SubmissionService {
         List<UUID> submissionIds = submissions.stream()
                 .map(Submission::getId)
                 .toList();
-        Map<UUID, List<UserAnswer>> answersBySubmission =
-                userAnswerRepository.findBySubmissionIdIn(submissionIds)
-                        .stream()
-                        .collect(Collectors.groupingBy(
-                                UserAnswer::getSubmissionId));
+        List<UserAnswer> allAnswers = userAnswerRepository.findBySubmissionIdIn(submissionIds);
+        Map<UUID, List<UserAnswer>> answersBySubmission = allAnswers.stream()
+                .collect(Collectors.groupingBy(UserAnswer::getSubmissionId));
+
+        // Batch-fetch the question snapshots actually drawn, for an accurate maxScore
+        Map<UUID, QuestionSnapshot> questionSnapshotById = questionSnapshotRepository
+                .findByIdIn(allAnswers.stream()
+                        .map(UserAnswer::getQuestionSnapshotId)
+                        .distinct()
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(QuestionSnapshot::getId, qs -> qs));
+
+        // Batch-compute the per-subject breakdown, so the history detail shows the same
+        // chart the student saw right after submitting
+        Map<UUID, Double> ptsCorrectBySubmission = submissions.stream()
+                .filter(s -> snapshotMap.containsKey(s.getAssessmentSnapshotId()))
+                .collect(Collectors.toMap(
+                        Submission::getId,
+                        s -> snapshotMap.get(s.getAssessmentSnapshotId())
+                                .getPtsCorrect().doubleValue(),
+                        (a, b) -> a));
+        Map<UUID, List<SubjectScore>> subjectScoresBySubmission =
+                scoringService.computeSubjectScoresBySubmission(
+                        answersBySubmission, questionSnapshotById, ptsCorrectBySubmission);
 
         List<SubmissionSummary> summaries = submissions.stream()
                 .map(s -> {
@@ -518,12 +538,16 @@ public class SubmissionService {
                                     ? s.getSubmittedAt().toString()
                                     : null,
                             s.getScore(),
-                            computeMaxScore(snapshot, null),
+                            computeMaxScore(snapshot, answers.stream()
+                                    .map(a -> questionSnapshotById.get(a.getQuestionSnapshotId()))
+                                    .filter(Objects::nonNull)
+                                    .toList()),
                             computePassed(s.getScore(), snapshot),
                             mcAnswers.size(),
                             correct,
                             wrong,
-                            unanswered
+                            unanswered,
+                            subjectScoresBySubmission.getOrDefault(s.getId(), List.of())
                     );
                 })
                 .toList();
@@ -550,8 +574,14 @@ public class SubmissionService {
                 .findById(submission.getAssessmentSnapshotId())
                 .orElseThrow(() -> new ResourceNotFoundException("Assessment snapshot not found"));
 
-        List<QuestionSnapshot> questions = questionSnapshotRepository
-                .findByAssessmentSnapshotIdOrderByPosition(snapshot.getId());
+        // Fetch user answers first: they identify the questions this submission drew
+        List<UserAnswer> answers = userAnswerRepository.findBySubmissionId(submissionId);
+        Map<UUID, UserAnswer> answerByQuestion = new HashMap<>();
+        for (UserAnswer a : answers) {
+            answerByQuestion.put(a.getQuestionSnapshotId(), a);
+        }
+
+        List<QuestionSnapshot> questions = questionSnapshotsOf(answers);
 
         List<UUID> questionIds = questions.stream()
                 .map(QuestionSnapshot::getId)
@@ -563,13 +593,6 @@ public class SubmissionService {
                 : optionSnapshotRepository.findByQuestionSnapshotIdInOrderByPosition(questionIds);
         Map<UUID, List<OptionSnapshot>> optionsByQuestion = allOptions.stream()
                 .collect(Collectors.groupingBy(OptionSnapshot::getQuestionSnapshotId));
-
-        // Fetch user answers
-        List<UserAnswer> answers = userAnswerRepository.findBySubmissionId(submissionId);
-        Map<UUID, UserAnswer> answerByQuestion = new HashMap<>();
-        for (UserAnswer a : answers) {
-            answerByQuestion.put(a.getQuestionSnapshotId(), a);
-        }
 
         // Fetch selected options
         List<UUID> answerIds = answers.stream().map(UserAnswer::getId).toList();
@@ -667,6 +690,25 @@ public class SubmissionService {
      * (falling back to ptsCorrect for questions without custom points).
      * If questionSnapshots are null, use the legacy approximation.
      */
+    /**
+     * The question snapshots a submission actually drew, resolved from its answers.
+     * An assessment snapshot holds the whole question pool while each submission draws
+     * only {@code questionsPerAssessment} of them, so the pool must not be used to
+     * measure a single submission.
+     */
+    private List<QuestionSnapshot> questionSnapshotsOf(List<UserAnswer> answers) {
+        List<UUID> ids = answers.stream()
+                .map(UserAnswer::getQuestionSnapshotId)
+                .distinct()
+                .toList();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return questionSnapshotRepository.findByIdIn(ids).stream()
+                .sorted(Comparator.comparingInt(QuestionSnapshot::getPosition))
+                .toList();
+    }
+
     private static Double computeMaxScore(AssessmentSnapshot snapshot,
                                            List<QuestionSnapshot> questionSnapshots) {
         if (snapshot == null) {

@@ -217,6 +217,12 @@ class StudentFlowIntegrationTest {
             assertThat(result).containsKey("is_correct");
             assertThat(result).containsKey("correct_option_snapshot_ids");
         }
+
+        // maxScore measures the questions this submission drew, not the whole pool
+        // behind the snapshot (pointsPerCorrect is 1.0 and no seeded question
+        // overrides it, so it equals the number of questions answered)
+        assertThat(((Number) response.getBody().get("max_score")).doubleValue())
+                .isEqualTo(questions.size());
     }
 
     // ── 7. Get submission history ─────────────────────────────────
@@ -385,6 +391,29 @@ class StudentFlowIntegrationTest {
         assertThat(publishAs("admin", platformTemplateId))
                 .as("an admin may publish any template, including platform content")
                 .isEqualTo(HttpStatus.CREATED);
+    }
+
+    // ── Review covers the drawn paper only ──────────────────────────
+
+    @Test
+    @Order(15)
+    @DisplayName("GET /submissions/{id}/review → only the questions the submission drew")
+    void reviewCoversDrawnQuestionsOnly() {
+        ResponseEntity<Map> response = rest.exchange(
+                "/submissions/{id}/review", HttpMethod.GET,
+                withAuth(null), Map.class, submissionId);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        List<Map<String, Object>> reviewQuestions =
+                (List<Map<String, Object>>) response.getBody().get("questions");
+
+        // The snapshot holds the whole pool; a submission draws questionsPerAssessment
+        // of it. The review must not show questions the student never saw.
+        assertThat(reviewQuestions).hasSameSizeAs(questions);
+        assertThat(reviewQuestions.stream().map(q -> q.get("id")).toList())
+                .containsExactlyInAnyOrderElementsOf(
+                        questions.stream().map(q -> q.get("id")).toList());
     }
 
     // ── Reproducible draw ───────────────────────────────────────────
