@@ -172,6 +172,58 @@ public class ScoringService {
         return computeSubjectScores(answers, snapshotId, qsMap, ptsCorrect);
     }
 
+    /**
+     * Subject scores for many submissions at once, for list endpoints such as the
+     * submission history. Every lookup is batched, so the cost stays flat instead of
+     * growing with the number of submissions on the page.
+     *
+     * @param answersBySubmission answers grouped by submission
+     * @param qsMap               question snapshots drawn by those submissions, by id
+     * @param defaultPtsBySubmission fallback points per correct answer, per submission
+     * @return subject scores by submission id; submissions without tagged questions are absent
+     */
+    public Map<UUID, List<SubjectScore>> computeSubjectScoresBySubmission(
+            Map<UUID, List<UserAnswer>> answersBySubmission,
+            Map<UUID, QuestionSnapshot> qsMap,
+            Map<UUID, Double> defaultPtsBySubmission) {
+
+        List<UUID> allQuestionIds = answersBySubmission.values().stream()
+                .flatMap(List::stream)
+                .map(UserAnswer::getQuestionSnapshotId)
+                .distinct()
+                .toList();
+
+        if (allQuestionIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<QuestionSnapshotSubject> qsSubjects =
+                questionSnapshotSubjectRepository.findByQuestionSnapshotIdIn(allQuestionIds);
+
+        if (qsSubjects.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<UUID, List<QuestionSnapshotSubject>> subjectsByQuestion = qsSubjects.stream()
+                .collect(Collectors.groupingBy(QuestionSnapshotSubject::getQuestionSnapshotId));
+        Map<UUID, String> subjectLabels = subjectLabelsFor(qsSubjects);
+
+        Map<UUID, List<SubjectScore>> result = new HashMap<>();
+        for (Map.Entry<UUID, List<UserAnswer>> entry : answersBySubmission.entrySet()) {
+            List<QuestionSnapshotSubject> relevant = entry.getValue().stream()
+                    .flatMap(a -> subjectsByQuestion
+                            .getOrDefault(a.getQuestionSnapshotId(), List.of()).stream())
+                    .toList();
+            if (relevant.isEmpty()) {
+                continue;
+            }
+            result.put(entry.getKey(), accumulate(
+                    entry.getValue(), relevant, subjectLabels, qsMap,
+                    defaultPtsBySubmission.getOrDefault(entry.getKey(), 0.0)));
+        }
+        return result;
+    }
+
     private List<SubjectScore> computeSubjectScores(List<UserAnswer> answers, UUID snapshotId,
                                                      Map<UUID, QuestionSnapshot> qsMap,
                                                      double defaultPtsCorrect) {
@@ -190,14 +242,24 @@ public class ScoringService {
             return List.of();
         }
 
-        // Collect unique subject IDs and fetch labels
+        return accumulate(answers, qsSubjects, subjectLabelsFor(qsSubjects),
+                qsMap, defaultPtsCorrect);
+    }
+
+    private Map<UUID, String> subjectLabelsFor(List<QuestionSnapshotSubject> qsSubjects) {
         List<UUID> subjectIds = qsSubjects.stream()
                 .map(QuestionSnapshotSubject::getSubjectId)
                 .distinct()
                 .toList();
-        Map<UUID, String> subjectLabels = subjectRepository.findByIdIn(subjectIds).stream()
+        return subjectRepository.findByIdIn(subjectIds).stream()
                 .collect(Collectors.toMap(Subject::getId, Subject::getLabel));
+    }
 
+    private List<SubjectScore> accumulate(List<UserAnswer> answers,
+                                           List<QuestionSnapshotSubject> qsSubjects,
+                                           Map<UUID, String> subjectLabels,
+                                           Map<UUID, QuestionSnapshot> qsMap,
+                                           double defaultPtsCorrect) {
         // Build answer lookup: questionSnapshotId -> UserAnswer
         Map<UUID, UserAnswer> answerByQuestion = answers.stream()
                 .collect(Collectors.toMap(UserAnswer::getQuestionSnapshotId, a -> a, (a, b) -> a));

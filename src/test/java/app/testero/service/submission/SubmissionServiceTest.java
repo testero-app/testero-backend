@@ -1088,8 +1088,6 @@ class SubmissionServiceTest {
                     .thenReturn(correctOptionSnapshotsFor(Q1_ID));
             when(assessmentSnapshotRepository.findById(SNAPSHOT_ID))
                     .thenReturn(Optional.of(defaultSnapshot));
-            when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
-                    .thenReturn(List.of());
 
             SubmissionFeedbackResponse response = submissionService.getSubmission(SUBMISSION_ID, STUDENT_ID);
 
@@ -1126,8 +1124,6 @@ class SubmissionServiceTest {
                     .thenReturn(correctOptionSnapshotsFor(Q1_ID));
             when(assessmentSnapshotRepository.findById(SNAPSHOT_ID))
                     .thenReturn(Optional.of(defaultSnapshot));
-            when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
-                    .thenReturn(List.of());
 
             SubmissionFeedbackResponse response = submissionService.getSubmission(SUBMISSION_ID, STUDENT_ID);
 
@@ -1209,6 +1205,189 @@ class SubmissionServiceTest {
             assertThat(summary.maxScore()).isEqualTo(5.0);
         }
 
+        @Test
+        @DisplayName("maxScore sums the points of the questions actually drawn")
+        void maxScoreSumsDrawnQuestionPoints() {
+            Submission sub = startedSubmission();
+            sub.setStatus(SubmissionStatus.SUBMITTED);
+            sub.setSubmittedAt(LocalDateTime.of(2026, 6, 15, 10, 25));
+            sub.setScore(4.0);
+
+            // The submission drew 3 of the pool's questions
+            UUID drawn1 = UUID.randomUUID();
+            UUID drawn2 = UUID.randomUUID();
+            UUID drawn3 = UUID.randomUUID();
+
+            when(submissionRepository
+                    .findByUserIdAndStatusInOrderBySubmittedAtDesc(
+                            eq(STUDENT_ID),
+                            eq(List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED)),
+                            any()))
+                    .thenReturn(new PageImpl<>(List.of(sub)));
+            when(assessmentSnapshotRepository.findAllById(List.of(SNAPSHOT_ID)))
+                    .thenReturn(List.of(defaultSnapshot));
+            when(userAnswerRepository.findBySubmissionIdIn(List.of(SUBMISSION_ID)))
+                    .thenReturn(List.of(
+                            mcAnswerFor(drawn1, true),
+                            mcAnswerFor(drawn2, true),
+                            mcAnswerFor(drawn3, false)));
+
+            // 2.00 + 3.00 + fallback ptsCorrect 1.00 = 6.00, while the legacy approximation
+            // (questionsPerAssessment 5 × ptsCorrect 1.00) would say 5.00
+            when(questionSnapshotRepository.findByIdIn(List.of(drawn1, drawn2, drawn3)))
+                    .thenReturn(List.of(
+                            pointedQuestionSnapshot(drawn1, new BigDecimal("2.00")),
+                            pointedQuestionSnapshot(drawn2, new BigDecimal("3.00")),
+                            pointedQuestionSnapshot(drawn3, null)));
+
+            SubmissionHistoryResponse response =
+                    submissionService.getSubmissionHistory(STUDENT_ID, 0, 20);
+
+            SubmissionSummary summary = response.submissions().get(0);
+            assertThat(summary.maxScore()).isEqualTo(6.0);
+            // passed comes from the snapshot's passingScore (3.00), not a hardcoded ratio
+            assertThat(summary.passed()).isTrue();
+        }
+
+        @Test
+        @DisplayName("maxScore ignores pool questions the submission did not draw")
+        void maxScoreIgnoresUndrawnPoolQuestions() {
+            Submission sub = startedSubmission();
+            sub.setStatus(SubmissionStatus.SUBMITTED);
+            sub.setSubmittedAt(LocalDateTime.of(2026, 6, 15, 10, 25));
+            sub.setScore(2.0);
+
+            UUID drawn1 = UUID.randomUUID();
+            UUID drawn2 = UUID.randomUUID();
+
+            when(submissionRepository
+                    .findByUserIdAndStatusInOrderBySubmittedAtDesc(
+                            eq(STUDENT_ID),
+                            eq(List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED)),
+                            any()))
+                    .thenReturn(new PageImpl<>(List.of(sub)));
+            when(assessmentSnapshotRepository.findAllById(List.of(SNAPSHOT_ID)))
+                    .thenReturn(List.of(defaultSnapshot));
+            when(userAnswerRepository.findBySubmissionIdIn(List.of(SUBMISSION_ID)))
+                    .thenReturn(List.of(mcAnswerFor(drawn1, true), mcAnswerFor(drawn2, true)));
+            // Only the two drawn questions are looked up, never the whole pool
+            when(questionSnapshotRepository.findByIdIn(List.of(drawn1, drawn2)))
+                    .thenReturn(List.of(
+                            pointedQuestionSnapshot(drawn1, new BigDecimal("1.00")),
+                            pointedQuestionSnapshot(drawn2, new BigDecimal("1.00"))));
+
+            SubmissionHistoryResponse response =
+                    submissionService.getSubmissionHistory(STUDENT_ID, 0, 20);
+
+            assertThat(response.submissions().get(0).maxScore()).isEqualTo(2.0);
+            verify(questionSnapshotRepository, never())
+                    .findByAssessmentSnapshotIdOrderByPosition(any());
+        }
+
+        @Test
+        @DisplayName("carries the per-subject breakdown, batched across submissions")
+        void includesSubjectScores() {
+            Submission sub = startedSubmission();
+            sub.setStatus(SubmissionStatus.SUBMITTED);
+            sub.setSubmittedAt(LocalDateTime.of(2026, 6, 15, 10, 25));
+            sub.setScore(1.0);
+
+            UUID drawn = UUID.randomUUID();
+            UserAnswer answer = mcAnswerFor(drawn, true);
+            answer.setPointsAwarded(1.0);
+
+            when(submissionRepository
+                    .findByUserIdAndStatusInOrderBySubmittedAtDesc(
+                            eq(STUDENT_ID),
+                            eq(List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED)),
+                            any()))
+                    .thenReturn(new PageImpl<>(List.of(sub)));
+            when(assessmentSnapshotRepository.findAllById(List.of(SNAPSHOT_ID)))
+                    .thenReturn(List.of(defaultSnapshot));
+            when(userAnswerRepository.findBySubmissionIdIn(List.of(SUBMISSION_ID)))
+                    .thenReturn(List.of(answer));
+            when(questionSnapshotRepository.findByIdIn(List.of(drawn)))
+                    .thenReturn(List.of(pointedQuestionSnapshot(drawn, null)));
+
+            UUID subjectId = UUID.fromString("ab000000-0000-0000-0000-000000000009");
+            QuestionSnapshotSubject qss = new QuestionSnapshotSubject();
+            qss.setQuestionSnapshotId(drawn);
+            qss.setSubjectId(subjectId);
+            qss.setWeight(new BigDecimal("1.00"));
+            when(questionSnapshotSubjectRepository.findByQuestionSnapshotIdIn(List.of(drawn)))
+                    .thenReturn(List.of(qss));
+
+            Subject subject = new Subject();
+            subject.setId(subjectId);
+            subject.setLabel("Variables");
+            when(subjectRepository.findByIdIn(List.of(subjectId))).thenReturn(List.of(subject));
+
+            SubmissionHistoryResponse response =
+                    submissionService.getSubmissionHistory(STUDENT_ID, 0, 20);
+
+            List<SubjectScore> scores = response.submissions().get(0).subjectScores();
+            assertThat(scores).hasSize(1);
+            assertThat(scores.get(0).label()).isEqualTo("Variables");
+            assertThat(scores.get(0).pointsEarned()).isCloseTo(1.0, within(0.001));
+            assertThat(scores.get(0).pointsAvailable()).isCloseTo(1.0, within(0.001));
+
+            // One query per lookup for the whole page, not one per submission
+            verify(questionSnapshotSubjectRepository, times(1))
+                    .findByQuestionSnapshotIdIn(anyList());
+            verify(subjectRepository, times(1)).findByIdIn(anyList());
+        }
+
+        @Test
+        @DisplayName("no tagged questions → empty breakdown, no failure")
+        void emptySubjectScoresWhenNoTags() {
+            Submission sub = startedSubmission();
+            sub.setStatus(SubmissionStatus.SUBMITTED);
+            sub.setSubmittedAt(LocalDateTime.of(2026, 6, 15, 10, 25));
+            sub.setScore(1.0);
+
+            UUID drawn = UUID.randomUUID();
+            when(submissionRepository
+                    .findByUserIdAndStatusInOrderBySubmittedAtDesc(
+                            eq(STUDENT_ID),
+                            eq(List.of(SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_CLOSED)),
+                            any()))
+                    .thenReturn(new PageImpl<>(List.of(sub)));
+            when(assessmentSnapshotRepository.findAllById(List.of(SNAPSHOT_ID)))
+                    .thenReturn(List.of(defaultSnapshot));
+            when(userAnswerRepository.findBySubmissionIdIn(List.of(SUBMISSION_ID)))
+                    .thenReturn(List.of(mcAnswerFor(drawn, true)));
+            when(questionSnapshotRepository.findByIdIn(List.of(drawn)))
+                    .thenReturn(List.of(pointedQuestionSnapshot(drawn, null)));
+            when(questionSnapshotSubjectRepository.findByQuestionSnapshotIdIn(List.of(drawn)))
+                    .thenReturn(List.of());
+
+            SubmissionHistoryResponse response =
+                    submissionService.getSubmissionHistory(STUDENT_ID, 0, 20);
+
+            assertThat(response.submissions().get(0).subjectScores()).isEmpty();
+        }
+
+        private QuestionSnapshot pointedQuestionSnapshot(UUID id, BigDecimal points) {
+            QuestionSnapshot qs = new QuestionSnapshot();
+            qs.setId(id);
+            qs.setAssessmentSnapshotId(SNAPSHOT_ID);
+            qs.setType("multiple");
+            qs.setText("Q");
+            qs.setPosition(1);
+            qs.setPoints(points);
+            return qs;
+        }
+
+        private UserAnswer mcAnswerFor(UUID questionSnapshotId, Boolean isCorrect) {
+            UserAnswer a = new UserAnswer();
+            a.setId(UUID.randomUUID());
+            a.setSubmissionId(SUBMISSION_ID);
+            a.setQuestionSnapshotId(questionSnapshotId);
+            a.setType("multiple");
+            a.setIsCorrect(isCorrect);
+            return a;
+        }
+
         private UserAnswer mcAnswer(UUID submissionId,
                                      Boolean isCorrect) {
             UserAnswer a = new UserAnswer();
@@ -1251,8 +1430,6 @@ class SubmissionServiceTest {
 
             stubSubmitFlow();
             when(questionSnapshotRepository.findByIdIn(anyList())).thenReturn(List.of(qs1, qs2));
-            when(questionSnapshotRepository.findByAssessmentSnapshotIdOrderByPosition(SNAPSHOT_ID))
-                    .thenReturn(List.of(qs1, qs2));
             when(optionSnapshotRepository.findByQuestionSnapshotIdInAndCorrectTrue(anyList()))
                     .thenReturn(correctOptionSnapshotsFor(Q1_ID, Q2_ID));
 
