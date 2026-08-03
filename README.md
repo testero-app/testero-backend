@@ -100,7 +100,7 @@ Run all checks locally (same as CI):
 ./mvnw compile checkstyle:check spotbugs:check test
 ```
 
-The CI pipeline runs four steps on every PR to `main`:
+The CI pipeline runs five steps on every PR to `main`:
 
 | Step | What it does |
 |------|-------------|
@@ -108,6 +108,7 @@ The CI pipeline runs four steps on every PR to `main`:
 | **Checkstyle** | Enforces code style (indentation, imports, naming) |
 | **SpotBugs** | Static analysis for common bug patterns |
 | **Test** | Runs the full test suite (JUnit 5 + Mockito) |
+| **OpenAPI spec** | Fails if `docs/openapi.json` no longer matches the code |
 
 The "Build & Verify" check is **required** — PRs cannot be merged if any
 step fails. Tests also run during the **Docker build on Render**, blocking
@@ -118,6 +119,24 @@ and available under `target/site/jacoco/` after running `./mvnw test`.
 
 > **For contributors:** every change to backend logic must include tests.
 > See [CONTRIBUTING.md](./CONTRIBUTING.md#testing) for details.
+
+## API Contract
+
+`docs/openapi.json` is the published API contract:
+[testero-web](https://github.com/testero-app/testero-web) generates its TypeScript
+types from it rather than hand-writing them. It is rewritten by `OpenApiSpecTest`
+on every `./mvnw test`, so a DTO change lands in it automatically — **commit it
+with the change**, or CI fails on the stale file.
+
+The metadata a generated client needs comes from `RecordSchemaModelConverter`:
+since no DTO uses `@JsonInclude`, every record component is serialised and is
+therefore emitted as `required`. Mark a field that may carry `null` with JSpecify's
+`@Nullable` — it stays required and is emitted as nullable. On request DTOs, a field
+the client may leave out entirely takes
+`@Schema(requiredMode = NOT_REQUIRED)` instead.
+
+The live spec and Swagger UI are served at `/api/v3/api-docs` and
+`/api/swagger-ui.html`.
 
 ## Releases
 
