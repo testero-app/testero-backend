@@ -234,7 +234,7 @@ class CompetencyServiceTest {
 
         Topic childTopic = new Topic();
         childTopic.setId(childTopicId);
-        childTopic.setTitle("Capitolo 1.1");
+        childTopic.setTitle("Chapter 1.1");
         childTopic.setEnabled(true);
         childTopic.setParentId(TOPIC_ID);
         childTopic.setPosition(0);
@@ -283,7 +283,7 @@ class CompetencyServiceTest {
         assertThat(root.children()).hasSize(1);
 
         var child = root.children().getFirst();
-        assertThat(child.title()).isEqualTo("Capitolo 1.1");
+        assertThat(child.title()).isEqualTo("Chapter 1.1");
         assertThat(child.subjects().getFirst().mastery()).isEqualTo(100);
         assertThat(child.mastery()).isEqualTo(100);
 
