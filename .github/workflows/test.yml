@@ -46,3 +46,13 @@ jobs:
         env:
           DATABASE_URL: jdbc:postgresql://localhost:5432/unused
           JWT_SECRET: ci-test-secret-key-that-is-long-enough-for-hs256
+
+      # The test suite rewrites docs/openapi.json from the running application. A diff here means
+      # a DTO changed without the published contract being regenerated — testero-web generates its
+      # types from this file, so it must be committed alongside the change.
+      - name: OpenAPI spec is up to date
+        run: |
+          git diff --exit-code -- docs/openapi.json || {
+            echo "::error::docs/openapi.json is stale — run ./mvnw test and commit the result."
+            exit 1
+          }

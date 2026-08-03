@@ -1,12 +1,13 @@
 package app.testero.dto.assessment;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 public record AssessmentQuestionsResponse(
         String assessmentId,
         String title,
-        String availableFrom,
-        String availableUntil,
+        @Nullable String availableFrom,
+        @Nullable String availableUntil,
         int timerMinutes,
         int totalQuestions,
         List<QuestionDto> questions
@@ -15,9 +16,10 @@ public record AssessmentQuestionsResponse(
             String id,
             String type,
             String text,
-            String code,
-            List<OptionDto> options,
-            Double points,
+            @Nullable String code,
+            // null for open questions — only multiple-choice ones carry options.
+            @Nullable List<OptionDto> options,
+            @Nullable Double points,
             List<SubjectDto> subjects
     ) {}
 
