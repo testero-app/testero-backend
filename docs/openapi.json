@@ -1,0 +1,2025 @@
+{
+  "components" : {
+    "schemas" : {
+      "AnswerInput" : {
+        "properties" : {
+          "motivation" : {
+            "type" : "string"
+          },
+          "question_id" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "selected_option_ids" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "type" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [ "question_id", "type" ],
+        "type" : "object"
+      },
+      "AnswerResult" : {
+        "properties" : {
+          "correct_option_snapshot_ids" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "is_correct" : {
+            "nullable" : true,
+            "type" : "boolean"
+          },
+          "points_awarded" : {
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "question_snapshot_id" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "correct_option_snapshot_ids", "is_correct", "points_awarded", "question_snapshot_id", "type" ],
+        "type" : "object"
+      },
+      "AssessmentConfigResponse" : {
+        "properties" : {
+          "assessmentId" : {
+            "type" : "string"
+          },
+          "availableFrom" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "availableUntil" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "maxAttempts" : {
+            "format" : "int32",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "questionsPerAssessment" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "scoring" : {
+            "$ref" : "#/components/schemas/ScoringRules"
+          },
+          "shuffleOptions" : {
+            "type" : "boolean"
+          },
+          "shuffleQuestions" : {
+            "type" : "boolean"
+          },
+          "subjects" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SubjectDto"
+            },
+            "type" : "array"
+          },
+          "timerMinutes" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "assessmentId", "availableFrom", "availableUntil", "maxAttempts", "questionsPerAssessment", "scoring", "shuffleOptions", "shuffleQuestions", "subjects", "timerMinutes", "title" ],
+        "type" : "object"
+      },
+      "AssessmentListItem" : {
+        "properties" : {
+          "availableFrom" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "availableUntil" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "difficulty" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "questionsPerAssessment" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "score" : {
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "subjects" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SubjectDto"
+            },
+            "type" : "array"
+          },
+          "timerMinutes" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "availableFrom", "availableUntil", "difficulty", "id", "questionsPerAssessment", "score", "status", "subjects", "timerMinutes", "title", "type" ],
+        "type" : "object"
+      },
+      "AssessmentListResponse" : {
+        "properties" : {
+          "assessments" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AssessmentListItem"
+            },
+            "type" : "array"
+          },
+          "pagination" : {
+            "$ref" : "#/components/schemas/PaginationMetadata"
+          }
+        },
+        "required" : [ "assessments", "pagination" ],
+        "type" : "object"
+      },
+      "AssessmentQuestionsResponse" : {
+        "properties" : {
+          "assessmentId" : {
+            "type" : "string"
+          },
+          "availableFrom" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "availableUntil" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "questions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/QuestionDto"
+            },
+            "type" : "array"
+          },
+          "timerMinutes" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "totalQuestions" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "assessmentId", "availableFrom", "availableUntil", "questions", "timerMinutes", "title", "totalQuestions" ],
+        "type" : "object"
+      },
+      "AvailableQuestions" : {
+        "properties" : {
+          "advanced" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "base" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "intermediate" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "total" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "advanced", "base", "intermediate", "total" ],
+        "type" : "object"
+      },
+      "ChangePasswordRequest" : {
+        "properties" : {
+          "confirm_password" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "current_password" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "new_password" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [ "confirm_password", "current_password", "new_password" ],
+        "type" : "object"
+      },
+      "ChapterItem" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "question_counts" : {
+            "$ref" : "#/components/schemas/QuestionCounts"
+          }
+        },
+        "required" : [ "id", "label", "question_counts" ],
+        "type" : "object"
+      },
+      "CompetencyResponse" : {
+        "properties" : {
+          "topics" : {
+            "items" : {
+              "$ref" : "#/components/schemas/TopicMastery"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "topics" ],
+        "type" : "object"
+      },
+      "LoginRequest" : {
+        "properties" : {
+          "password" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "username" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [ "password", "username" ],
+        "type" : "object"
+      },
+      "LoginResponse" : {
+        "properties" : {
+          "must_change_password" : {
+            "type" : "boolean"
+          },
+          "password_expired" : {
+            "type" : "boolean"
+          },
+          "token" : {
+            "type" : "string"
+          },
+          "user" : {
+            "$ref" : "#/components/schemas/UserInfo"
+          }
+        },
+        "required" : [ "must_change_password", "password_expired", "token", "user" ],
+        "type" : "object"
+      },
+      "NotificationItemDto" : {
+        "properties" : {
+          "created_at" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "event" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "read" : {
+            "type" : "boolean"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "created_at", "event", "id", "message", "read", "title" ],
+        "type" : "object"
+      },
+      "NotificationPreferenceDto" : {
+        "properties" : {
+          "channel" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "event" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "channel", "enabled", "event" ],
+        "type" : "object"
+      },
+      "OptionDto" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "isFallback" : {
+            "type" : "boolean"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "isFallback", "text" ],
+        "type" : "object"
+      },
+      "PaginationMetadata" : {
+        "properties" : {
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "size" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "total_elements" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "total_pages" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "page", "size", "total_elements", "total_pages" ],
+        "type" : "object"
+      },
+      "QuestionCounts" : {
+        "properties" : {
+          "advanced" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "base" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "intermediate" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "advanced", "base", "intermediate" ],
+        "type" : "object"
+      },
+      "QuestionDto" : {
+        "properties" : {
+          "code" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "options" : {
+            "items" : {
+              "$ref" : "#/components/schemas/OptionDto"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "points" : {
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "subjects" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SubjectDto"
+            },
+            "type" : "array"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "id", "options", "points", "subjects", "text", "type" ],
+        "type" : "object"
+      },
+      "ReviewOption" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "is_correct" : {
+            "type" : "boolean"
+          },
+          "position" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "is_correct", "position", "text" ],
+        "type" : "object"
+      },
+      "ReviewQuestion" : {
+        "properties" : {
+          "answer_text" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "code" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "explanation" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "is_correct" : {
+            "nullable" : true,
+            "type" : "boolean"
+          },
+          "motivation" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "options" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ReviewOption"
+            },
+            "type" : "array"
+          },
+          "points" : {
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "points_awarded" : {
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "position" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "selected_option_ids" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "subjects" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SubjectDto"
+            },
+            "type" : "array"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "answer_text", "code", "explanation", "id", "is_correct", "motivation", "options", "points", "points_awarded", "position", "selected_option_ids", "subjects", "text", "type" ],
+        "type" : "object"
+      },
+      "SaveAnswerRequest" : {
+        "properties" : {
+          "flagged" : {
+            "type" : "boolean"
+          },
+          "motivation" : {
+            "type" : "string"
+          },
+          "selected_option_ids" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "type" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ],
+        "type" : "object"
+      },
+      "SavedAnswer" : {
+        "properties" : {
+          "flagged" : {
+            "type" : "boolean"
+          },
+          "motivation" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "question_snapshot_id" : {
+            "type" : "string"
+          },
+          "selected_option_ids" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "text" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "flagged", "motivation", "question_snapshot_id", "selected_option_ids", "text", "type" ],
+        "type" : "object"
+      },
+      "SavedAnswersResponse" : {
+        "properties" : {
+          "answers" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SavedAnswer"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "answers" ],
+        "type" : "object"
+      },
+      "ScoringRules" : {
+        "properties" : {
+          "pointsPerCorrect" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "pointsPerUnanswered" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "pointsPerWrong" : {
+            "format" : "double",
+            "type" : "number"
+          }
+        },
+        "required" : [ "pointsPerCorrect", "pointsPerUnanswered", "pointsPerWrong" ],
+        "type" : "object"
+      },
+      "SetPasswordRequest" : {
+        "properties" : {
+          "confirm_password" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "new_password" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [ "confirm_password", "new_password" ],
+        "type" : "object"
+      },
+      "SubjectDto" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "label" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "label" ],
+        "type" : "object"
+      },
+      "SubjectMastery" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "mastery" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "id", "label", "mastery" ],
+        "type" : "object"
+      },
+      "SubjectScore" : {
+        "properties" : {
+          "label" : {
+            "type" : "string"
+          },
+          "points_available" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "points_earned" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "subject_id" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "label", "points_available", "points_earned", "subject_id" ],
+        "type" : "object"
+      },
+      "SubmissionFeedbackResponse" : {
+        "properties" : {
+          "answers" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AnswerResult"
+            },
+            "type" : "array"
+          },
+          "assessment_snapshot_id" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "max_score" : {
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "passed" : {
+            "nullable" : true,
+            "type" : "boolean"
+          },
+          "passing_score" : {
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "score" : {
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "started_at" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "subject_scores" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SubjectScore"
+            },
+            "type" : "array"
+          },
+          "submitted_at" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "user_id" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "answers", "assessment_snapshot_id", "id", "max_score", "passed", "passing_score", "score", "started_at", "subject_scores", "submitted_at", "user_id" ],
+        "type" : "object"
+      },
+      "SubmissionHistoryResponse" : {
+        "properties" : {
+          "pagination" : {
+            "$ref" : "#/components/schemas/PaginationMetadata"
+          },
+          "submissions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SubmissionSummary"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "pagination", "submissions" ],
+        "type" : "object"
+      },
+      "SubmissionReviewResponse" : {
+        "properties" : {
+          "assessment_title" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "max_score" : {
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "questions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ReviewQuestion"
+            },
+            "type" : "array"
+          },
+          "score" : {
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "started_at" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "submitted_at" : {
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "assessment_title", "id", "max_score", "questions", "score", "started_at", "submitted_at" ],
+        "type" : "object"
+      },
+      "SubmissionStartResponse" : {
+        "properties" : {
+          "started_at" : {
+            "type" : "string"
+          },
+          "submission_id" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "started_at", "submission_id" ],
+        "type" : "object"
+      },
+      "SubmissionSubmitRequest" : {
+        "properties" : {
+          "answers" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AnswerInput"
+            },
+            "minItems" : 1,
+            "type" : "array"
+          }
+        },
+        "required" : [ "answers" ],
+        "type" : "object"
+      },
+      "SubmissionSummary" : {
+        "properties" : {
+          "assessment_snapshot_id" : {
+            "type" : "string"
+          },
+          "assessment_title" : {
+            "type" : "string"
+          },
+          "correct_count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "max_score" : {
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "passed" : {
+            "nullable" : true,
+            "type" : "boolean"
+          },
+          "score" : {
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "started_at" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "subject_scores" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SubjectScore"
+            },
+            "type" : "array"
+          },
+          "submitted_at" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "total_questions" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "unanswered_count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "wrong_count" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "assessment_snapshot_id", "assessment_title", "correct_count", "id", "max_score", "passed", "score", "started_at", "subject_scores", "submitted_at", "total_questions", "type", "unanswered_count", "wrong_count" ],
+        "type" : "object"
+      },
+      "TagRequest" : {
+        "properties" : {
+          "name" : {
+            "maxLength" : 50,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "name" ],
+        "type" : "object"
+      },
+      "TagResponse" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "name" ],
+        "type" : "object"
+      },
+      "TaggedQuestionResponse" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "position" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "tags" : {
+            "items" : {
+              "$ref" : "#/components/schemas/TagResponse"
+            },
+            "type" : "array"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "position", "tags", "text", "type" ],
+        "type" : "object"
+      },
+      "TopicChaptersResponse" : {
+        "properties" : {
+          "available_questions" : {
+            "$ref" : "#/components/schemas/AvailableQuestions"
+          },
+          "chapters" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ChapterItem"
+            },
+            "type" : "array"
+          },
+          "topic_id" : {
+            "type" : "string"
+          },
+          "topic_title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "available_questions", "chapters", "topic_id", "topic_title" ],
+        "type" : "object"
+      },
+      "TopicItem" : {
+        "properties" : {
+          "abbreviation" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "chapters" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ChapterItem"
+            },
+            "type" : "array"
+          },
+          "description" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "total_chapters" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "total_questions" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "abbreviation", "chapters", "description", "enabled", "id", "title", "total_chapters", "total_questions" ],
+        "type" : "object"
+      },
+      "TopicListResponse" : {
+        "properties" : {
+          "topics" : {
+            "items" : {
+              "$ref" : "#/components/schemas/TopicItem"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "topics" ],
+        "type" : "object"
+      },
+      "TopicMastery" : {
+        "properties" : {
+          "children" : {
+            "items" : {
+              "$ref" : "#/components/schemas/TopicMastery"
+            },
+            "type" : "array"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "mastery" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "subjects" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SubjectMastery"
+            },
+            "type" : "array"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "children", "id", "mastery", "subjects", "title" ],
+        "type" : "object"
+      },
+      "TrainingStartRequest" : {
+        "properties" : {
+          "chapter_ids" : {
+            "items" : {
+              "type" : "string"
+            },
+            "minItems" : 1,
+            "type" : "array"
+          },
+          "difficulty" : {
+            "type" : "string"
+          },
+          "question_count" : {
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 1,
+            "type" : "integer"
+          },
+          "timer_enabled" : {
+            "type" : "boolean"
+          },
+          "topic_id" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "chapter_ids", "difficulty", "question_count", "timer_enabled", "topic_id" ],
+        "type" : "object"
+      },
+      "TrainingStartResponse" : {
+        "properties" : {
+          "assessment_snapshot_id" : {
+            "type" : "string"
+          },
+          "submission_id" : {
+            "type" : "string"
+          },
+          "timer_minutes" : {
+            "format" : "int32",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "total_questions" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "assessment_snapshot_id", "submission_id", "timer_minutes", "total_questions" ],
+        "type" : "object"
+      },
+      "UpdateNotificationPreferencesRequest" : {
+        "properties" : {
+          "preferences" : {
+            "items" : {
+              "$ref" : "#/components/schemas/NotificationPreferenceDto"
+            },
+            "minItems" : 1,
+            "type" : "array"
+          }
+        },
+        "required" : [ "preferences" ],
+        "type" : "object"
+      },
+      "UpdateProfileRequest" : {
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "language" : {
+            "pattern" : "it|en",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "UserInfo" : {
+        "properties" : {
+          "class_name" : {
+            "type" : "string"
+          },
+          "first_name" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "last_name" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "class_name", "first_name", "id", "last_name", "username" ],
+        "type" : "object"
+      },
+      "UserProfileResponse" : {
+        "properties" : {
+          "class_name" : {
+            "type" : "string"
+          },
+          "email" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "first_name" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "language" : {
+            "type" : "string"
+          },
+          "last_name" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "class_name", "email", "first_name", "id", "language", "last_name", "role", "username" ],
+        "type" : "object"
+      }
+    },
+    "securitySchemes" : {
+      "Bearer" : {
+        "bearerFormat" : "JWT",
+        "description" : "Paste your JWT token here",
+        "scheme" : "bearer",
+        "type" : "http"
+      }
+    }
+  },
+  "info" : {
+    "description" : "REST API for Testero — test administration for educational settings",
+    "title" : "Testero API",
+    "version" : "v1"
+  },
+  "openapi" : "3.0.1",
+  "paths" : {
+    "/assessments" : {
+      "get" : {
+        "operationId" : "getAvailableAssessments",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssessmentListResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Assessments" ]
+      }
+    },
+    "/assessments/{assessmentId}/publish" : {
+      "post" : {
+        "operationId" : "publishAssessment",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "assessmentId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Assessments" ]
+      }
+    },
+    "/assessments/{snapshotId}/config" : {
+      "get" : {
+        "operationId" : "getAssessmentConfig",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "snapshotId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssessmentConfigResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Assessments" ]
+      }
+    },
+    "/assessments/{snapshotId}/questions" : {
+      "get" : {
+        "operationId" : "getAssessmentQuestions",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "snapshotId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssessmentQuestionsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Assessments" ]
+      }
+    },
+    "/assessments/{snapshotId}/start" : {
+      "post" : {
+        "operationId" : "startAssessment",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "snapshotId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmissionStartResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Assessments" ]
+      }
+    },
+    "/auth/login" : {
+      "post" : {
+        "operationId" : "login",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Authenticate and obtain JWT token",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/set-password" : {
+      "post" : {
+        "operationId" : "setPassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SetPasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Set new password (first access or expired password)",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/competencies" : {
+      "get" : {
+        "operationId" : "getCompetencies",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "from",
+          "required" : false,
+          "schema" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : false,
+          "schema" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CompetencyResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Competencies" ]
+      }
+    },
+    "/notifications/count" : {
+      "get" : {
+        "operationId" : "getCount",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "additionalProperties" : {
+                    "format" : "int64",
+                    "type" : "integer"
+                  },
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Notifications" ]
+      }
+    },
+    "/notifications/read-all" : {
+      "put" : {
+        "operationId" : "markAllAsRead",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Notifications" ]
+      }
+    },
+    "/notifications/unread" : {
+      "get" : {
+        "operationId" : "getUnread",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/NotificationItemDto"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Notifications" ]
+      }
+    },
+    "/notifications/{id}/read" : {
+      "put" : {
+        "operationId" : "markAsRead",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Notifications" ]
+      }
+    },
+    "/questions" : {
+      "get" : {
+        "operationId" : "byTag",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "tagId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/TaggedQuestionResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Questions" ]
+      }
+    },
+    "/questions/{questionId}/tags/{tagId}" : {
+      "delete" : {
+        "operationId" : "detachTag",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "questionId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "tagId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Questions" ]
+      },
+      "post" : {
+        "operationId" : "attachTag",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "questionId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "tagId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Questions" ]
+      }
+    },
+    "/submissions/mine" : {
+      "get" : {
+        "operationId" : "getMySubmissions",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmissionHistoryResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Submissions" ]
+      }
+    },
+    "/submissions/{submissionId}" : {
+      "get" : {
+        "operationId" : "getSubmission",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "submissionId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmissionFeedbackResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Submissions" ]
+      },
+      "put" : {
+        "operationId" : "submitAnswers",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "submissionId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmissionSubmitRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmissionFeedbackResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Submissions" ]
+      }
+    },
+    "/submissions/{submissionId}/answers" : {
+      "get" : {
+        "operationId" : "getSavedAnswers",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "submissionId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SavedAnswersResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Submissions" ]
+      }
+    },
+    "/submissions/{submissionId}/answers/{questionSnapshotId}" : {
+      "put" : {
+        "operationId" : "saveAnswer",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "submissionId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "questionSnapshotId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SaveAnswerRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Submissions" ]
+      }
+    },
+    "/submissions/{submissionId}/review" : {
+      "get" : {
+        "operationId" : "getSubmissionReview",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "submissionId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmissionReviewResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Submissions" ]
+      }
+    },
+    "/tags" : {
+      "get" : {
+        "operationId" : "listOwn",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/TagResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Tags" ]
+      },
+      "post" : {
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TagRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Tags" ]
+      }
+    },
+    "/tags/{tagId}" : {
+      "delete" : {
+        "operationId" : "delete",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "tagId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Tags" ]
+      },
+      "patch" : {
+        "operationId" : "rename",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "tagId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TagRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Tags" ]
+      }
+    },
+    "/topics" : {
+      "get" : {
+        "operationId" : "getTopics",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicListResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Topics" ]
+      }
+    },
+    "/topics/{topicId}/chapters" : {
+      "get" : {
+        "operationId" : "getTopicChapters",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "topicId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicChaptersResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Topics" ]
+      }
+    },
+    "/training/start" : {
+      "post" : {
+        "operationId" : "startTraining",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TrainingStartRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TrainingStartResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Training" ]
+      }
+    },
+    "/users/me" : {
+      "get" : {
+        "operationId" : "getProfile",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Users" ]
+      },
+      "put" : {
+        "operationId" : "updateProfile",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Users" ]
+      }
+    },
+    "/users/me/notifications" : {
+      "get" : {
+        "operationId" : "getNotifications",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/NotificationPreferenceDto"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Users" ]
+      },
+      "put" : {
+        "operationId" : "updateNotifications",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateNotificationPreferencesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/NotificationPreferenceDto"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Users" ]
+      }
+    },
+    "/users/me/password" : {
+      "put" : {
+        "operationId" : "changePassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Users" ]
+      }
+    }
+  },
+  "security" : [ {
+    "Bearer" : [ ]
+  } ],
+  "servers" : [ {
+    "description" : "Testero API, relative to the host serving it",
+    "url" : "/api"
+  } ]
+}

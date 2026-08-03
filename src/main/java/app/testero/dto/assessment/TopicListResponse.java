@@ -2,14 +2,15 @@ package app.testero.dto.assessment;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 public record TopicListResponse(List<TopicItem> topics) {
 
     public record TopicItem(
             String id,
             String title,
-            String abbreviation,
-            String description,
+            @Nullable String abbreviation,
+            @Nullable String description,
             boolean enabled,
             List<ChapterItem> chapters,
             @JsonProperty("total_chapters") int totalChapters,
