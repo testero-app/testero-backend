@@ -58,7 +58,7 @@ class NotificationSchedulerTest {
 
         AssessmentSnapshot snapshot = new AssessmentSnapshot();
         snapshot.setId(SNAPSHOT_ID);
-        snapshot.setTitle("Verifica di Matematica");
+        snapshot.setTitle("Mathematics test");
         lenient().when(snapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.of(snapshot));
     }
 
