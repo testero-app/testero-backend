@@ -17,14 +17,18 @@ import app.testero.dto.submission.SubmissionReviewResponse.ReviewOption;
 import app.testero.dto.submission.SubmissionReviewResponse.ReviewQuestion;
 import app.testero.dto.submission.SubmissionStartResponse;
 import app.testero.dto.submission.SubmissionSubmitRequest;
+import app.testero.dto.assessment.AssessmentQuestionsResponse;
+import app.testero.dto.assessment.AssessmentQuestionsResponse.QuestionDto;
 import app.testero.entity.assessment.AssessmentType;
 import app.testero.entity.assessment.Subject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
+import app.testero.entity.user.AppUser;
 import app.testero.entity.user.NotificationType;
 import app.testero.entity.snapshot.OptionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.entity.submission.Submission;
+import app.testero.entity.submission.SubmissionQuestion;
 import app.testero.entity.submission.SubmissionStatus;
 import app.testero.entity.submission.UserAnswer;
 import app.testero.entity.submission.UserAnswerSelectedOption;
@@ -37,12 +41,17 @@ import app.testero.repository.assessment.OptionSnapshotRepository;
 import app.testero.repository.assessment.QuestionSnapshotRepository;
 import app.testero.repository.assessment.QuestionSnapshotSubjectRepository;
 import app.testero.repository.assessment.SubjectRepository;
+import app.testero.repository.user.AppUserRepository;
+import app.testero.repository.submission.SubmissionQuestionRepository;
 import app.testero.repository.submission.SubmissionRepository;
 import app.testero.repository.submission.UserAnswerRepository;
 import app.testero.repository.submission.UserAnswerSelectedOptionRepository;
+import app.testero.service.assessment.AssessmentService;
+import app.testero.service.assessment.QuestionPrepService;
 import app.testero.service.submission.ScoringService.ScoringResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -54,6 +63,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -73,8 +83,13 @@ public class SubmissionService {
     private final QuestionSnapshotRepository questionSnapshotRepository;
     private final QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
     private final SubjectRepository subjectRepository;
+    private final SubmissionQuestionRepository submissionQuestionRepository;
+    private final AppUserRepository appUserRepository;
     private final ScoringService scoringService;
     private final NotificationService notificationService;
+    private final AssessmentService assessmentService;
+    private final QuestionPrepService questionPrepService;
+    private final MessageSource messageSource;
     private final ApplicationEventPublisher eventPublisher;
 
     public SubmissionService(SubmissionRepository submissionRepository,
@@ -85,8 +100,13 @@ public class SubmissionService {
                              QuestionSnapshotRepository questionSnapshotRepository,
                              QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository,
                              SubjectRepository subjectRepository,
+                             SubmissionQuestionRepository submissionQuestionRepository,
+                             AppUserRepository appUserRepository,
                              ScoringService scoringService,
                              NotificationService notificationService,
+                             AssessmentService assessmentService,
+                             QuestionPrepService questionPrepService,
+                             MessageSource messageSource,
                              ApplicationEventPublisher eventPublisher) {
         this.submissionRepository = submissionRepository;
         this.userAnswerRepository = userAnswerRepository;
@@ -96,8 +116,13 @@ public class SubmissionService {
         this.questionSnapshotRepository = questionSnapshotRepository;
         this.questionSnapshotSubjectRepository = questionSnapshotSubjectRepository;
         this.subjectRepository = subjectRepository;
+        this.submissionQuestionRepository = submissionQuestionRepository;
+        this.appUserRepository = appUserRepository;
         this.scoringService = scoringService;
         this.notificationService = notificationService;
+        this.assessmentService = assessmentService;
+        this.questionPrepService = questionPrepService;
+        this.messageSource = messageSource;
         this.eventPublisher = eventPublisher;
     }
 
@@ -170,10 +195,19 @@ public class SubmissionService {
             throw new IllegalSubmissionStateException("Submission is not in progress");
         }
 
-        // Validate question belongs to this submission's assessment snapshot
-        questionSnapshotRepository.findById(questionSnapshotId)
-                .filter(q -> q.getAssessmentSnapshotId().equals(submission.getAssessmentSnapshotId()))
-                .orElseThrow(() -> new ResourceNotFoundException("Question not found in this assessment"));
+        // The question must be one of those administered: for a sitting, it belongs to the
+        // submission's snapshot; for a free training session, which has none, it is one of the
+        // questions drawn for it.
+        boolean administered = submission.getAssessmentSnapshotId() == null
+                ? submissionQuestionRepository
+                        .existsBySubmissionIdAndQuestionSnapshotId(submissionId, questionSnapshotId)
+                : questionSnapshotRepository.findById(questionSnapshotId)
+                        .filter(q -> q.getAssessmentSnapshotId()
+                                .equals(submission.getAssessmentSnapshotId()))
+                        .isPresent();
+        if (!administered) {
+            throw new ResourceNotFoundException("Question not found in this assessment");
+        }
 
         // Upsert: find existing or create new
         Optional<UserAnswer> existingAnswer = userAnswerRepository
@@ -284,9 +318,7 @@ public class SubmissionService {
         // 6. Notify scheduler to cancel auto-close
         eventPublisher.publishEvent(new SubmissionCompletedEvent(submission.getId()));
 
-        AssessmentSnapshot snapshot = assessmentSnapshotRepository
-                .findById(submission.getAssessmentSnapshotId())
-                .orElse(null);
+        AssessmentSnapshot snapshot = snapshotOf(submission);
 
         // Notify student of result (non-training assessments only)
         if (snapshot != null && snapshot.getType() != AssessmentType.TRAINING) {
@@ -312,7 +344,7 @@ public class SubmissionService {
         return new SubmissionFeedbackResponse(
                 submission.getId().toString(),
                 submission.getUserId().toString(),
-                submission.getAssessmentSnapshotId().toString(),
+                idOrNull(submission.getAssessmentSnapshotId()),
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt().toString(),
                 submission.getScore(),
@@ -419,9 +451,7 @@ public class SubmissionService {
                 ))
                 .toList();
 
-        AssessmentSnapshot feedbackSnapshot = assessmentSnapshotRepository
-                .findById(submission.getAssessmentSnapshotId())
-                .orElse(null);
+        AssessmentSnapshot feedbackSnapshot = snapshotOf(submission);
 
         // Fetch question snapshots for accurate maxScore
         List<QuestionSnapshot> questionSnapshots = questionSnapshotsOf(answers);
@@ -433,7 +463,7 @@ public class SubmissionService {
         return new SubmissionFeedbackResponse(
                 submission.getId().toString(),
                 submission.getUserId().toString(),
-                submission.getAssessmentSnapshotId().toString(),
+                idOrNull(submission.getAssessmentSnapshotId()),
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null,
                 submission.getScore(),
@@ -443,6 +473,54 @@ public class SubmissionService {
                         ? feedbackSnapshot.getPassingScore().doubleValue() : null,
                 answerResults,
                 subjectScores
+        );
+    }
+
+    /**
+     * The questions of a session, whichever kind it is.
+     *
+     * <p>A sitting delegates to the assessment: its paper is drawn from the published snapshot
+     * and frozen by the seed. A free training session has no snapshot — its paper was drawn
+     * across the pools its class may practise on and recorded at start, so it is replayed from
+     * {@code submission_question}, in the order drawn.
+     */
+    @Transactional(readOnly = true)
+    public AssessmentQuestionsResponse getSubmissionQuestions(UUID submissionId, UUID userId) {
+        Submission submission = submissionRepository.findByIdAndUserId(submissionId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Submission not found"));
+
+        if (submission.getAssessmentSnapshotId() != null) {
+            return assessmentService.getAssessmentQuestions(
+                    submission.getAssessmentSnapshotId().toString(), userId);
+        }
+
+        List<UUID> drawn = submissionQuestionRepository
+                .findBySubmissionIdOrderByPositionAsc(submissionId).stream()
+                .map(SubmissionQuestion::getQuestionSnapshotId)
+                .toList();
+        Map<UUID, QuestionSnapshot> byId = drawn.isEmpty()
+                ? Map.of()
+                : questionSnapshotRepository.findByIdIn(drawn).stream()
+                        .collect(Collectors.toMap(QuestionSnapshot::getId, q -> q));
+        List<QuestionSnapshot> questions = drawn.stream()
+                .map(byId::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        // The question order is the one drawn at start; only the options are shuffled, with the
+        // submission's seed, so a reload replays the identical paper.
+        List<QuestionDto> prepared = questionPrepService.prepare(
+                new ArrayList<>(assessmentService.toQuestionDtos(questions)),
+                questions.size(), false, true, submission.getSeed());
+
+        return new AssessmentQuestionsResponse(
+                null,
+                freeTrainingTitle(userId),
+                null,
+                null,
+                submission.getTimerMinutes() == null ? 0 : submission.getTimerMinutes(),
+                prepared.size(),
+                prepared
         );
     }
 
@@ -465,6 +543,7 @@ public class SubmissionService {
         // Batch-fetch snapshot titles
         List<UUID> snapshotIds = submissions.stream()
                 .map(Submission::getAssessmentSnapshotId)
+                .filter(Objects::nonNull)
                 .distinct()
                 .toList();
         Map<UUID, AssessmentSnapshot> snapshotMap = assessmentSnapshotRepository
@@ -491,7 +570,8 @@ public class SubmissionService {
         // Batch-compute the per-subject breakdown, so the history detail shows the same
         // chart the student saw right after submitting
         Map<UUID, Double> ptsCorrectBySubmission = submissions.stream()
-                .filter(s -> snapshotMap.containsKey(s.getAssessmentSnapshotId()))
+                .filter(s -> s.getAssessmentSnapshotId() != null
+                        && snapshotMap.containsKey(s.getAssessmentSnapshotId()))
                 .collect(Collectors.toMap(
                         Submission::getId,
                         s -> snapshotMap.get(s.getAssessmentSnapshotId())
@@ -503,12 +583,17 @@ public class SubmissionService {
 
         List<SubmissionSummary> summaries = submissions.stream()
                 .map(s -> {
-                    AssessmentSnapshot snapshot = snapshotMap
-                            .get(s.getAssessmentSnapshotId());
+                    AssessmentSnapshot snapshot = s.getAssessmentSnapshotId() == null
+                            ? null
+                            : snapshotMap.get(s.getAssessmentSnapshotId());
+                    // A session with no snapshot is free training: it is named for what it is,
+                    // in the student's language, since there is no assessment to name it after.
                     String title = snapshot != null
-                            ? snapshot.getTitle() : "Unknown";
+                            ? snapshot.getTitle()
+                            : freeTrainingTitle(userId);
                     String type = snapshot != null && snapshot.getType() != null
-                            ? snapshot.getType().name() : "CERTIFICATION";
+                            ? snapshot.getType().name()
+                            : AssessmentType.TRAINING.name();
 
                     List<UserAnswer> answers = answersBySubmission
                             .getOrDefault(s.getId(), List.of());
@@ -528,7 +613,7 @@ public class SubmissionService {
 
                     return new SubmissionSummary(
                             s.getId().toString(),
-                            s.getAssessmentSnapshotId().toString(),
+                            idOrNull(s.getAssessmentSnapshotId()),
                             title,
                             type,
                             s.getStartedAt() != null
@@ -570,9 +655,7 @@ public class SubmissionService {
             throw new IllegalSubmissionStateException("Submission not yet completed");
         }
 
-        AssessmentSnapshot snapshot = assessmentSnapshotRepository
-                .findById(submission.getAssessmentSnapshotId())
-                .orElseThrow(() -> new ResourceNotFoundException("Assessment snapshot not found"));
+        AssessmentSnapshot snapshot = snapshotOf(submission);
 
         // Fetch user answers first: they identify the questions this submission drew
         List<UserAnswer> answers = userAnswerRepository.findBySubmissionId(submissionId);
@@ -676,7 +759,7 @@ public class SubmissionService {
 
         return new SubmissionReviewResponse(
                 submission.getId().toString(),
-                snapshot.getTitle(),
+                snapshot != null ? snapshot.getTitle() : freeTrainingTitle(userId),
                 submission.getStartedAt() != null ? submission.getStartedAt().toString() : null,
                 submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null,
                 submission.getScore(),
@@ -709,10 +792,39 @@ public class SubmissionService {
                 .toList();
     }
 
+    /** How a session with no assessment is named, in the student's own language. */
+    private String freeTrainingTitle(UUID userId) {
+        String language = appUserRepository.findById(userId)
+                .map(AppUser::getLanguage)
+                .orElse("it");
+        return messageSource.getMessage("training.free.title", null, Locale.of(language));
+    }
+
+    /** The published assessment behind a submission, or null for a free training session. */
+    private AssessmentSnapshot snapshotOf(Submission submission) {
+        return submission.getAssessmentSnapshotId() == null
+                ? null
+                : assessmentSnapshotRepository.findById(submission.getAssessmentSnapshotId())
+                        .orElse(null);
+    }
+
+    private static String idOrNull(UUID id) {
+        return id == null ? null : id.toString();
+    }
+
     private static Double computeMaxScore(AssessmentSnapshot snapshot,
                                            List<QuestionSnapshot> questionSnapshots) {
         if (snapshot == null) {
-            return null;
+            // Free training: no snapshot to read the rules from, so the maximum is what the
+            // questions themselves are worth, a point each unless they say otherwise.
+            if (questionSnapshots == null || questionSnapshots.isEmpty()) {
+                return null;
+            }
+            double total = 0.0;
+            for (QuestionSnapshot qs : questionSnapshots) {
+                total += (qs.getPoints() != null) ? qs.getPoints().doubleValue() : 1.0;
+            }
+            return total;
         }
         if (questionSnapshots != null && !questionSnapshots.isEmpty()) {
             double ptsCorrect = snapshot.getPtsCorrect().doubleValue();
