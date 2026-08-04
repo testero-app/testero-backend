@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0](https://github.com/testero-app/testero-backend/compare/v1.35.3...v2.0.0) (2026-08-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* POST /training/start no longer returns assessment_snapshot_id — a free session has no assessment. Clients fetch the paper from the new GET /submissions/{id}/questions using the submission id alone.
+
+### Features
+
+* free training draws across pools without copying questions ([#247](https://github.com/testero-app/testero-backend/issues/247)) ([2ff192b](https://github.com/testero-app/testero-backend/commit/2ff192b7ee32b97e8049bfb87cc1866047be9165))
+
 ## [1.35.3](https://github.com/testero-app/testero-backend/compare/v1.35.2...v1.35.3) (2026-08-03)
 
 
