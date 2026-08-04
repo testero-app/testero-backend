@@ -47,7 +47,12 @@ public class Submission {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "assessment_snapshot_id", nullable = false)
+    /**
+     * The published assessment being sat, or {@code null} for a free training session — whose
+     * paper spans several pools and therefore belongs to no single snapshot. When null, the
+     * questions drawn are listed in {@code submission_question}.
+     */
+    @Column(name = "assessment_snapshot_id")
     private UUID assessmentSnapshotId;
 
     @Enumerated(EnumType.STRING)
@@ -67,6 +72,10 @@ public class Submission {
      */
     @Column(name = "seed", nullable = false)
     private long seed;
+
+    /** Only for sessions with no snapshot: a free training session owns its countdown. */
+    @Column(name = "timer_minutes")
+    private Integer timerMinutes;
 
     private Double score;
 

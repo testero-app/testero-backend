@@ -10,4 +10,6 @@ public interface QuestionSnapshotRepository extends JpaRepository<QuestionSnapsh
     List<QuestionSnapshot> findByAssessmentSnapshotIdOrderByPosition(UUID assessmentSnapshotId);
 
     List<QuestionSnapshot> findByIdIn(List<UUID> ids);
+
+    List<QuestionSnapshot> findByAssessmentSnapshotIdIn(List<UUID> assessmentSnapshotIds);
 }

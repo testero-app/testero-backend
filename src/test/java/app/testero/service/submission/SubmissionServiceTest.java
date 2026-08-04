@@ -1,5 +1,7 @@
 package app.testero.service.submission;
 import app.testero.service.notification.NotificationService;
+import app.testero.service.assessment.QuestionPrepService;
+import app.testero.service.assessment.AssessmentService;
 
 import app.testero.dto.submission.AnswerInput;
 import app.testero.dto.submission.SaveAnswerRequest;
@@ -28,7 +30,9 @@ import app.testero.repository.assessment.OptionSnapshotRepository;
 import app.testero.repository.assessment.QuestionSnapshotRepository;
 import app.testero.repository.assessment.QuestionSnapshotSubjectRepository;
 import app.testero.repository.assessment.SubjectRepository;
+import app.testero.repository.user.AppUserRepository;
 import app.testero.repository.submission.SubmissionRepository;
+import app.testero.repository.submission.SubmissionQuestionRepository;
 import app.testero.repository.submission.UserAnswerRepository;
 import app.testero.repository.submission.UserAnswerSelectedOptionRepository;
 
@@ -42,6 +46,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageImpl;
 
 import java.math.BigDecimal;
@@ -69,6 +74,11 @@ class SubmissionServiceTest {
     @Mock QuestionSnapshotRepository questionSnapshotRepository;
     @Mock QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
     @Mock SubjectRepository subjectRepository;
+    @Mock SubmissionQuestionRepository submissionQuestionRepository;
+    @Mock AppUserRepository appUserRepository;
+    @Mock AssessmentService assessmentService;
+    @Mock QuestionPrepService questionPrepService;
+    @Mock MessageSource messageSource;
     @Mock ApplicationEventPublisher eventPublisher;
     @Mock NotificationService notificationService;
 
@@ -104,7 +114,9 @@ class SubmissionServiceTest {
                 submissionRepository, userAnswerRepository, userAnswerSelectedOptionRepository,
                 optionSnapshotRepository, assessmentSnapshotRepository, questionSnapshotRepository,
                 questionSnapshotSubjectRepository, subjectRepository,
-                scoringService, notificationService, eventPublisher);
+                submissionQuestionRepository, appUserRepository,
+                scoringService, notificationService, assessmentService, questionPrepService,
+                messageSource, eventPublisher);
     }
 
     // ── Stub helpers ───────────────────────────────────────────────

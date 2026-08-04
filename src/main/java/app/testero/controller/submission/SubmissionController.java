@@ -1,6 +1,7 @@
 package app.testero.controller.submission;
 
 import app.testero.dto.submission.SaveAnswerRequest;
+import app.testero.dto.assessment.AssessmentQuestionsResponse;
 import app.testero.dto.submission.SavedAnswersResponse;
 import app.testero.dto.submission.SubmissionFeedbackResponse;
 import app.testero.dto.submission.SubmissionHistoryResponse;
@@ -40,6 +41,14 @@ public class SubmissionController {
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(
                 submissionService.getSubmissionHistory(principal.userId(), page, size));
+    }
+
+    @GetMapping("/{submissionId}/questions")
+    public ResponseEntity<AssessmentQuestionsResponse> getSubmissionQuestions(
+            @PathVariable UUID submissionId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(
+                submissionService.getSubmissionQuestions(submissionId, principal.userId()));
     }
 
     @GetMapping("/{submissionId}/answers")

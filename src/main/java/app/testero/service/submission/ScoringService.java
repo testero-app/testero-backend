@@ -32,6 +32,10 @@ import java.util.stream.Collectors;
 @Service
 public class ScoringService {
 
+    /** Scoring of a free training session: a point per correct answer, no penalty. */
+    private static final double FREE_TRAINING_PTS_CORRECT = 1.0;
+    private static final double FREE_TRAINING_PTS_WRONG = 0.0;
+
     private final SubmissionRepository submissionRepository;
     private final UserAnswerRepository userAnswerRepository;
     private final OptionSnapshotRepository optionSnapshotRepository;
@@ -63,10 +67,16 @@ public class ScoringService {
                                           List<UserAnswerSelectedOption> selectedOptions) {
         UUID snapshotId = submission.getAssessmentSnapshotId();
 
-        AssessmentSnapshot snapshot = assessmentSnapshotRepository.findById(snapshotId)
-                .orElseThrow(() -> new ResourceNotFoundException("Assessment snapshot not found"));
-        double ptsCorrect = snapshot.getPtsCorrect().doubleValue();
-        double ptsWrong = snapshot.getPtsWrong().doubleValue();
+        // A free training session has no snapshot to read the scoring rules from: it is
+        // practice, so a question is worth its own points and a wrong answer costs nothing.
+        AssessmentSnapshot snapshot = snapshotId == null
+                ? null
+                : assessmentSnapshotRepository.findById(snapshotId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Assessment snapshot not found"));
+        double ptsCorrect = snapshot != null
+                ? snapshot.getPtsCorrect().doubleValue() : FREE_TRAINING_PTS_CORRECT;
+        double ptsWrong = snapshot != null
+                ? snapshot.getPtsWrong().doubleValue() : FREE_TRAINING_PTS_WRONG;
 
         // Batch-fetch QuestionSnapshot for per-question points
         List<UUID> allQuestionSnapshotIds = answers.stream()
