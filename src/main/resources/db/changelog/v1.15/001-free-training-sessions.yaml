@@ -1,0 +1,98 @@
+databaseChangeLog:
+  # Free training draws questions across every pool a student may practise on, so its paper
+  # cannot belong to a single assessment snapshot. Two changes make that possible:
+  #
+  # 1. submission.assessment_snapshot_id becomes optional. It stays populated for exams and
+  #    certification simulations, where the paper *is* one published assessment, and is left
+  #    null for a free training session.
+  # 2. submission_question records the paper of a session that has no snapshot of its own:
+  #    which question snapshots were drawn, and in which order.
+  #
+  # Nothing is copied: the rows referenced here already exist, created when the teacher
+  # published the pool. Previously each training session copied its questions into a private
+  # snapshot — 170 rows for a 28-question session, unreadable by anyone else.
+  - changeSet:
+      id: v1.15-001-make-submission-snapshot-optional
+      author: testero
+      comment: Allow a submission with no assessment snapshot — a free training session.
+      changes:
+        - dropNotNullConstraint:
+            tableName: submission
+            columnName: assessment_snapshot_id
+            columnDataType: uuid
+      rollback:
+        - addNotNullConstraint:
+            tableName: submission
+            columnName: assessment_snapshot_id
+            columnDataType: uuid
+
+  - changeSet:
+      id: v1.15-002-create-submission-question
+      author: testero
+      comment: The drawn paper of a session that spans several pools.
+      changes:
+        - createTable:
+            tableName: submission_question
+            columns:
+              - column:
+                  name: submission_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: question_snapshot_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addPrimaryKey:
+            tableName: submission_question
+            columnNames: submission_id, question_snapshot_id
+            constraintName: pk_submission_question
+        - addForeignKeyConstraint:
+            constraintName: fk_submission_question_submission
+            baseTableName: submission_question
+            baseColumnNames: submission_id
+            referencedTableName: submission
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_submission_question_question
+            baseTableName: submission_question
+            baseColumnNames: question_snapshot_id
+            referencedTableName: question_snapshot
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - createIndex:
+            tableName: submission_question
+            indexName: idx_submission_question_submission
+            columns:
+              - column:
+                  name: submission_id
+      rollback:
+        - dropTable:
+            tableName: submission_question
+
+  - changeSet:
+      id: v1.15-003-add-timer-to-submission
+      author: testero
+      comment: A free training session carries its own timer — it has no snapshot to read it from.
+      changes:
+        - addColumn:
+            tableName: submission
+            columns:
+              - column:
+                  name: timer_minutes
+                  type: int
+      rollback:
+        - dropColumn:
+            tableName: submission
+            columnName: timer_minutes

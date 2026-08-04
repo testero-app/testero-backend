@@ -195,36 +195,8 @@ public class AssessmentService {
 
         List<QuestionSnapshot> questions = questionSnapshotRepository
                 .findByAssessmentSnapshotIdOrderByPosition(snapshot.getId());
-        List<UUID> questionIds = questions.stream().map(QuestionSnapshot::getId).toList();
 
-        List<OptionSnapshot> allOptions = questionIds.isEmpty()
-                ? List.of()
-                : optionSnapshotRepository.findByQuestionSnapshotIdInOrderByPosition(questionIds);
-
-        Map<UUID, List<OptionSnapshot>> optionsByQuestion = allOptions.stream()
-                .collect(Collectors.groupingBy(OptionSnapshot::getQuestionSnapshotId));
-
-        // Batch-fetch subjects for all questions
-        Map<UUID, List<SubjectDto>> subjectsByQuestion = fetchSubjectsByQuestionIds(questionIds);
-
-        List<QuestionDto> questionDtos = questions.stream()
-                .map(q -> {
-                    List<OptionSnapshot> opts = optionsByQuestion
-                            .getOrDefault(q.getId(), List.of());
-                    List<OptionDto> optionDtos = opts.stream()
-                            .map(o -> new OptionDto(o.getId().toString(), o.getText(), o.isFallback()))
-                            .toList();
-                    return new QuestionDto(
-                            q.getId().toString(),
-                            q.getType(),
-                            q.getText(),
-                            q.getCode(),
-                            "multiple".equals(q.getType()) ? optionDtos : null,
-                            q.getPoints() != null ? q.getPoints().doubleValue() : null,
-                            subjectsByQuestion.getOrDefault(q.getId(), List.of())
-                    );
-                })
-                .toList();
+        List<QuestionDto> questionDtos = toQuestionDtos(questions);
 
         // Run through preparation pipeline: subset, question order, option order — all seeded
         // and gated on the snapshot's shuffle flags.
@@ -245,6 +217,42 @@ public class AssessmentService {
                 prepared.size(),
                 prepared
         );
+    }
+
+    /**
+     * Maps question snapshots onto the DTO the client renders, batching the two lookups they
+     * need. Shared with the free-training path, whose paper comes from several snapshots at
+     * once rather than from one.
+     */
+    public List<QuestionDto> toQuestionDtos(List<QuestionSnapshot> questions) {
+        List<UUID> questionIds = questions.stream().map(QuestionSnapshot::getId).toList();
+
+        Map<UUID, List<OptionSnapshot>> optionsByQuestion = questionIds.isEmpty()
+                ? Map.of()
+                : optionSnapshotRepository.findByQuestionSnapshotIdInOrderByPosition(questionIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(OptionSnapshot::getQuestionSnapshotId));
+
+        Map<UUID, List<SubjectDto>> subjectsByQuestion = fetchSubjectsByQuestionIds(questionIds);
+
+        return questions.stream()
+                .map(q -> {
+                    List<OptionDto> optionDtos = optionsByQuestion
+                            .getOrDefault(q.getId(), List.of())
+                            .stream()
+                            .map(o -> new OptionDto(o.getId().toString(), o.getText(), o.isFallback()))
+                            .toList();
+                    return new QuestionDto(
+                            q.getId().toString(),
+                            q.getType(),
+                            q.getText(),
+                            q.getCode(),
+                            "multiple".equals(q.getType()) ? optionDtos : null,
+                            q.getPoints() != null ? q.getPoints().doubleValue() : null,
+                            subjectsByQuestion.getOrDefault(q.getId(), List.of())
+                    );
+                })
+                .toList();
     }
 
     private AssessmentSnapshot findSnapshotOrThrow(String snapshotId) {

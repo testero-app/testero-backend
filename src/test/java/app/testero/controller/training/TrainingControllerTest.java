@@ -63,7 +63,7 @@ class TrainingControllerTest {
         @DisplayName("valid request → 200 with submission info")
         void success() throws Exception {
             when(trainingService.startTraining(any(), eq(USER_ID)))
-                    .thenReturn(new TrainingStartResponse(SUBMISSION_ID, SNAPSHOT_ID, 23, 15));
+                    .thenReturn(new TrainingStartResponse(SUBMISSION_ID, 23, 15));
 
             mockMvc.perform(post("/training/start")
                             .with(jwt())
@@ -79,7 +79,9 @@ class TrainingControllerTest {
                                     """))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.submission_id").value(SUBMISSION_ID))
-                    .andExpect(jsonPath("$.assessment_snapshot_id").value(SNAPSHOT_ID))
+                    // No snapshot id: a free session belongs to no assessment, and the client
+                    // works from the submission alone.
+                    .andExpect(jsonPath("$.assessment_snapshot_id").doesNotExist())
                     .andExpect(jsonPath("$.timer_minutes").value(23))
                     .andExpect(jsonPath("$.total_questions").value(15));
         }
@@ -106,8 +108,11 @@ class TrainingControllerTest {
         }
 
         @Test
-        @DisplayName("empty chapter_ids → 400")
+        @DisplayName("no chapters → 200, the whole topic is drawn from")
         void emptyChapters() throws Exception {
+            when(trainingService.startTraining(any(), eq(USER_ID)))
+                    .thenReturn(new TrainingStartResponse(SUBMISSION_ID, 23, 15));
+
             mockMvc.perform(post("/training/start")
                             .with(jwt())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -120,7 +125,27 @@ class TrainingControllerTest {
                                       "timer_enabled": true
                                     }
                                     """))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("no topic and no chapters → 200, everything the class may practise on")
+        void noFilters() throws Exception {
+            when(trainingService.startTraining(any(), eq(USER_ID)))
+                    .thenReturn(new TrainingStartResponse(SUBMISSION_ID, null, 10));
+
+            mockMvc.perform(post("/training/start")
+                            .with(jwt())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "question_count": 10,
+                                      "timer_enabled": false
+                                    }
+                                    """))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.timer_minutes").doesNotExist())
+                    .andExpect(jsonPath("$.total_questions").value(10));
         }
 
         @Test

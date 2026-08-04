@@ -117,3 +117,5 @@ databaseChangeLog:
       file: db/changelog/v1.14/002-freeze-shuffle-flags-into-snapshot.yaml
   - include:
       file: db/changelog/v1.14/003-add-seed-to-submission.yaml
+  - include:
+      file: db/changelog/v1.15/001-free-training-sessions.yaml

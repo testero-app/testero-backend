@@ -4,7 +4,8 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 public record AssessmentQuestionsResponse(
-        String assessmentId,
+        // null for a free training session: its paper belongs to no single assessment.
+        @Nullable String assessmentId,
         String title,
         @Nullable String availableFrom,
         @Nullable String availableUntil,
