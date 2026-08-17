@@ -35,6 +35,9 @@ public class Notification {
     @Column(columnDefinition = "text")
     private String message;
 
+    @Column(name = "source_event_id")
+    private UUID sourceEventId;
+
     @Column(nullable = false)
     private boolean read;
 

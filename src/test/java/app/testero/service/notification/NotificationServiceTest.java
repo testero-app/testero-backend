@@ -47,6 +47,8 @@ class NotificationServiceTest {
     private static final UUID USER_ID = UUID.fromString("aa000000-0000-0000-0000-000000000001");
     private static final UUID NOTIF_ID = UUID.fromString("bb000000-0000-0000-0000-000000000001");
 
+    private static final UUID SOURCE_ID = UUID.fromString("dd000000-0000-0000-0000-000000000001");
+
     private Notification buildNotification(UUID id, UUID userId, boolean read) {
         Notification n = new Notification();
         n.setId(id);
@@ -55,6 +57,7 @@ class NotificationServiceTest {
         n.setTitle("Test title");
         n.setMessage("Test message");
         n.setRead(read);
+        n.setSourceEventId(SOURCE_ID);
         // createdAt is set by DB, use reflection or setter for test
         try {
             var field = Notification.class.getDeclaredField("createdAt");
@@ -100,6 +103,28 @@ class NotificationServiceTest {
             assertThat(saved.getTitle()).isEqualTo("Exam result available");
             assertThat(saved.getMessage()).isEqualTo("Python: 18 points");
             assertThat(saved.isRead()).isFalse();
+            assertThat(saved.getSourceEventId()).isNull();
+        }
+
+        @Test
+        @DisplayName("saves sourceEventId when provided")
+        void withSourceEventId() {
+            UUID sourceId = UUID.fromString("dd000000-0000-0000-0000-000000000001");
+            when(preferenceRepository.findByUserIdAndEventAndChannel(
+                    USER_ID, NotificationType.EXAM_RESULT, NotificationChannel.IN_APP))
+                    .thenReturn(Optional.empty());
+            when(appUserRepository.findById(USER_ID)).thenReturn(Optional.of(userWithLanguage("it")));
+            when(messageSource.getMessage(eq("title.key"), any(), eq(Locale.of("it"))))
+                    .thenReturn("Risultato disponibile");
+            when(messageSource.getMessage(eq("msg.key"), any(), eq(Locale.of("it"))))
+                    .thenReturn("Python: 18 punti");
+
+            notificationService.notify(USER_ID, NotificationType.EXAM_RESULT,
+                    "title.key", "msg.key", sourceId, "Python", 18);
+
+            ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
+            verify(notificationRepository).save(captor.capture());
+            assertThat(captor.getValue().getSourceEventId()).isEqualTo(sourceId);
         }
 
         @Test
@@ -151,6 +176,7 @@ class NotificationServiceTest {
             assertThat(result.get(0).event()).isEqualTo("EXAM_RESULT");
             assertThat(result.get(0).title()).isEqualTo("Test title");
             assertThat(result.get(0).read()).isFalse();
+            assertThat(result.get(0).sourceEventId()).isEqualTo(SOURCE_ID.toString());
         }
 
         @Test
