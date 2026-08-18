@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0](https://github.com/testero-app/testero-backend/compare/v2.0.0...v2.1.0) (2026-08-18)
+
+
+### Features
+
+* **notification:** store source event ID for click-to-navigate ([#255](https://github.com/testero-app/testero-backend/issues/255)) ([54b87fb](https://github.com/testero-app/testero-backend/commit/54b87fbee9be8a6bdd0b82f82518c5b23d1f8582)), closes [#251](https://github.com/testero-app/testero-backend/issues/251)
+* **snapshot:** auto-assign topic subjects to questions without explicit links ([#258](https://github.com/testero-app/testero-backend/issues/258)) ([16a6d16](https://github.com/testero-app/testero-backend/commit/16a6d16017ee19d4ab9ac252442374b8c57b5120)), closes [#252](https://github.com/testero-app/testero-backend/issues/252)
+
 ## [2.0.0](https://github.com/testero-app/testero-backend/compare/v1.35.3...v2.0.0) (2026-08-04)
 
 
