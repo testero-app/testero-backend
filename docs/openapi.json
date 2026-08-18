@@ -318,11 +318,15 @@
           "read" : {
             "type" : "boolean"
           },
+          "source_event_id" : {
+            "nullable" : true,
+            "type" : "string"
+          },
           "title" : {
             "type" : "string"
           }
         },
-        "required" : [ "created_at", "event", "id", "message", "read", "title" ],
+        "required" : [ "created_at", "event", "id", "message", "read", "source_event_id", "title" ],
         "type" : "object"
       },
       "NotificationPreferenceDto" : {
