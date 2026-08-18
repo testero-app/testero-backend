@@ -21,6 +21,10 @@ import app.testero.repository.assessment.SubjectRepository;
 import app.testero.repository.assessment.AssessmentTemplateTopicRepository;
 import app.testero.repository.assessment.AssessmentSnapshotTopicRepository;
 import app.testero.repository.assessment.TopicRepository;
+import app.testero.repository.assessment.TopicSubjectRepository;
+import app.testero.entity.assessment.TopicSubject;
+import app.testero.entity.assessment.AssessmentTemplateTopic;
+import app.testero.entity.assessment.Subject;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -60,6 +64,7 @@ class SnapshotServiceTest {
     @Mock AssessmentTemplateTopicRepository assessmentTemplateTopicRepository;
     @Mock AssessmentSnapshotTopicRepository assessmentSnapshotTopicRepository;
     @Mock TopicRepository topicRepository;
+    @Mock TopicSubjectRepository topicSubjectRepository;
 
     @InjectMocks SnapshotService snapshotService;
 
@@ -110,6 +115,8 @@ class SnapshotServiceTest {
                 .thenReturn(List.of());
         when(assessmentTemplateTopicRepository.findByAssessmentTemplateId(TEST_ID))
                 .thenReturn(List.of());
+        lenient().when(topicSubjectRepository.findByTopicIdInOrderByPositionAsc(any()))
+                .thenReturn(List.of());
 
         when(snapshotRepository.findByAssessmentTemplateIdAndContentHash(eq(TEST_ID), anyString()))
                 .thenReturn(Optional.empty());
@@ -159,7 +166,7 @@ class SnapshotServiceTest {
         }
 
         @Test
-        @DisplayName("handles questions with no subjects")
+        @DisplayName("handles questions with no subjects and no topic fallback")
         void noSubjects() {
             QuestionTemplate q1 = buildQuestion(Q1_ID, 1);
 
@@ -168,6 +175,51 @@ class SnapshotServiceTest {
             snapshotService.publishSnapshot(TEST_ID);
 
             verify(questionSnapshotSubjectRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("auto-assigns topic subjects when question has no explicit subjects")
+        void fallbackToTopicSubjects() {
+            QuestionTemplate q1 = buildQuestion(Q1_ID, 1);
+
+            stubPublishSnapshot(List.of(q1), List.of(), List.of());
+
+            // Set up assessment → topic → subjects
+            UUID topicId = UUID.fromString("dd000000-0000-0000-0000-000000000001");
+            AssessmentTemplateTopic att = new AssessmentTemplateTopic();
+            att.setAssessmentTemplateId(TEST_ID);
+            att.setTopicId(topicId);
+            when(assessmentTemplateTopicRepository.findByAssessmentTemplateId(TEST_ID))
+                    .thenReturn(List.of(att));
+
+            TopicSubject ts1 = new TopicSubject();
+            ts1.setTopicId(topicId);
+            ts1.setSubjectId(SUBJECT_OOP);
+            ts1.setPosition(1);
+            TopicSubject ts2 = new TopicSubject();
+            ts2.setTopicId(topicId);
+            ts2.setSubjectId(SUBJECT_FLOW);
+            ts2.setPosition(2);
+            when(topicSubjectRepository.findByTopicIdInOrderByPositionAsc(List.of(topicId)))
+                    .thenReturn(List.of(ts1, ts2));
+
+            Subject subOop = new Subject();
+            subOop.setId(SUBJECT_OOP);
+            subOop.setLabel("OOP");
+            Subject subFlow = new Subject();
+            subFlow.setId(SUBJECT_FLOW);
+            subFlow.setLabel("Flow");
+            when(subjectRepository.findByIdIn(any())).thenReturn(List.of(subOop, subFlow));
+
+            snapshotService.publishSnapshot(TEST_ID);
+
+            verify(questionSnapshotSubjectRepository, times(2)).save(qssCaptor.capture());
+            List<QuestionSnapshotSubject> saved = qssCaptor.getAllValues();
+            assertThat(saved).hasSize(2);
+            assertThat(saved).extracting(QuestionSnapshotSubject::getSubjectId)
+                    .containsExactlyInAnyOrder(SUBJECT_OOP, SUBJECT_FLOW);
+            assertThat(saved).allSatisfy(qss ->
+                    assertThat(qss.getWeight()).isEqualByComparingTo(BigDecimal.ONE));
         }
     }
 
@@ -186,11 +238,11 @@ class SnapshotServiceTest {
             Map<UUID, List<OptionTemplate>> options = Map.of();
 
             String hashWithout = SnapshotService.computeContentHash(
-                    assessment, questions, options, Map.of(), List.of());
+                    assessment, questions, options, Map.of(), List.of(), List.of());
 
             QuestionTemplateSubject qs = buildQuestionTemplateSubject(Q1_ID, SUBJECT_OOP, "1.00");
             String hashWith = SnapshotService.computeContentHash(
-                    assessment, questions, options, Map.of(Q1_ID, List.of(qs)), List.of());
+                    assessment, questions, options, Map.of(Q1_ID, List.of(qs)), List.of(), List.of());
 
             assertThat(hashWith).isNotEqualTo(hashWithout);
         }
@@ -205,11 +257,11 @@ class SnapshotServiceTest {
 
             QuestionTemplateSubject qs1 = buildQuestionTemplateSubject(Q1_ID, SUBJECT_OOP, "1.00");
             String hash1 = SnapshotService.computeContentHash(
-                    assessment, questions, options, Map.of(Q1_ID, List.of(qs1)), List.of());
+                    assessment, questions, options, Map.of(Q1_ID, List.of(qs1)), List.of(), List.of());
 
             QuestionTemplateSubject qs2 = buildQuestionTemplateSubject(Q1_ID, SUBJECT_OOP, "0.50");
             String hash2 = SnapshotService.computeContentHash(
-                    assessment, questions, options, Map.of(Q1_ID, List.of(qs2)), List.of());
+                    assessment, questions, options, Map.of(Q1_ID, List.of(qs2)), List.of(), List.of());
 
             assertThat(hash2).isNotEqualTo(hash1);
         }
@@ -227,10 +279,10 @@ class SnapshotServiceTest {
 
             String hash1 = SnapshotService.computeContentHash(
                     assessment, questions, options,
-                    Map.of(Q1_ID, List.of(qs1, qs2)), List.of());
+                    Map.of(Q1_ID, List.of(qs1, qs2)), List.of(), List.of());
             String hash2 = SnapshotService.computeContentHash(
                     assessment, questions, options,
-                    Map.of(Q1_ID, List.of(qs2, qs1)), List.of());
+                    Map.of(Q1_ID, List.of(qs2, qs1)), List.of(), List.of());
 
             assertThat(hash1).isEqualTo(hash2);
         }
