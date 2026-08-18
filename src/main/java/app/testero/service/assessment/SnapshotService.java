@@ -5,6 +5,7 @@ import app.testero.entity.assessment.AssessmentTemplate;
 import app.testero.entity.assessment.OptionTemplate;
 import app.testero.entity.assessment.QuestionTemplate;
 import app.testero.entity.assessment.QuestionTemplateSubject;
+import app.testero.entity.assessment.TopicSubject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.assessment.AssessmentTemplateTopic;
 import app.testero.entity.assessment.Subject;
@@ -29,9 +30,11 @@ import app.testero.repository.assessment.QuestionSnapshotRepository;
 import app.testero.repository.assessment.QuestionTemplateSubjectRepository;
 import app.testero.repository.assessment.QuestionSnapshotSubjectRepository;
 import app.testero.repository.assessment.SubjectRepository;
+import app.testero.repository.assessment.TopicSubjectRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -61,6 +64,7 @@ public class SnapshotService {
     private final AssessmentTemplateTopicRepository assessmentTemplateTopicRepository;
     private final AssessmentSnapshotTopicRepository assessmentSnapshotTopicRepository;
     private final TopicRepository topicRepository;
+    private final TopicSubjectRepository topicSubjectRepository;
 
     public SnapshotService(
             AssessmentTemplateRepository assessmentTemplateRepository,
@@ -76,7 +80,8 @@ public class SnapshotService {
             SubjectRepository subjectRepository,
             AssessmentTemplateTopicRepository assessmentTemplateTopicRepository,
             AssessmentSnapshotTopicRepository assessmentSnapshotTopicRepository,
-            TopicRepository topicRepository) {
+            TopicRepository topicRepository,
+            TopicSubjectRepository topicSubjectRepository) {
         this.assessmentTemplateRepository = assessmentTemplateRepository;
         this.assessmentSubjectRepository = assessmentSubjectRepository;
         this.questionTemplateRepository = questionTemplateRepository;
@@ -91,6 +96,7 @@ public class SnapshotService {
         this.assessmentTemplateTopicRepository = assessmentTemplateTopicRepository;
         this.assessmentSnapshotTopicRepository = assessmentSnapshotTopicRepository;
         this.topicRepository = topicRepository;
+        this.topicSubjectRepository = topicSubjectRepository;
     }
 
     @Transactional
@@ -117,17 +123,28 @@ public class SnapshotService {
         List<AssessmentSubject> assessmentSubjects = assessmentSubjectRepository
                 .findByAssessmentId(assessmentId);
 
+        // Fetch topic subjects for the assessment's topics — used as fallback
+        // when a question has no explicit question_template_subject entries.
+        List<AssessmentTemplateTopic> assessmentTopicsForSubjects =
+                assessmentTemplateTopicRepository.findByAssessmentTemplateId(assessmentId);
+        List<UUID> topicIdsForSubjects = assessmentTopicsForSubjects.stream()
+                .map(AssessmentTemplateTopic::getTopicId).toList();
+        List<TopicSubject> fallbackTopicSubjects = topicIdsForSubjects.isEmpty()
+                ? List.of()
+                : topicSubjectRepository.findByTopicIdInOrderByPositionAsc(topicIdsForSubjects);
+
         // Collect all subject IDs and fetch labels
         List<UUID> allSubjectIds = new java.util.ArrayList<>();
         assessmentSubjects.forEach(as -> allSubjectIds.add(as.getSubjectId()));
         questionSubjects.forEach(qs -> allSubjectIds.add(qs.getSubjectId()));
+        fallbackTopicSubjects.forEach(ts -> allSubjectIds.add(ts.getSubjectId()));
         Map<UUID, String> subjectLabels = allSubjectIds.isEmpty()
                 ? Map.of()
                 : subjectRepository.findByIdIn(allSubjectIds).stream()
                         .collect(Collectors.toMap(Subject::getId, Subject::getLabel));
 
         String hash = computeContentHash(assessment, questions, optionsByQuestion,
-                subjectsByQuestion, assessmentSubjects);
+                subjectsByQuestion, assessmentSubjects, fallbackTopicSubjects);
 
         // If an identical snapshot already exists, return it
         Optional<AssessmentSnapshot> existing = snapshotRepository
@@ -212,13 +229,27 @@ public class SnapshotService {
 
             List<QuestionTemplateSubject> qSubjects = subjectsByQuestion
                     .getOrDefault(q.getId(), List.of());
-            for (QuestionTemplateSubject qsub : qSubjects) {
-                QuestionSnapshotSubject qss = new QuestionSnapshotSubject();
-                qss.setQuestionSnapshotId(qs.getId());
-                qss.setSubjectId(qsub.getSubjectId());
-                qss.setWeight(qsub.getWeight());
-                qss.setLabel(subjectLabels.get(qsub.getSubjectId()));
-                questionSnapshotSubjectRepository.save(qss);
+
+            if (!qSubjects.isEmpty()) {
+                // Explicit subjects — use them as-is
+                for (QuestionTemplateSubject qsub : qSubjects) {
+                    QuestionSnapshotSubject qss = new QuestionSnapshotSubject();
+                    qss.setQuestionSnapshotId(qs.getId());
+                    qss.setSubjectId(qsub.getSubjectId());
+                    qss.setWeight(qsub.getWeight());
+                    qss.setLabel(subjectLabels.get(qsub.getSubjectId()));
+                    questionSnapshotSubjectRepository.save(qss);
+                }
+            } else {
+                // Fallback: inherit subjects from the assessment's topics
+                for (TopicSubject ts : fallbackTopicSubjects) {
+                    QuestionSnapshotSubject qss = new QuestionSnapshotSubject();
+                    qss.setQuestionSnapshotId(qs.getId());
+                    qss.setSubjectId(ts.getSubjectId());
+                    qss.setWeight(BigDecimal.ONE);
+                    qss.setLabel(subjectLabels.get(ts.getSubjectId()));
+                    questionSnapshotSubjectRepository.save(qss);
+                }
             }
         }
 
@@ -229,7 +260,8 @@ public class SnapshotService {
                                      List<QuestionTemplate> questions,
                                      Map<UUID, List<OptionTemplate>> optionsByQuestion,
                                      Map<UUID, List<QuestionTemplateSubject>> subjectsByQuestion,
-                                     List<AssessmentSubject> assessmentSubjects) {
+                                     List<AssessmentSubject> assessmentSubjects,
+                                     List<TopicSubject> fallbackTopicSubjects) {
         StringBuilder sb = new StringBuilder();
         sb.append(assessment.getTitle());
         sb.append('|').append(assessment.getTimerMinutes());
@@ -246,6 +278,13 @@ public class SnapshotService {
                 .toList();
         for (AssessmentSubject as : sortedAssSubjects) {
             sb.append("|AS|").append(as.getSubjectId());
+        }
+
+        List<TopicSubject> sortedFallback = fallbackTopicSubjects.stream()
+                .sorted(Comparator.comparing(TopicSubject::getSubjectId))
+                .toList();
+        for (TopicSubject ts : sortedFallback) {
+            sb.append("|TS|").append(ts.getSubjectId());
         }
 
         for (QuestionTemplate q : questions) {
