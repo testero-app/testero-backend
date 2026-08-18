@@ -44,6 +44,7 @@ class NotificationControllerTest {
 
     private static final UUID USER_ID = UUID.fromString("aa000000-0000-0000-0000-000000000001");
     private static final UUID NOTIF_ID = UUID.fromString("bb000000-0000-0000-0000-000000000001");
+    private static final UUID SOURCE_ID = UUID.fromString("dd000000-0000-0000-0000-000000000001");
 
     private static RequestPostProcessor jwt() {
         var principal = new UserPrincipal(USER_ID, "mario");
@@ -60,7 +61,8 @@ class NotificationControllerTest {
         void success() throws Exception {
             var dto = new NotificationItemDto(
                     NOTIF_ID.toString(), "EXAM_RESULT", "Result ready",
-                    "Score: 80", false, "2026-06-15T10:00");
+                    "Score: 80", false, "2026-06-15T10:00",
+                    SOURCE_ID.toString());
             when(notificationService.getUnread(USER_ID)).thenReturn(List.of(dto));
 
             mockMvc.perform(get("/notifications/unread").with(jwt()))
@@ -68,7 +70,8 @@ class NotificationControllerTest {
                     .andExpect(jsonPath("$[0].id").value(NOTIF_ID.toString()))
                     .andExpect(jsonPath("$[0].event").value("EXAM_RESULT"))
                     .andExpect(jsonPath("$[0].title").value("Result ready"))
-                    .andExpect(jsonPath("$[0].read").value(false));
+                    .andExpect(jsonPath("$[0].read").value(false))
+                    .andExpect(jsonPath("$[0].source_event_id").value(SOURCE_ID.toString()));
         }
 
         @Test

@@ -46,6 +46,16 @@ public class NotificationService {
      */
     public void notify(UUID userId, NotificationType event,
                        String titleKey, String messageKey, Object... messageArgs) {
+        notify(userId, event, titleKey, messageKey, null, messageArgs);
+    }
+
+    /**
+     * Overload that also stores a {@code sourceEventId} so the frontend can navigate
+     * from the notification panel to the originating resource (e.g. submission result).
+     */
+    public void notify(UUID userId, NotificationType event,
+                       String titleKey, String messageKey,
+                       UUID sourceEventId, Object... messageArgs) {
         // Default is true if no preference record exists.
         Optional<NotificationPreference> pref = preferenceRepository
                 .findByUserIdAndEventAndChannel(userId, event, NotificationChannel.IN_APP);
@@ -61,6 +71,7 @@ public class NotificationService {
         n.setEvent(event.name());
         n.setTitle(messageSource.getMessage(titleKey, null, locale));
         n.setMessage(messageSource.getMessage(messageKey, messageArgs, locale));
+        n.setSourceEventId(sourceEventId);
         n.setRead(false);
         notificationRepository.save(n);
     }
@@ -112,6 +123,7 @@ public class NotificationService {
                 n.getTitle(),
                 n.getMessage(),
                 n.isRead(),
-                n.getCreatedAt() != null ? n.getCreatedAt().toString() : null);
+                n.getCreatedAt() != null ? n.getCreatedAt().toString() : null,
+                n.getSourceEventId() != null ? n.getSourceEventId().toString() : null);
     }
 }

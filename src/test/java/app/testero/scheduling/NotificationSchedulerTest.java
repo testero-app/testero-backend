@@ -78,7 +78,7 @@ class NotificationSchedulerTest {
 
         scheduler.sendDeadlineReminders();
 
-        verify(notificationService).notify(eq(STUDENT_A), eq(NotificationType.DEADLINE_REMINDER), any(), any(), any());
+        verify(notificationService).notify(eq(STUDENT_A), eq(NotificationType.DEADLINE_REMINDER), any(), any(), any(UUID.class), any());
         verify(reminderSentRepository).save(any(DeadlineReminderSent.class));
     }
 
@@ -90,7 +90,7 @@ class NotificationSchedulerTest {
 
         scheduler.sendDeadlineReminders();
 
-        verify(notificationService, never()).notify(any(), any(), any(), any(), any());
+        verify(notificationService, never()).notify(any(), any(), any(), any(), any(UUID.class), any());
         verify(reminderSentRepository, never()).save(any());
     }
 
@@ -103,7 +103,7 @@ class NotificationSchedulerTest {
 
         scheduler.sendDeadlineReminders();
 
-        verify(notificationService, never()).notify(any(), any(), any(), any(), any());
+        verify(notificationService, never()).notify(any(), any(), any(), any(), any(UUID.class), any());
         verify(reminderSentRepository, never()).save(any());
     }
 
@@ -119,8 +119,8 @@ class NotificationSchedulerTest {
 
         scheduler.sendDeadlineReminders();
 
-        verify(notificationService, never()).notify(eq(STUDENT_A), any(), any(), any(), any());
-        verify(notificationService, times(1)).notify(eq(STUDENT_B), eq(NotificationType.DEADLINE_REMINDER), any(), any(), any());
+        verify(notificationService, never()).notify(eq(STUDENT_A), any(), any(), any(), any(UUID.class), any());
+        verify(notificationService, times(1)).notify(eq(STUDENT_B), eq(NotificationType.DEADLINE_REMINDER), any(), any(), any(UUID.class), any());
     }
 
     @Test
@@ -130,7 +130,7 @@ class NotificationSchedulerTest {
 
         scheduler.sendDeadlineReminders();
 
-        verify(notificationService, never()).notify(any(), any(), any(), any(), any());
+        verify(notificationService, never()).notify(any(), any(), any(), any(), any(UUID.class), any());
         verify(studentProfileRepository, never()).findByClassId(any());
     }
 }
