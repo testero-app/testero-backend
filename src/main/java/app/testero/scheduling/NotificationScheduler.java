@@ -98,6 +98,7 @@ public class NotificationScheduler {
 
             notificationService.notify(userId, NotificationType.DEADLINE_REMINDER,
                     "notification.deadline.title", "notification.deadline.message",
+                    snapshotId,
                     snapshot.getTitle());
             reminderSentRepository.save(new DeadlineReminderSent(snapshotId, userId));
             sent++;

@@ -9,4 +9,5 @@ public record NotificationItemDto(
         String title,
         String message,
         boolean read,
-        @JsonProperty("created_at") @Nullable String createdAt) {}
+        @JsonProperty("created_at") @Nullable String createdAt,
+        @JsonProperty("source_event_id") @Nullable String sourceEventId) {}

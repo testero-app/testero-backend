@@ -330,6 +330,7 @@ public class SubmissionService {
                     : "notification.cert_result.title";
             notificationService.notify(submission.getUserId(), notifEvent,
                     titleKey, "notification.result.message",
+                    submission.getId(),
                     snapshot.getTitle(), Math.round(submission.getScore()));
         }
 

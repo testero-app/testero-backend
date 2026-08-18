@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.16-001-add-source-event-id-to-notification
+      author: testero
+      comment: >
+        Store the ID of the source event (e.g. submission, assessment snapshot)
+        so the frontend can navigate from a notification to its origin.
+      changes:
+        - addColumn:
+            tableName: notification
+            columns:
+              - column:
+                  name: source_event_id
+                  type: uuid
