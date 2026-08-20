@@ -95,7 +95,7 @@ public class TopicService {
             linksByTopic.computeIfAbsent(link.getTopicId(), k -> new ArrayList<>()).add(link);
         }
 
-        // Build response
+        // Build response — exclude topics with no questions
         List<TopicItem> items = topics.stream().map(topic -> {
             List<TopicSubject> links = linksByTopic.getOrDefault(topic.getId(), List.of());
             int totalQuestions = 0;
@@ -138,7 +138,9 @@ public class TopicService {
                     chapters.size(),
                     totalQuestions
             );
-        }).toList();
+        })
+        .filter(item -> item.totalQuestions() > 0)
+        .toList();
 
         return new TopicListResponse(items);
     }

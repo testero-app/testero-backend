@@ -185,8 +185,8 @@ public class CompetencyService {
     }
 
     private CompetencyResponse buildResponse(Map<UUID, double[]> subjectStats) {
-        // Load all enabled topics
-        List<Topic> allTopics = topicRepository.findByEnabledTrueOrderByPositionAsc();
+        // Load all topics (including disabled — competencies track everything)
+        List<Topic> allTopics = topicRepository.findAllByOrderByPositionAsc();
 
         // Load all topic-subject mappings
         List<UUID> topicIds = allTopics.stream().map(Topic::getId).toList();
