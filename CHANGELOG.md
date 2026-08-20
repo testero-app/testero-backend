@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.2](https://github.com/testero-app/testero-backend/compare/v2.1.1...v2.1.2) (2026-08-20)
+
+
+### Bug Fixes
+
+* correct checkstyle indentation in TopicService ([#262](https://github.com/testero-app/testero-backend/issues/262)) ([306227b](https://github.com/testero-app/testero-backend/commit/306227b6fe178a7cff107162247a73c3b648b908))
+
 ## [2.1.1](https://github.com/testero-app/testero-backend/compare/v2.1.0...v2.1.1) (2026-08-20)
 
 
