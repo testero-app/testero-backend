@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.17-001-add-unique-username
+      author: testero
+      comment: >
+        Enforce unique usernames. Previously only email had a unique constraint,
+        allowing duplicate usernames which caused authentication failures.
+      changes:
+        - addUniqueConstraint:
+            tableName: app_user
+            columnNames: username
+            constraintName: uq_app_user_username
