@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1](https://github.com/testero-app/testero-backend/compare/v2.1.0...v2.1.1) (2026-08-20)
+
+
+### Bug Fixes
+
+* add unique constraint on app_user.username ([#259](https://github.com/testero-app/testero-backend/issues/259)) ([45c79cc](https://github.com/testero-app/testero-backend/commit/45c79ccc9a7d3606759fc66c617f15d9b3be8ce3))
+* separate topic visibility for training vs competencies ([#260](https://github.com/testero-app/testero-backend/issues/260)) ([f26a14a](https://github.com/testero-app/testero-backend/commit/f26a14ab3652a5d6d315dca444ed61f5fae99ad9))
+
 ## [2.1.0](https://github.com/testero-app/testero-backend/compare/v2.0.0...v2.1.0) (2026-08-18)
 
 
