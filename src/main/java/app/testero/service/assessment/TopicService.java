@@ -139,8 +139,8 @@ public class TopicService {
                     totalQuestions
             );
         })
-        .filter(item -> item.totalQuestions() > 0)
-        .toList();
+                .filter(item -> item.totalQuestions() > 0)
+                .toList();
 
         return new TopicListResponse(items);
     }
