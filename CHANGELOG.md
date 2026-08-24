@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0](https://github.com/testero-app/testero-backend/compare/v2.1.2...v2.2.0) (2026-08-24)
+
+
+### Features
+
+* populate deadline fields and add maxAttempts/className to assessment API ([#269](https://github.com/testero-app/testero-backend/issues/269)) ([8a68002](https://github.com/testero-app/testero-backend/commit/8a680024c9b969d73e64a93c40021625384a96ad))
+
+
+### Bug Fixes
+
+* add precondition to unique username migration ([#267](https://github.com/testero-app/testero-backend/issues/267)) ([7c16de3](https://github.com/testero-app/testero-backend/commit/7c16de321456ed47173b64378b1e21780a0a7c16))
+
 ## [2.1.2](https://github.com/testero-app/testero-backend/compare/v2.1.1...v2.1.2) (2026-08-20)
 
 
