@@ -5,6 +5,11 @@ databaseChangeLog:
       comment: >
         Enforce unique usernames. Previously only email had a unique constraint,
         allowing duplicate usernames which caused authentication failures.
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: uq_app_user_username
       changes:
         - addUniqueConstraint:
             tableName: app_user
