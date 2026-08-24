@@ -8,6 +8,7 @@ import app.testero.dto.assessment.AssessmentQuestionsResponse.QuestionDto;
 import app.testero.dto.common.PaginationMetadata;
 import app.testero.dto.assessment.SubjectDto;
 import app.testero.entity.assessment.AssessmentSubject;
+import app.testero.entity.assessment.ClassAssessmentAssignment;
 import app.testero.entity.assessment.Subject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
@@ -15,14 +16,17 @@ import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.SubmissionStatus;
+import app.testero.entity.user.UserClass;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.assessment.AssessmentSnapshotRepository;
 import app.testero.repository.assessment.AssessmentSubjectRepository;
+import app.testero.repository.assessment.ClassAssessmentAssignmentRepository;
 import app.testero.repository.assessment.OptionSnapshotRepository;
 import app.testero.repository.assessment.QuestionSnapshotRepository;
 import app.testero.repository.assessment.QuestionSnapshotSubjectRepository;
 import app.testero.repository.assessment.SubjectRepository;
 import app.testero.repository.submission.SubmissionRepository;
+import app.testero.repository.user.UserClassRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -45,6 +49,8 @@ public class AssessmentService {
     private final AssessmentSubjectRepository assessmentSubjectRepository;
     private final QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
     private final SubjectRepository subjectRepository;
+    private final ClassAssessmentAssignmentRepository assignmentRepository;
+    private final UserClassRepository userClassRepository;
 
     public AssessmentService(AssessmentSnapshotRepository snapshotRepository,
                              QuestionSnapshotRepository questionSnapshotRepository,
@@ -53,7 +59,9 @@ public class AssessmentService {
                              QuestionPrepService questionPrepService,
                              AssessmentSubjectRepository assessmentSubjectRepository,
                              QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository,
-                             SubjectRepository subjectRepository) {
+                             SubjectRepository subjectRepository,
+                             ClassAssessmentAssignmentRepository assignmentRepository,
+                             UserClassRepository userClassRepository) {
         this.snapshotRepository = snapshotRepository;
         this.questionSnapshotRepository = questionSnapshotRepository;
         this.optionSnapshotRepository = optionSnapshotRepository;
@@ -62,12 +70,15 @@ public class AssessmentService {
         this.assessmentSubjectRepository = assessmentSubjectRepository;
         this.questionSnapshotSubjectRepository = questionSnapshotSubjectRepository;
         this.subjectRepository = subjectRepository;
+        this.assignmentRepository = assignmentRepository;
+        this.userClassRepository = userClassRepository;
     }
 
     public AssessmentListResponse getAvailableAssessments(UUID classId, UUID userId,
                                                            int page, int size) {
+        // Use the unfiltered query so the FE can also show upcoming ("Programmate") items
         Page<AssessmentSnapshot> snapshotPage = snapshotRepository
-                .findSnapshotsByClassId(classId, PageRequest.of(page, size));
+                .findAllSnapshotsByClassId(classId, PageRequest.of(page, size));
         List<AssessmentSnapshot> snapshots = snapshotPage.getContent();
 
         List<UUID> snapshotIds = snapshots.stream().map(AssessmentSnapshot::getId).toList();
@@ -80,6 +91,21 @@ public class AssessmentService {
                                 s -> s,
                                 (a, b) -> resolveLatest(a, b)
                         ));
+
+        // Batch-fetch assignments to get availableFrom / availableUntil per snapshot
+        Map<UUID, ClassAssessmentAssignment> assignmentBySnapshot = assignmentRepository
+                .findByClassId(classId)
+                .stream()
+                .collect(Collectors.toMap(
+                        ClassAssessmentAssignment::getAssessmentSnapshotId,
+                        a -> a,
+                        (a, b) -> a
+                ));
+
+        // Resolve class name (single lookup — all items share the same class)
+        String className = userClassRepository.findById(classId)
+                .map(UserClass::getName)
+                .orElse(null);
 
         // Batch-fetch subjects for all assessments
         List<UUID> assessmentIds = snapshots.stream()
@@ -107,18 +133,27 @@ public class AssessmentService {
                     List<SubjectDto> subjects = s.getAssessmentTemplateId() != null
                             ? subjectsByAssessment.getOrDefault(s.getAssessmentTemplateId(), List.of())
                             : List.of();
+
+                    ClassAssessmentAssignment assignment = assignmentBySnapshot.get(s.getId());
+                    String availableFrom = assignment != null && assignment.getAvailableFrom() != null
+                            ? assignment.getAvailableFrom().toString() : null;
+                    String availableUntil = assignment != null && assignment.getAvailableUntil() != null
+                            ? assignment.getAvailableUntil().toString() : null;
+
                     return new AssessmentListResponse.AssessmentListItem(
                             s.getId().toString(),
                             s.getTitle(),
-                            null,
-                            null,
+                            availableFrom,
+                            availableUntil,
                             s.getTimerMinutes(),
                             s.getQuestionsPerAssessment(),
                             s.getDifficulty() != null ? s.getDifficulty().name() : null,
                             s.getType() != null ? s.getType().name() : "CERTIFICATION",
                             status,
                             score,
-                            subjects
+                            subjects,
+                            s.getMaxAttempts(),
+                            className
                     );
                 })
                 .toList();

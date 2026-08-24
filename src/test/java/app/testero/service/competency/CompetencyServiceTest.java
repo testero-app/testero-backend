@@ -87,7 +87,7 @@ class CompetencyServiceTest {
     void noSubmissions() {
         when(submissionRepository.findByUserIdAndStatusInOrderBySubmittedAtDesc(eq(USER_ID), any()))
                 .thenReturn(List.of());
-        when(topicRepository.findByEnabledTrueOrderByPositionAsc())
+        when(topicRepository.findAllByOrderByPositionAsc())
                 .thenReturn(List.of(topic));
         when(topicSubjectRepository.findByTopicIdInOrderByPositionAsc(any()))
                 .thenReturn(List.of());
@@ -120,7 +120,7 @@ class CompetencyServiceTest {
         when(assessmentSnapshotRepository.findAllById(any()))
                 .thenReturn(List.of(trainingSnapshot));
 
-        when(topicRepository.findByEnabledTrueOrderByPositionAsc())
+        when(topicRepository.findAllByOrderByPositionAsc())
                 .thenReturn(List.of(topic));
         when(topicSubjectRepository.findByTopicIdInOrderByPositionAsc(any()))
                 .thenReturn(List.of());
@@ -263,7 +263,7 @@ class CompetencyServiceTest {
                 .thenReturn(List.of(createQuestionSnapshot(Q1, null)));
 
         // Topic hierarchy: root topic has no subjects, child topic has childSubject
-        when(topicRepository.findByEnabledTrueOrderByPositionAsc())
+        when(topicRepository.findAllByOrderByPositionAsc())
                 .thenReturn(List.of(topic, childTopic));
 
         TopicSubject ts = new TopicSubject();
@@ -335,7 +335,7 @@ class CompetencyServiceTest {
     }
 
     private void stubTopicHierarchy() {
-        when(topicRepository.findByEnabledTrueOrderByPositionAsc())
+        when(topicRepository.findAllByOrderByPositionAsc())
                 .thenReturn(List.of(topic));
 
         TopicSubject ts1 = new TopicSubject();

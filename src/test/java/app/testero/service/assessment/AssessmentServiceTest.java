@@ -5,6 +5,7 @@ import app.testero.dto.assessment.AssessmentListResponse;
 import app.testero.dto.assessment.AssessmentQuestionsResponse;
 import app.testero.dto.assessment.AssessmentQuestionsResponse.QuestionDto;
 import app.testero.entity.assessment.AssessmentSubject;
+import app.testero.entity.assessment.ClassAssessmentAssignment;
 import app.testero.entity.assessment.Subject;
 import app.testero.entity.snapshot.AssessmentSnapshot;
 import app.testero.entity.snapshot.OptionSnapshot;
@@ -12,14 +13,17 @@ import app.testero.entity.snapshot.QuestionSnapshot;
 import app.testero.entity.snapshot.QuestionSnapshotSubject;
 import app.testero.entity.submission.Submission;
 import app.testero.entity.submission.SubmissionStatus;
+import app.testero.entity.user.UserClass;
 import app.testero.exception.ResourceNotFoundException;
 import app.testero.repository.assessment.AssessmentSnapshotRepository;
 import app.testero.repository.assessment.AssessmentSubjectRepository;
+import app.testero.repository.assessment.ClassAssessmentAssignmentRepository;
 import app.testero.repository.assessment.OptionSnapshotRepository;
 import app.testero.repository.assessment.QuestionSnapshotRepository;
 import app.testero.repository.assessment.QuestionSnapshotSubjectRepository;
 import app.testero.repository.assessment.SubjectRepository;
 import app.testero.repository.submission.SubmissionRepository;
+import app.testero.repository.user.UserClassRepository;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -58,6 +62,8 @@ class AssessmentServiceTest {
     @Mock AssessmentSubjectRepository assessmentSubjectRepository;
     @Mock QuestionSnapshotSubjectRepository questionSnapshotSubjectRepository;
     @Mock SubjectRepository subjectRepository;
+    @Mock ClassAssessmentAssignmentRepository assignmentRepository;
+    @Mock UserClassRepository userClassRepository;
 
     @InjectMocks AssessmentService assessmentService;
 
@@ -102,15 +108,35 @@ class AssessmentServiceTest {
     @DisplayName("getAvailableAssessments")
     class GetAvailableAssessments {
 
+        private static final String CLASS_NAME = "Test Class 1A";
+        private static final LocalDateTime AVAILABLE_FROM = LocalDateTime.of(2026, 6, 1, 9, 0);
+        private static final LocalDateTime AVAILABLE_UNTIL = LocalDateTime.of(2026, 7, 1, 18, 0);
+
+        /** Stubs the assignment and class lookups that every list-API test needs. */
+        private void stubAssignmentAndClass() {
+            ClassAssessmentAssignment assignment = new ClassAssessmentAssignment();
+            assignment.setClassId(CLASS_ID);
+            assignment.setAssessmentSnapshotId(SNAPSHOT_ID);
+            assignment.setAvailableFrom(AVAILABLE_FROM);
+            assignment.setAvailableUntil(AVAILABLE_UNTIL);
+            when(assignmentRepository.findByClassId(CLASS_ID)).thenReturn(List.of(assignment));
+
+            UserClass userClass = new UserClass();
+            userClass.setId(CLASS_ID);
+            userClass.setName(CLASS_NAME);
+            when(userClassRepository.findById(CLASS_ID)).thenReturn(Optional.of(userClass));
+        }
+
         @Test
         @DisplayName("returns NOT_STARTED when no submissions exist")
         void notStarted() {
             AssessmentSnapshot s = buildAssessmentSnapshot();
-            when(snapshotRepository.findSnapshotsByClassId(eq(CLASS_ID), any()))
+            when(snapshotRepository.findAllSnapshotsByClassId(eq(CLASS_ID), any()))
                     .thenReturn(new PageImpl<>(List.of(s)));
             when(submissionRepository.findByUserIdAndAssessmentSnapshotIdIn(
                     STUDENT_ID, List.of(SNAPSHOT_ID)))
                     .thenReturn(List.of());
+            stubAssignmentAndClass();
 
             AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID, 0, 20);
 
@@ -123,6 +149,9 @@ class AssessmentServiceTest {
             assertThat(item.difficulty()).isEqualTo(DIFFICULTY.name());
             assertThat(item.status()).isEqualTo("NOT_STARTED");
             assertThat(item.score()).isNull();
+            assertThat(item.availableFrom()).isEqualTo(AVAILABLE_FROM.toString());
+            assertThat(item.availableUntil()).isEqualTo(AVAILABLE_UNTIL.toString());
+            assertThat(item.className()).isEqualTo(CLASS_NAME);
         }
 
         @Test
@@ -136,11 +165,12 @@ class AssessmentServiceTest {
             sub.setStatus(SubmissionStatus.IN_PROGRESS);
             sub.setStartedAt(LocalDateTime.now());
 
-            when(snapshotRepository.findSnapshotsByClassId(eq(CLASS_ID), any()))
+            when(snapshotRepository.findAllSnapshotsByClassId(eq(CLASS_ID), any()))
                     .thenReturn(new PageImpl<>(List.of(s)));
             when(submissionRepository.findByUserIdAndAssessmentSnapshotIdIn(
                     STUDENT_ID, List.of(SNAPSHOT_ID)))
                     .thenReturn(List.of(sub));
+            stubAssignmentAndClass();
 
             AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID, 0, 20);
 
@@ -161,11 +191,12 @@ class AssessmentServiceTest {
             sub.setSubmittedAt(LocalDateTime.now());
             sub.setScore(82.0);
 
-            when(snapshotRepository.findSnapshotsByClassId(eq(CLASS_ID), any()))
+            when(snapshotRepository.findAllSnapshotsByClassId(eq(CLASS_ID), any()))
                     .thenReturn(new PageImpl<>(List.of(s)));
             when(submissionRepository.findByUserIdAndAssessmentSnapshotIdIn(
                     STUDENT_ID, List.of(SNAPSHOT_ID)))
                     .thenReturn(List.of(sub));
+            stubAssignmentAndClass();
 
             AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID, 0, 20);
 
@@ -178,11 +209,12 @@ class AssessmentServiceTest {
         @DisplayName("includes subjects for each assessment")
         void includesSubjects() {
             AssessmentSnapshot s = buildAssessmentSnapshot();
-            when(snapshotRepository.findSnapshotsByClassId(eq(CLASS_ID), any()))
+            when(snapshotRepository.findAllSnapshotsByClassId(eq(CLASS_ID), any()))
                     .thenReturn(new PageImpl<>(List.of(s)));
             when(submissionRepository.findByUserIdAndAssessmentSnapshotIdIn(
                     STUDENT_ID, List.of(SNAPSHOT_ID)))
                     .thenReturn(List.of());
+            stubAssignmentAndClass();
 
             // Stub subject relationships
             when(assessmentSubjectRepository.findByAssessmentIdIn(List.of(TEST_ID)))
@@ -203,10 +235,30 @@ class AssessmentServiceTest {
         }
 
         @Test
+        @DisplayName("populates maxAttempts from snapshot")
+        void populatesMaxAttempts() {
+            AssessmentSnapshot s = buildAssessmentSnapshot();
+            s.setMaxAttempts(3);
+            when(snapshotRepository.findAllSnapshotsByClassId(eq(CLASS_ID), any()))
+                    .thenReturn(new PageImpl<>(List.of(s)));
+            when(submissionRepository.findByUserIdAndAssessmentSnapshotIdIn(
+                    STUDENT_ID, List.of(SNAPSHOT_ID)))
+                    .thenReturn(List.of());
+            stubAssignmentAndClass();
+
+            AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID, 0, 20);
+
+            var item = response.assessments().get(0);
+            assertThat(item.maxAttempts()).isEqualTo(3);
+        }
+
+        @Test
         @DisplayName("returns empty list when no snapshots exist")
         void emptyList() {
-            when(snapshotRepository.findSnapshotsByClassId(eq(CLASS_ID), any()))
+            when(snapshotRepository.findAllSnapshotsByClassId(eq(CLASS_ID), any()))
                     .thenReturn(new PageImpl<>(List.of()));
+            when(assignmentRepository.findByClassId(CLASS_ID)).thenReturn(List.of());
+            when(userClassRepository.findById(CLASS_ID)).thenReturn(Optional.empty());
 
             AssessmentListResponse response = assessmentService.getAvailableAssessments(CLASS_ID, STUDENT_ID, 0, 20);
 
