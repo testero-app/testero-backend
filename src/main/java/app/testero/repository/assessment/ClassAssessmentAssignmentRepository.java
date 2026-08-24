@@ -4,12 +4,19 @@ import app.testero.entity.assessment.ClassAssessmentAssignment;
 import app.testero.entity.assessment.ClassAssessmentAssignmentId;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ClassAssessmentAssignmentRepository
         extends JpaRepository<ClassAssessmentAssignment, ClassAssessmentAssignmentId> {
+
+    /**
+     * All assignments for a class — regardless of availability window.
+     * Used by the assessment list API so the FE can show upcoming ("Programmate") items too.
+     */
+    List<ClassAssessmentAssignment> findByClassId(UUID classId);
 
     /**
      * Assignments whose deadline falls in (now, until] — i.e. approaching but not yet passed.

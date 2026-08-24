@@ -19,6 +19,8 @@ public record AssessmentListResponse(List<AssessmentListItem> assessments,
             String status,
             // null until the assessment has been completed at least once.
             @Nullable Double score,
-            List<SubjectDto> subjects
+            List<SubjectDto> subjects,
+            @Nullable Integer maxAttempts,
+            @Nullable String className
     ) {}
 }

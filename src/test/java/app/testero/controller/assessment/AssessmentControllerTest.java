@@ -90,7 +90,7 @@ class AssessmentControllerTest {
                     .thenReturn(Optional.of(buildProfile()));
             when(assessmentService.getAvailableAssessments(CLASS_ID, USER_ID, 0, 20))
                     .thenReturn(new AssessmentListResponse(List.of(
-                            new AssessmentListItem(ASSESSMENT_ID, "Test 1", null, null, 45, 5, "INTERMEDIATE", "CERT_SIMULATION", "NOT_STARTED", null, List.of())
+                            new AssessmentListItem(ASSESSMENT_ID, "Test 1", null, null, 45, 5, "INTERMEDIATE", "CERT_SIMULATION", "NOT_STARTED", null, List.of(), null, null)
                     ), new PaginationMetadata(1, 1, 0, 20)));
 
             mockMvc.perform(get("/assessments").with(jwt()))
