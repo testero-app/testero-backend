@@ -32,6 +32,16 @@ public interface AssessmentSnapshotRepository extends JpaRepository<AssessmentSn
                                                     Pageable pageable);
 
     /**
+     * All snapshots assigned to a class — no availability-window filter.
+     * Includes future ("Programmate") and past assignments so the FE can display them all.
+     */
+    @Query("SELECT s FROM AssessmentSnapshot s JOIN ClassAssessmentAssignment ca "
+            + "ON ca.assessmentSnapshotId = s.id "
+            + "WHERE ca.classId = :classId")
+    Page<AssessmentSnapshot> findAllSnapshotsByClassId(@Param("classId") UUID classId,
+                                                       Pageable pageable);
+
+    /**
      * The pools a class may practise on: what is assigned to it, of a type a student is
      * allowed to meet outside a sitting. Exams are excluded by the caller's type list — a
      * student must not train on the questions of a test they have yet to sit.
