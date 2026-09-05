@@ -5,6 +5,111 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0](https://github.com/testero-app/testero-backend/compare/v2.2.0...v3.0.0) (2026-09-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* POST /training/start no longer returns assessment_snapshot_id — a free session has no assessment. Clients fetch the paper from the new GET /submissions/{id}/questions using the submission id alone.
+
+### Features
+
+* add activation fields to ClassTest and startedAt to Submission ([#11](https://github.com/testero-app/testero-backend/issues/11)) ([4dafacd](https://github.com/testero-app/testero-backend/commit/4dafacda70ef99daec7a23c2e498d9d924365aac))
+* add assessment_snapshot_subject table ([#188](https://github.com/testero-app/testero-backend/issues/188)) ([6007d3b](https://github.com/testero-app/testero-backend/commit/6007d3b9f58399fea239297b2be3fb601a09022a))
+* add audit fields (created_at, updated_at) to all tables ([#71](https://github.com/testero-app/testero-backend/issues/71)) ([50aabe6](https://github.com/testero-app/testero-backend/commit/50aabe6457e59c703f0f87040776eb2c2b7a9d2d)), closes [#37](https://github.com/testero-app/testero-backend/issues/37)
+* add dev seed data with Liquibase contexts ([#18](https://github.com/testero-app/testero-backend/issues/18)) ([7f4956b](https://github.com/testero-app/testero-backend/commit/7f4956b5fd16c2c1040c98bf47761e381f9818ee))
+* add difficulty field to Assessment and AssessmentSnapshot ([#121](https://github.com/testero-app/testero-backend/issues/121)) ([a16a2a9](https://github.com/testero-app/testero-backend/commit/a16a2a9fa77926d4d86c80583ae5f8aa024a7221)), closes [#102](https://github.com/testero-app/testero-backend/issues/102)
+* add endpoint to retrieve saved answers for session resume ([#148](https://github.com/testero-app/testero-backend/issues/148)) ([f04fa5e](https://github.com/testero-app/testero-backend/commit/f04fa5e35b6e1cf33f6d7bb782c8b5e84e24be54)), closes [#112](https://github.com/testero-app/testero-backend/issues/112)
+* add explanation field to Question and QuestionSnapshot ([#125](https://github.com/testero-app/testero-backend/issues/125)) ([8ffe268](https://github.com/testero-app/testero-backend/commit/8ffe268673695d09f2eff6e9c4f0de631db0a5db)), closes [#104](https://github.com/testero-app/testero-backend/issues/104)
+* add first-access set-password flow and prod role seed ([#153](https://github.com/testero-app/testero-backend/issues/153)) ([e32d46a](https://github.com/testero-app/testero-backend/commit/e32d46a1de29969af6c1bba975d597fabb91c459))
+* add GET /api/topics/{id}/chapters endpoint ([#177](https://github.com/testero-app/testero-backend/issues/177)) ([013106c](https://github.com/testero-app/testero-backend/commit/013106ca610047b69c553e94ff1dcade7c8ac2b7)), closes [#170](https://github.com/testero-app/testero-backend/issues/170)
+* add hierarchical topics and competency mastery endpoint ([#203](https://github.com/testero-app/testero-backend/issues/203)) ([6a7e38b](https://github.com/testero-app/testero-backend/commit/6a7e38b455fd3943fb2d3c6d9cf3117684a0464a))
+* add in-app notification system ([#201](https://github.com/testero-app/testero-backend/issues/201)) ([11d04b1](https://github.com/testero-app/testero-backend/commit/11d04b1448cfeb60f8fd1cb1db9b55221ac356ed))
+* add is_active flag to app_user ([#196](https://github.com/testero-app/testero-backend/issues/196)) ([4420bb8](https://github.com/testero-app/testero-backend/commit/4420bb84647d68e482ced0234f2d70386dd8576d))
+* add Liquibase database migrations for initial schema ([#14](https://github.com/testero-app/testero-backend/issues/14)) ([948bae7](https://github.com/testero-app/testero-backend/commit/948bae7f32e8ca2cb7c7c8912acaa9ea954010f6))
+* add Liquibase dev seed with demo data for contributors ([#55](https://github.com/testero-app/testero-backend/issues/55)) ([f72aba5](https://github.com/testero-app/testero-backend/commit/f72aba5df19664b94758eac39e06ccc896f38a10))
+* add max_score to submission DTOs and support email login ([#139](https://github.com/testero-app/testero-backend/issues/139)) ([fc451f6](https://github.com/testero-app/testero-backend/commit/fc451f69585e7c3efd1e1067e160a7aa82d14782)), closes [#110](https://github.com/testero-app/testero-backend/issues/110) [#117](https://github.com/testero-app/testero-backend/issues/117)
+* add notification preferences CRUD endpoints ([#174](https://github.com/testero-app/testero-backend/issues/174)) ([eebf6d9](https://github.com/testero-app/testero-backend/commit/eebf6d9599ea9cbef91a5d11dfab19135c0bb43a)), closes [#168](https://github.com/testero-app/testero-backend/issues/168)
+* add pagination to assessment list and submission history ([#142](https://github.com/testero-app/testero-backend/issues/142)) ([9187077](https://github.com/testero-app/testero-backend/commit/91870773c7806600ee6509d3f85a223620ece688)), closes [#119](https://github.com/testero-app/testero-backend/issues/119)
+* add passing_score to Assessment and pass/fail logic ([#131](https://github.com/testero-app/testero-backend/issues/131)) ([89d6b84](https://github.com/testero-app/testero-backend/commit/89d6b844c95755fd208f5bc180e4e03ff722074f)), closes [#103](https://github.com/testero-app/testero-backend/issues/103)
+* add per-question points, subjects in DTOs, and subject scoring breakdown ([#146](https://github.com/testero-app/testero-backend/issues/146)) ([a3c3714](https://github.com/testero-app/testero-backend/commit/a3c3714b37ec708292f6e5663f0308e99aa9b686))
+* add POST /api/training/start for dynamic training sessions ([#178](https://github.com/testero-app/testero-backend/issues/178)) ([a14f757](https://github.com/testero-app/testero-backend/commit/a14f757f6d6db506a22579e1f1c6799ad18a844b))
+* add question flag/bookmark support during assessment ([#149](https://github.com/testero-app/testero-backend/issues/149)) ([9ec0061](https://github.com/testero-app/testero-backend/commit/9ec0061b621f0a6a1c05719df8f2a1beb999f7de)), closes [#111](https://github.com/testero-app/testero-backend/issues/111)
+* add question-subject many-to-many relationship with weight ([#141](https://github.com/testero-app/testero-backend/issues/141)) ([8ea489f](https://github.com/testero-app/testero-backend/commit/8ea489fc655dd82776422d0e3bf65b610a0d40c0)), closes [#106](https://github.com/testero-app/testero-backend/issues/106)
+* add Spring profiles (dev/prod) and Docker Compose for local PostgreSQL ([#16](https://github.com/testero-app/testero-backend/issues/16)) ([3517454](https://github.com/testero-app/testero-backend/commit/3517454f8beaf981c0115e953569fc92e92ec30c))
+* add submission review endpoint with full snapshot data ([#84](https://github.com/testero-app/testero-backend/issues/84)) ([be05676](https://github.com/testero-app/testero-backend/commit/be056765374d69dcc20c6482afc5fdfdd8153fe6))
+* add Swagger/OpenAPI documentation for REST endpoints ([#137](https://github.com/testero-app/testero-backend/issues/137)) ([f938a52](https://github.com/testero-app/testero-backend/commit/f938a526096bfe2e1e094b7e0e7f1becd8d635e8)), closes [#98](https://github.com/testero-app/testero-backend/issues/98)
+* add TeacherClass M:N relation for teacher-class assignment ([#13](https://github.com/testero-app/testero-backend/issues/13)) ([3a679b4](https://github.com/testero-app/testero-backend/commit/3a679b46207ec24a9121cc158d50dc535206b3b5))
+* add Topic entity and GET /api/topics endpoint ([#175](https://github.com/testero-app/testero-backend/issues/175)) ([8f5fd0a](https://github.com/testero-app/testero-backend/commit/8f5fd0aaa6a1f8191b49ace9572ce5200d837fc4)), closes [#169](https://github.com/testero-app/testero-backend/issues/169)
+* add type field (CERTIFICATION/TRAINING) to assessments ([#172](https://github.com/testero-app/testero-backend/issues/172)) ([ff4452a](https://github.com/testero-app/testero-backend/commit/ff4452a300d66e0da2e26778511bc7f77a1bbd28)), closes [#167](https://github.com/testero-app/testero-backend/issues/167)
+* add user profile and change password endpoints ([#135](https://github.com/testero-app/testero-backend/issues/135)) ([318d262](https://github.com/testero-app/testero-backend/commit/318d262cd317504c59a6f12bd58bf9b3ef5a69eb)), closes [#113](https://github.com/testero-app/testero-backend/issues/113) [#114](https://github.com/testero-app/testero-backend/issues/114)
+* allow multiple submission attempts (retake support) ([#74](https://github.com/testero-app/testero-backend/issues/74)) ([1758179](https://github.com/testero-app/testero-backend/commit/1758179ffd13ffb76a8b718e684f3e9ac9871f65))
+* assessment snapshot — git-style versioning for test history ([#79](https://github.com/testero-app/testero-backend/issues/79)) ([79db70b](https://github.com/testero-app/testero-backend/commit/79db70b4552241de341b048c03d238ed1d43d8b2)), closes [#78](https://github.com/testero-app/testero-backend/issues/78)
+* **assessment:** add template ownership and enforce it on publish ([#215](https://github.com/testero-app/testero-backend/issues/215)) ([6fe5548](https://github.com/testero-app/testero-backend/commit/6fe554895ef8940956168bf06229faba49c81095))
+* **db:** seed Python Certification Exam Practice assessment ([#210](https://github.com/testero-app/testero-backend/issues/210)) ([0201463](https://github.com/testero-app/testero-backend/commit/02014635da4cec82c54bfd0a2003e5586001aa03))
+* difficulty-weighted mastery + date filter on competencies ([#207](https://github.com/testero-app/testero-backend/issues/207)) ([eddd4f1](https://github.com/testero-app/testero-backend/commit/eddd4f14ad079caf41cd0b2d8d8260423db89456))
+* expose subject tags per question in assessment questions endpoint ([#151](https://github.com/testero-app/testero-backend/issues/151)) ([e93c2dc](https://github.com/testero-app/testero-backend/commit/e93c2dcef59a5173fb40afe3e2267539e15c58db))
+* free training draws across pools without copying questions ([#247](https://github.com/testero-app/testero-backend/issues/247)) ([be55c49](https://github.com/testero-app/testero-backend/commit/be55c496902982bc4ff4d7ce25cc06c0c2ac2aba))
+* freeze subject label in snapshot at publish time ([#193](https://github.com/testero-app/testero-backend/issues/193)) ([bf9551e](https://github.com/testero-app/testero-backend/commit/bf9551e508966deda70aec1b355a24d047a1cfe7))
+* handle orphaned submissions with incremental save and auto-close ([#92](https://github.com/testero-app/testero-backend/issues/92)) ([e57ad0a](https://github.com/testero-app/testero-backend/commit/e57ad0ae24505446d5348431b53a563eb8991994)), closes [#68](https://github.com/testero-app/testero-backend/issues/68)
+* **i18n:** backend language preference + localised notifications (+ package reorg) ([#234](https://github.com/testero-app/testero-backend/issues/234)) ([ae39cc7](https://github.com/testero-app/testero-backend/commit/ae39cc777d7de93ac153a8257de1b36afec5ccf9))
+* include student submission status in assessment list response ([#127](https://github.com/testero-app/testero-backend/issues/127)) ([87feca8](https://github.com/testero-app/testero-backend/commit/87feca89b5dd65577b0500b4460c2b8ffd36ebd7)), closes [#108](https://github.com/testero-app/testero-backend/issues/108)
+* link assessment templates to topics (M:N) ([#195](https://github.com/testero-app/testero-backend/issues/195)) ([3d1cd46](https://github.com/testero-app/testero-backend/commit/3d1cd4668f37716539e266bb8affe02e096b37d2))
+* move availability window from template to class assignment ([#186](https://github.com/testero-app/testero-backend/issues/186)) ([ea7d461](https://github.com/testero-app/testero-backend/commit/ea7d46101e9eea23e92106bf4b0a6e3c8f5dbcb0))
+* **notifications:** generate DEADLINE_REMINDER notifications ([#232](https://github.com/testero-app/testero-backend/issues/232)) ([4a3ae77](https://github.com/testero-app/testero-backend/commit/4a3ae77d60fb6b4466174e7c3d4b8f54037b8f15)), closes [#231](https://github.com/testero-app/testero-backend/issues/231)
+* **notification:** store source event ID for click-to-navigate ([#255](https://github.com/testero-app/testero-backend/issues/255)) ([c0fd87f](https://github.com/testero-app/testero-backend/commit/c0fd87fb08da43787bfdb017d5c935e9abb9beee)), closes [#251](https://github.com/testero-app/testero-backend/issues/251)
+* populate deadline fields and add maxAttempts/className to assessment API ([#269](https://github.com/testero-app/testero-backend/issues/269)) ([5947bf8](https://github.com/testero-app/testero-backend/commit/5947bf8b2a0ac355ee1fd9035f806d15c021e877))
+* replace date + start_time with availability window ([#184](https://github.com/testero-app/testero-backend/issues/184)) ([d3132e4](https://github.com/testero-app/testero-backend/commit/d3132e45b21d5fc606aa1b5037b72630c3c7c9df))
+* scaffold Spring Boot backend with auth, JWT and CORS config ([#3](https://github.com/testero-app/testero-backend/issues/3)) ([dfa9ea1](https://github.com/testero-app/testero-backend/commit/dfa9ea1b02d973dfb97573c4b8e75cdc6a02429f))
+* seed demo submissions for all five students ([#88](https://github.com/testero-app/testero-backend/issues/88)) ([8c8476c](https://github.com/testero-app/testero-backend/commit/8c8476cfd33cb3bf73ac20c05c058ed400981e11))
+* **snapshot:** auto-assign topic subjects to questions without explicit links ([#258](https://github.com/testero-app/testero-backend/issues/258)) ([c7c6156](https://github.com/testero-app/testero-backend/commit/c7c615625010dd51f7e0cecc4f91211e09fdeffc)), closes [#252](https://github.com/testero-app/testero-backend/issues/252)
+* split name into first_name/last_name, add PUT /users/me ([#199](https://github.com/testero-app/testero-backend/issues/199)) ([0958c0a](https://github.com/testero-app/testero-backend/commit/0958c0aee48918a398e0bfc307204e6e837ab6ae))
+* student personal area — submission history endpoint ([#76](https://github.com/testero-app/testero-backend/issues/76)) ([2edf951](https://github.com/testero-app/testero-backend/commit/2edf951fe5c287189e50a877e9103ab240555aa8))
+* **submissions:** enforce max_attempts, frozen into the snapshot ([#228](https://github.com/testero-app/testero-backend/issues/228)) ([3d689c1](https://github.com/testero-app/testero-backend/commit/3d689c17ad808da11e94f8ed2a477f7cb4141f60))
+* **tags:** teacher-scoped question tags with CRUD and tag filter ([#225](https://github.com/testero-app/testero-backend/issues/225)) ([7bc3035](https://github.com/testero-app/testero-backend/commit/7bc3035555a747896d694c29e06bd0d897b554e2))
+
+
+### Bug Fixes
+
+* add braces to single-line if statements (checkstyle) ([#129](https://github.com/testero-app/testero-backend/issues/129)) ([5ae34fe](https://github.com/testero-app/testero-backend/commit/5ae34fe156a56888f0727ba830d302f739a5305d))
+* add is_fallback field to OptionSnapshot ([#123](https://github.com/testero-app/testero-backend/issues/123)) ([cf007da](https://github.com/testero-app/testero-backend/commit/cf007daeb72a2b065923c9f54621b8c930b03a00)), closes [#118](https://github.com/testero-app/testero-backend/issues/118)
+* add precondition to unique username migration ([#267](https://github.com/testero-app/testero-backend/issues/267)) ([8be8d31](https://github.com/testero-app/testero-backend/commit/8be8d311b8e2a34a49dd32924aa706c72910ebcd))
+* add question-subject links and topic to dev seed data ([#205](https://github.com/testero-app/testero-backend/issues/205)) ([8d85d59](https://github.com/testero-app/testero-backend/commit/8d85d592cbf504fa139ce20cb3c55fb95c3bf21c))
+* add splitStatements:false to dev seed changeset ([#62](https://github.com/testero-app/testero-backend/issues/62)) ([a183775](https://github.com/testero-app/testero-backend/commit/a183775c8b805279d3c75a9d77061b3ac9f23a73))
+* add unique constraint on app_user.username ([#259](https://github.com/testero-app/testero-backend/issues/259)) ([6daacb2](https://github.com/testero-app/testero-backend/commit/6daacb21c1730fe17c32a4b32e45c735d2426dac))
+* add validCheckSum for dev seed changeset ([#86](https://github.com/testero-app/testero-backend/issues/86)) ([9e74b82](https://github.com/testero-app/testero-backend/commit/9e74b82c8d3cf07a040e315d38fc51ba2a0b3d88))
+* **assessment:** freeze question draw per submission and honor shuffle flags ([#238](https://github.com/testero-app/testero-backend/issues/238)) ([fd3fe06](https://github.com/testero-app/testero-backend/commit/fd3fe06d525a1aa08241e56d4ffde3026be9717b)), closes [#237](https://github.com/testero-app/testero-backend/issues/237)
+* **ci:** use config file in release-please to respect snapshot:false ([#59](https://github.com/testero-app/testero-backend/issues/59)) ([00ea62d](https://github.com/testero-app/testero-backend/commit/00ea62d46e02d5f0f19a03d36002e235266494b9))
+* **ci:** use skip-snapshot to prevent SNAPSHOT release PRs ([#64](https://github.com/testero-app/testero-backend/issues/64)) ([edcfbfc](https://github.com/testero-app/testero-backend/commit/edcfbfcd1de66a3c24b665a0f7fd26d2264f3ed1))
+* correct checkstyle indentation in TopicService ([#262](https://github.com/testero-app/testero-backend/issues/262)) ([ae98878](https://github.com/testero-app/testero-backend/commit/ae988781983e3c499b156905cdff5ef070dcc48f))
+* **deps:** bump Tomcat to 11.0.22 and PostgreSQL driver to 42.7.11 ([#9](https://github.com/testero-app/testero-backend/issues/9)) ([3857f53](https://github.com/testero-app/testero-backend/commit/3857f53601a3e0d7935938ab694b09985d825461))
+* **deps:** upgrade spring-dotenv to 5.1.0 for Spring Boot 4.x support ([#15](https://github.com/testero-app/testero-backend/issues/15)) ([243dd8d](https://github.com/testero-app/testero-backend/commit/243dd8d1f47d0b951d487b1c904ce99b7eb3eecb))
+* duplicate key on submit with saved answers ([#133](https://github.com/testero-app/testero-backend/issues/133)) ([cbee7b8](https://github.com/testero-app/testero-backend/commit/cbee7b85978fb468c7361349c7370d7602ee985d))
+* prevent duplicate key violation on submit after incremental save ([#145](https://github.com/testero-app/testero-backend/issues/145)) ([de89e45](https://github.com/testero-app/testero-backend/commit/de89e45d8b8926d6d3f41c6643a5053c8989ccbe))
+* resolve checkstyle violations (file length, constant name) ([#95](https://github.com/testero-app/testero-backend/issues/95)) ([a1a0881](https://github.com/testero-app/testero-backend/commit/a1a088111d2091240e2d97d77e25073a5639f42e))
+* **security:** address CodeQL alerts for CSRF and workflow permissions ([#52](https://github.com/testero-app/testero-backend/issues/52)) ([f257976](https://github.com/testero-app/testero-backend/commit/f2579762fa23959f8d1ee99b52d4fe69a4d9d427))
+* **security:** restrict assessment publishing to teachers and admins ([#213](https://github.com/testero-app/testero-backend/issues/213)) ([a8d4007](https://github.com/testero-app/testero-backend/commit/a8d4007a89cdad4de4aa3ab66c3948f6d17a50b9))
+* separate topic visibility for training vs competencies ([#260](https://github.com/testero-app/testero-backend/issues/260)) ([52a1854](https://github.com/testero-app/testero-backend/commit/52a18549fbee724dcb1e953e0a814862aa04cb5e))
+* set Liquibase context to prod to exclude dev seed data ([#90](https://github.com/testero-app/testero-backend/issues/90)) ([4a09102](https://github.com/testero-app/testero-backend/commit/4a09102362857071e442f55a7d29e283c2d376b7))
+* **submissions:** measure results against the drawn paper ([#240](https://github.com/testero-app/testero-backend/issues/240)) ([5e7782a](https://github.com/testero-app/testero-backend/commit/5e7782a9715146d788279b20d82b98209ac35183))
+* switch Render to Docker runtime and add Dockerfile ([#7](https://github.com/testero-app/testero-backend/issues/7)) ([6dee0a0](https://github.com/testero-app/testero-backend/commit/6dee0a0db6e45ac8bfc56847982127736d889d9b))
+* use correct question type and improve project setup ([#40](https://github.com/testero-app/testero-backend/issues/40)) ([b0f703d](https://github.com/testero-app/testero-backend/commit/b0f703d0efe552443dd71dad0fe32ed2a14e6a2b))
+
+
+### Performance Improvements
+
+* **snapshot:** batch the inserts that create an assessment snapshot ([#244](https://github.com/testero-app/testero-backend/issues/244)) ([cf0e56e](https://github.com/testero-app/testero-backend/commit/cf0e56e0e6ef59aa7d86be3a03ef45a0b5e25934))
+
+
+### Documentation
+
+* add architecture and workflow diagrams ([#69](https://github.com/testero-app/testero-backend/issues/69)) ([1583402](https://github.com/testero-app/testero-backend/commit/15834025eed92829876d5bc6b269167145e28546))
+* add governance files (README, CONTRIBUTING, DCO, templates) ([#1](https://github.com/testero-app/testero-backend/issues/1)) ([d324115](https://github.com/testero-app/testero-backend/commit/d3241156c8c5f214ac307162ae9533d700172f92))
+* add v4 data model and v2 assessment flow diagrams (draw.io) ([#82](https://github.com/testero-app/testero-backend/issues/82)) ([12c742c](https://github.com/testero-app/testero-backend/commit/12c742caff869d7b134d3341cbb9aae391699772))
+* align data-model diagram with Assessment rename and remove v2.2 ([#48](https://github.com/testero-app/testero-backend/issues/48)) ([998cdd1](https://github.com/testero-app/testero-backend/commit/998cdd10ec10de9b6bc5d48e8676ff0aaa369933))
+* move diagrams and docs to testero-docs repository ([#99](https://github.com/testero-app/testero-backend/issues/99)) ([1045e6e](https://github.com/testero-app/testero-backend/commit/1045e6e3f307f4b7cae8b654930232d281f0e42d))
+* update README with env vars table and stack details ([#8](https://github.com/testero-app/testero-backend/issues/8)) ([b433404](https://github.com/testero-app/testero-backend/commit/b433404b46a889a4365b48f4497c526ed036544d))
+
 ## [2.2.0](https://github.com/testero-app/testero-backend/compare/v2.1.2...v2.2.0) (2026-08-24)
 
 
