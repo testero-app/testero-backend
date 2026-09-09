@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.18-004-fix-assessment-type-default
+      author: testero
+      comment: >
+        The column default was 'CERTIFICATION', which is not a value of the
+        AssessmentType enum (CERT_SIMULATION, TRAINING, EXAM). Any row inserted
+        without an explicit type could not be deserialised by the application.
+        Realign the default and repair rows already carrying the invalid value.
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              UPDATE assessment_template SET type = 'CERT_SIMULATION' WHERE type = 'CERTIFICATION';
+              UPDATE assessment_snapshot SET type = 'CERT_SIMULATION' WHERE type = 'CERTIFICATION';
+              ALTER TABLE assessment_template ALTER COLUMN type SET DEFAULT 'CERT_SIMULATION';
+              ALTER TABLE assessment_snapshot ALTER COLUMN type SET DEFAULT 'CERT_SIMULATION';
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE assessment_template ALTER COLUMN type SET DEFAULT 'CERTIFICATION';
+              ALTER TABLE assessment_snapshot ALTER COLUMN type SET DEFAULT 'CERTIFICATION';

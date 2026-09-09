@@ -1,0 +1,123 @@
+databaseChangeLog:
+  - changeSet:
+      id: v1.18-001-dedup-subject-topic
+      author: testero
+      comment: >
+        Deduplicate subject.label and topic.title before enforcing uniqueness.
+        Seed scripts insert with a fresh gen_random_uuid() and ON CONFLICT DO
+        NOTHING: with a unique index only on the primary key the conflict never
+        fires, so every re-run inserted the same subjects and topics again.
+        References are repointed to the surviving row before the duplicates go.
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: uq_subject_label
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              DO $$
+              BEGIN
+                CREATE TEMP TABLE _subj_dedup ON COMMIT DROP AS
+                SELECT s.id AS dup_id, k.id AS keep_id
+                FROM subject s
+                JOIN (SELECT label, MIN(id::text)::uuid AS id FROM subject GROUP BY label) k
+                  ON s.label = k.label AND s.id <> k.id;
+
+                UPDATE question_template_subject t SET subject_id = d.keep_id
+                FROM _subj_dedup d WHERE t.subject_id = d.dup_id
+                AND NOT EXISTS (SELECT 1 FROM question_template_subject x
+                                WHERE x.question_template_id = t.question_template_id
+                                  AND x.subject_id = d.keep_id);
+                DELETE FROM question_template_subject t USING _subj_dedup d WHERE t.subject_id = d.dup_id;
+
+                UPDATE question_snapshot_subject t SET subject_id = d.keep_id
+                FROM _subj_dedup d WHERE t.subject_id = d.dup_id
+                AND NOT EXISTS (SELECT 1 FROM question_snapshot_subject x
+                                WHERE x.question_snapshot_id = t.question_snapshot_id
+                                  AND x.subject_id = d.keep_id);
+                DELETE FROM question_snapshot_subject t USING _subj_dedup d WHERE t.subject_id = d.dup_id;
+
+                UPDATE assessment_template_subject t SET subject_id = d.keep_id
+                FROM _subj_dedup d WHERE t.subject_id = d.dup_id
+                AND NOT EXISTS (SELECT 1 FROM assessment_template_subject x
+                                WHERE x.assessment_template_id = t.assessment_template_id
+                                  AND x.subject_id = d.keep_id);
+                DELETE FROM assessment_template_subject t USING _subj_dedup d WHERE t.subject_id = d.dup_id;
+
+                UPDATE assessment_snapshot_subject t SET subject_id = d.keep_id
+                FROM _subj_dedup d WHERE t.subject_id = d.dup_id
+                AND NOT EXISTS (SELECT 1 FROM assessment_snapshot_subject x
+                                WHERE x.assessment_snapshot_id = t.assessment_snapshot_id
+                                  AND x.subject_id = d.keep_id);
+                DELETE FROM assessment_snapshot_subject t USING _subj_dedup d WHERE t.subject_id = d.dup_id;
+
+                UPDATE topic_subject t SET subject_id = d.keep_id
+                FROM _subj_dedup d WHERE t.subject_id = d.dup_id
+                AND NOT EXISTS (SELECT 1 FROM topic_subject x
+                                WHERE x.topic_id = t.topic_id AND x.subject_id = d.keep_id);
+                DELETE FROM topic_subject t USING _subj_dedup d WHERE t.subject_id = d.dup_id;
+
+                DELETE FROM subject s USING _subj_dedup d WHERE s.id = d.dup_id;
+
+                CREATE TEMP TABLE _topic_dedup ON COMMIT DROP AS
+                SELECT t.id AS dup_id, k.id AS keep_id
+                FROM topic t
+                JOIN (SELECT title, MIN(id::text)::uuid AS id FROM topic GROUP BY title) k
+                  ON t.title = k.title AND t.id <> k.id;
+
+                UPDATE topic t SET parent_id = d.keep_id FROM _topic_dedup d WHERE t.parent_id = d.dup_id;
+
+                UPDATE topic_subject t SET topic_id = d.keep_id
+                FROM _topic_dedup d WHERE t.topic_id = d.dup_id
+                AND NOT EXISTS (SELECT 1 FROM topic_subject x
+                                WHERE x.topic_id = d.keep_id AND x.subject_id = t.subject_id);
+                DELETE FROM topic_subject t USING _topic_dedup d WHERE t.topic_id = d.dup_id;
+
+                UPDATE assessment_template_topic t SET topic_id = d.keep_id
+                FROM _topic_dedup d WHERE t.topic_id = d.dup_id
+                AND NOT EXISTS (SELECT 1 FROM assessment_template_topic x
+                                WHERE x.assessment_template_id = t.assessment_template_id
+                                  AND x.topic_id = d.keep_id);
+                DELETE FROM assessment_template_topic t USING _topic_dedup d WHERE t.topic_id = d.dup_id;
+
+                UPDATE assessment_snapshot_topic t SET topic_id = d.keep_id
+                FROM _topic_dedup d WHERE t.topic_id = d.dup_id
+                AND NOT EXISTS (SELECT 1 FROM assessment_snapshot_topic x
+                                WHERE x.assessment_snapshot_id = t.assessment_snapshot_id
+                                  AND x.topic_id = d.keep_id);
+                DELETE FROM assessment_snapshot_topic t USING _topic_dedup d WHERE t.topic_id = d.dup_id;
+
+                DELETE FROM topic t USING _topic_dedup d WHERE t.id = d.dup_id;
+              END $$;
+
+  - changeSet:
+      id: v1.18-002-add-unique-subject-label
+      author: testero
+      comment: Subject labels identify a chapter and must be unique.
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: uq_subject_label
+      changes:
+        - addUniqueConstraint:
+            tableName: subject
+            columnNames: label
+            constraintName: uq_subject_label
+
+  - changeSet:
+      id: v1.18-003-add-unique-topic-title
+      author: testero
+      comment: Topic titles identify a topic tree node and must be unique.
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: uq_topic_title
+      changes:
+        - addUniqueConstraint:
+            tableName: topic
+            columnNames: title
+            constraintName: uq_topic_title
