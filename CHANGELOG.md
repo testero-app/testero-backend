@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1](https://github.com/testero-app/testero-backend/compare/v2.2.0...v2.2.1) (2026-09-10)
+
+
+### Bug Fixes
+
+* **db:** enforce unique subject label and topic title, repair assessment type default ([#277](https://github.com/testero-app/testero-backend/issues/277)) ([4a25d4a](https://github.com/testero-app/testero-backend/commit/4a25d4a34c9f4ed20fa8021e25a4886a1fd8642a))
+
 ## [2.2.0](https://github.com/testero-app/testero-backend/compare/v2.1.2...v2.2.0) (2026-08-24)
 
 
